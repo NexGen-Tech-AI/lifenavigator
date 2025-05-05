@@ -1,7 +1,7 @@
-// FILE: src/app/dashboard/finance/layout.tsx
+'use client';
 
-import { ReactNode } from "react";
-import { FinanceSidebar } from "@/components/domain/finance/FinanceSidebar";
+import React, { ReactNode } from 'react';
+import { FinanceSidebar } from '@/components/domain/finance/FinanceSidebar';
 
 interface FinanceLayoutProps {
   children: ReactNode;
@@ -10,11 +10,11 @@ interface FinanceLayoutProps {
 export default function FinanceLayout({ children }: FinanceLayoutProps) {
   return (
     <div className="flex h-full">
-      {/* Finance-specific sidebar */}
+      {/* Finance Sidebar */}
       <FinanceSidebar />
       
-      {/* Main content area */}
-      <div className="flex-1 overflow-auto p-4">
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
         {children}
       </div>
     </div>

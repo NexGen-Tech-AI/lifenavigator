@@ -8,7 +8,7 @@ import { classNames } from '@/lib/utils/classNames';
 // Navigation items
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Finance', href: '/finance', icon: CurrencyDollarIcon },
+  { name: 'Finance', href: '/dashboard/finance', icon: CurrencyDollarIcon },
   { name: 'Career', href: '/career', icon: BriefcaseIcon },
   { name: 'Education', href: '/education', icon: AcademicCapIcon },
   { name: 'Healthcare', href: '/healthcare', icon: HeartIcon },

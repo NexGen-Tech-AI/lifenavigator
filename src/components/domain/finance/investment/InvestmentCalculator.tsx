@@ -156,6 +156,9 @@ export function InvestmentCalculator() {
                   $
                 </span>
                 <input
+                  title="Enter initial investment amount"
+                  placeholder="Enter initial investment"
+                  aria-label="Initial Investment"
                   type="number"
                   value={initialValue}
                   onChange={e => setInitialValue(Number(e.target.value))}
@@ -174,6 +177,9 @@ export function InvestmentCalculator() {
                   $
                 </span>
                 <input
+                  title="Enter monthly contribution amount"
+                  placeholder="Enter monthly contribution"
+                  aria-label="Monthly Contribution"
                   type="number"
                   value={monthlyContribution}
                   onChange={e => setMonthlyContribution(Number(e.target.value))}
@@ -188,6 +194,9 @@ export function InvestmentCalculator() {
                 Time Horizon (Years)
               </label>
               <input
+                title="Select investment time horizon in years"
+                placeholder="Select time horizon"
+                aria-label="Time Horizon"
                 type="range"
                 min="1"
                 max="40"
@@ -214,6 +223,9 @@ export function InvestmentCalculator() {
               </label>
               <div className="relative">
                 <input
+                  aria-label="Risk-Free Rate"
+                  title="Enter risk-free rate percentage"
+                  placeholder="Enter risk-free rate"
                   type="number"
                   value={marketAssumptions.riskFreeRate}
                   onChange={e => handleAssumptionChange('riskFreeRate', e.target.value)}
@@ -237,6 +249,9 @@ export function InvestmentCalculator() {
               </label>
               <div className="relative">
                 <input
+                  aria-label="Equity Risk Premium"
+                  title="Enter expected equity risk premium"
+                  placeholder="Enter equity risk premium"
                   type="number"
                   value={marketAssumptions.equityRiskPremium}
                   onChange={e => handleAssumptionChange('equityRiskPremium', e.target.value)}
@@ -260,6 +275,9 @@ export function InvestmentCalculator() {
               </label>
               <div className="relative">
                 <input
+                  aria-label="Inflation Rate"
+                  title="Enter expected long-term inflation rate"
+                  placeholder="Enter inflation rate"
                   type="number"
                   value={marketAssumptions.inflationRate}
                   onChange={e => handleAssumptionChange('inflationRate', e.target.value)}
