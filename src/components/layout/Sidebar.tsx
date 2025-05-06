@@ -9,10 +9,10 @@ import { classNames } from '@/lib/utils/classNames';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Finance', href: '/dashboard/finance', icon: CurrencyDollarIcon },
-  { name: 'Career', href: '/career', icon: BriefcaseIcon },
-  { name: 'Education', href: '/education', icon: AcademicCapIcon },
-  { name: 'Healthcare', href: '/healthcare', icon: HeartIcon },
-  { name: 'Settings', href: '/settings', icon: CogIcon },
+  { name: 'Career', href: '/dashboard/career', icon: BriefcaseIcon },
+  { name: 'Education', href: '/dashboard/education', icon: AcademicCapIcon },
+  { name: 'Healthcare', href: '/dashboard/healthcare', icon: HeartIcon },
+  { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
 ];
 
 // Sidebar component
@@ -56,11 +56,11 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center px-4 border-b border-gray-200 dark:border-gray-700">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/dashboard" className="flex items-center space-x-2">
             <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center">
-              <span className="text-white text-xl font-bold">N</span>
+              <span className="text-white text-xl font-bold">L</span>
             </div>
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">NexLevel</span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">LifeNavigator</span>
           </Link>
         </div>
 

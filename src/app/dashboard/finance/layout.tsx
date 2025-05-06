@@ -9,7 +9,7 @@ interface FinanceLayoutProps {
 
 export default function FinanceLayout({ children }: FinanceLayoutProps) {
   return (
-    <div className="flex h-full">
+    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
       {/* Finance Sidebar */}
       <FinanceSidebar />
       
