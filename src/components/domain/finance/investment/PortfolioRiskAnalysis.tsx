@@ -1,4 +1,5 @@
 // FILE: src/components/finance/investment/PortfolioRiskAnalysis.tsx
+'use client';
 
 import React, { useState } from "react";
 import { 

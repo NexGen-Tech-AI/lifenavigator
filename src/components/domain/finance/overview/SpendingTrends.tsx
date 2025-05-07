@@ -1,4 +1,5 @@
 // FILE: src/components/finance/overview/SpendingTrends.tsx
+'use client';
 
 import React, { useState } from "react";
 

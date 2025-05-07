@@ -1,4 +1,6 @@
 // components/integrations/ProviderCard.tsx
+'use client';
+
 import Image from 'next/image';
 import { Provider } from '@/types/integration';
 

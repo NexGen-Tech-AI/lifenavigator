@@ -1,4 +1,6 @@
 // src/components/retirement/RetirementCalculator.tsx
+'use client';
+
 import React, { useState } from 'react';
 
 const RetirementCalculator: React.FC = () => {

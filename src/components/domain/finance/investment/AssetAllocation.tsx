@@ -1,4 +1,5 @@
 // FILE: src/components/finance/investment/AssetAllocation.tsx
+'use client';
 
 import React, { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";

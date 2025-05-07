@@ -1,4 +1,6 @@
 // components/integrations/IntegrationsOverview.tsx
+'use client';
+
 import { useState } from 'react';
 import { IntegrationCategoryTabs } from './IntegrationCategoryTabs';
 import { ProviderGrid } from './ProviderGrid';

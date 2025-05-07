@@ -1,4 +1,6 @@
 // components/integrations/components/ConnectedServices.tsx
+'use client';
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { useConnectedServices } from '@/hooks/useConnectedServices';

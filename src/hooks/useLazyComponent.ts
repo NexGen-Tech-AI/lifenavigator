@@ -1,4 +1,6 @@
 // hooks/useLazyComponent.ts
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useIntersectionObserver } from './useIntersectionObserver';
 

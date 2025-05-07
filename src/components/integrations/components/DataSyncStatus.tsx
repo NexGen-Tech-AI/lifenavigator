@@ -1,4 +1,6 @@
 // components/integrations/components/DataSyncStatus.tsx
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useSyncStatus } from '../../../hooks/useSyncStatus';
 

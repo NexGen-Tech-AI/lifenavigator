@@ -1,4 +1,6 @@
 // components/ui/lazy/LazyLoad.tsx
+'use client';
+
 import React, { ReactNode, Suspense } from 'react';
 import { useLazyComponent } from '@/hooks/useLazyComponent';
 

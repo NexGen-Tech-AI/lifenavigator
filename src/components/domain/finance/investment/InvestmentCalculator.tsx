@@ -1,4 +1,5 @@
 // FILE: src/components/finance/investment/InvestmentCalculator.tsx
+'use client';
 
 import React, { useState, useEffect } from "react";
 import {

@@ -1,4 +1,6 @@
 // src/hooks/useOnClickOutside.ts
+'use client';
+
 import { useEffect, RefObject } from 'react';
 
 type Handler = (event: MouseEvent | TouchEvent) => void;

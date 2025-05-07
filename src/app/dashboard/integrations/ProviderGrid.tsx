@@ -1,4 +1,6 @@
 // src/app/dashboard/integrations/ProviderGrid.tsx
+'use client';
+
 import { useState } from 'react';
 import { ProviderCard } from '@/components/integrations/components/ProviderCard';
 import { IntegrationModal } from '@/components/integrations/components/IntegrationModal';

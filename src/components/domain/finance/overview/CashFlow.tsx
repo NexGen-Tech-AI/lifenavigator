@@ -1,4 +1,5 @@
 // FILE: src/components/finance/overview/CashFlow.tsx
+'use client';
 
 import React, { useState } from "react";
 

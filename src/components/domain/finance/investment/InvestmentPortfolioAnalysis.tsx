@@ -1,4 +1,5 @@
 // FILE: src/components/finance/investment/InvestmentPortfolioAnalysis.tsx
+'use client';
 
 import React, { useState } from "react";
 import { MagnifyingGlassIcon as SearchIcon, ArrowsUpDownIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
