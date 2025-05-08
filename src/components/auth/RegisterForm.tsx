@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { toast } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/toaster';
 
 interface RegisterFormData {
   name: string;
@@ -15,6 +15,7 @@ interface RegisterFormData {
 
 export default function RegisterForm() {
   const router = useRouter();
+  const { addToast } = useToast();
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
     email: '',
@@ -88,10 +89,10 @@ export default function RegisterForm() {
       }
 
       // After successful registration, redirect to login page
-      toast({
+      addToast({
         title: "Registration successful",
         description: "Your account has been created. Please log in with your credentials.",
-        variant: "default",
+        type: "success",
       });
       
       router.push('/auth/login');

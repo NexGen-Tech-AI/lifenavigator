@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast } from '@/components/ui/toaster';
+import { useToast } from '@/components/ui/toaster';
 
 // Domain-specific questionnaire steps
 import EducationQuestionnaire from '@/components/onboarding/EducationQuestionnaire';
@@ -28,6 +28,7 @@ export default function QuestionnairePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
+  const { addToast } = useToast();
   
   const [currentStep, setCurrentStep] = useState(STEPS.INTRO);
   const [formData, setFormData] = useState({
@@ -42,14 +43,14 @@ export default function QuestionnairePage() {
   // Redirect to login if no userId is provided or not authenticated
   useEffect(() => {
     if (!userId) {
-      toast({
+      addToast({
         title: "Authentication Required",
         description: "Please login to access the onboarding questionnaire.",
-        variant: "destructive",
+        type: "error",
       });
       router.push('/auth/login');
     }
-  }, [userId, router]);
+  }, [userId, router, addToast]);
 
   const handleStepDataChange = (step, data) => {
     setFormData(prev => ({
@@ -125,10 +126,10 @@ export default function QuestionnairePage() {
       nextStep();
     } catch (error) {
       console.error('Error submitting questionnaire:', error);
-      toast({
+      addToast({
         title: "Error",
         description: "Failed to save your goals. Please try again.",
-        variant: "destructive",
+        type: "error",
       });
     } finally {
       setIsSubmitting(false);

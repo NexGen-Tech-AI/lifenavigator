@@ -1,10 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
 import { Analytics } from "@/components/analytics/Analytics";
+import { Toaster } from "@/components/ui/toaster";
 
 // Font configuration
 const geistSans = Geist({
@@ -23,7 +22,6 @@ export const metadata: Metadata = {
   description: "Secure, AI-powered life management platform for finance, career, education, and healthcare guidance",
   keywords: ["life management", "AI advisor", "financial planning", "career development", "education planning", "healthcare management"],
   authors: [{ name: "NexLevel Team" }],
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
   openGraph: {
     type: "website",
@@ -43,6 +41,12 @@ export const metadata: Metadata = {
   },
 };
 
+// Viewport
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 // Root layout
 export default function RootLayout({
   children,
@@ -56,21 +60,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-            {/* Sidebar - visible on larger screens */}
-            <Sidebar />
-
-            {/* Main content area */}
-            <div className="flex flex-col flex-1 w-full overflow-hidden">
-              {/* Header */}
-              <Header />
-
-              {/* Main content with scrolling */}
-              <main className="flex-1 overflow-y-auto">
-                {children}
-              </main>
-            </div>
-          </div>
+          {children}
+          <Toaster />
         </Providers>
         <Analytics />
       </body>
