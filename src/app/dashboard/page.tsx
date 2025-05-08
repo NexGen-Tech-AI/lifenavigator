@@ -1,14 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useUserData } from '@/hooks/useUserData';
+import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
 
 // Main dashboard components
 const Dashboard = () => {
+  const { data: session } = useSession();
+  const { userData, loading: userLoading, error: userError } = useUserData();
   const [loading, setLoading] = useState(false);
 
-  // Domain summaries for the dashboard
-  const domainSummaries = [
+  // Domain summaries with default data
+  const [domainSummaries, setDomainSummaries] = useState([
     {
       title: 'Financial Overview',
       stats: [
@@ -38,7 +43,7 @@ const Dashboard = () => {
         { label: 'Certifications', value: '3', trend: 'neutral', percent: '0%' },
         { label: 'Learning Hours', value: '48', trend: 'up', percent: '10%' },
       ],
-      insights: 'You're on track to complete your current certification within 45 days.',
+      insights: "You're on track to complete your current certification within 45 days.",
       link: '/dashboard/education',
       color: 'from-amber-500 to-yellow-400',
     },
@@ -53,7 +58,45 @@ const Dashboard = () => {
       link: '/dashboard/healthcare',
       color: 'from-rose-500 to-red-400',
     },
-  ];
+  ]);
+  
+  // Update domain summaries based on user data
+  useEffect(() => {
+    if (userData?.goals) {
+      const updatedSummaries = [...domainSummaries];
+      
+      // Update with user-specific financial data if available
+      if (userData.goals.financialGoals) {
+        try {
+          const financialGoals = typeof userData.goals.financialGoals === 'string' 
+            ? JSON.parse(userData.goals.financialGoals)
+            : userData.goals.financialGoals;
+            
+          // Update the financial domain with user data
+          // This is just an example - adjust based on your actual data structure
+          if (financialGoals.netWorth) {
+            updatedSummaries[0].stats[0].value = `$${financialGoals.netWorth.toLocaleString()}`;
+          }
+          if (financialGoals.monthlyExpenses) {
+            updatedSummaries[0].stats[1].value = `$${financialGoals.monthlyExpenses.toLocaleString()}`;
+          }
+          if (financialGoals.investmentReturn) {
+            updatedSummaries[0].stats[2].value = `${financialGoals.investmentReturn}%`;
+          }
+          if (financialGoals.insight) {
+            updatedSummaries[0].insights = financialGoals.insight;
+          }
+        } catch (e) {
+          console.error('Error parsing financial goals:', e);
+        }
+      }
+      
+      // Apply similar updates for other domains
+      // Career, Education, Health...
+      
+      setDomainSummaries(updatedSummaries);
+    }
+  }, [userData]);
 
   // Actions for quick access
   const quickActions = [
@@ -65,12 +108,33 @@ const Dashboard = () => {
     { name: 'Upcoming Tasks', icon: '=�', href: '/insights' },
   ];
 
+  // Show loading spinner while fetching user data
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
+
+  // Show error message if fetching user data failed
+  if (userError) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-800 dark:text-red-200 max-w-md text-center">
+          <p className="text-lg font-medium">Failed to load dashboard data</p>
+          <p className="mt-2">Please try refreshing the page or contact support if the problem persists.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="mx-auto px-4 sm:px-6 md:px-8">
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sr-only">Dashboard</h1>
         <p className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-          Welcome back! Here's your life at a glance.
+          Welcome back, {userData?.name || 'User'}! Here's your life at a glance.
         </p>
       </div>
       

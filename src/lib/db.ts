@@ -1,17 +1,30 @@
 import { PrismaClient } from '@prisma/client';
 
-// PrismaClient is attached to the `global` object in development to prevent
-// exhausting your database connection limit.
-//
-// Learn more: 
-// https://pris.ly/d/help/next-js-best-practices
+// Prevent multiple instances of Prisma Client in development environment
+// With Vercel serverless functions, we need a more robust approach to handle connection pooling
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+declare global {
+  var cachedPrisma: PrismaClient;
+}
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+let prisma: PrismaClient;
+
+if (process.env.NODE_ENV === 'production') {
+  // In production, create a new PrismaClient instance for each request
+  // This works well with Vercel's serverless functions
+  prisma = new PrismaClient({
+    log: ['error'],
+    errorFormat: 'minimal',
   });
+} else {
+  // In development, reuse the same connection to avoid exhausting the DB connection limit
+  if (!global.cachedPrisma) {
+    global.cachedPrisma = new PrismaClient({
+      log: ['query', 'error', 'warn'],
+      errorFormat: 'pretty',
+    });
+  }
+  prisma = global.cachedPrisma;
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export { prisma };

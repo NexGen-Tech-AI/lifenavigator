@@ -221,7 +221,7 @@ const HealthcareDashboard = () => {
             </div>
           </div>
           <div className="mt-2 text-sm text-green-600 dark:text-green-400">
-            ‘ 5% improvement this month
+            â†‘ 5% improvement this month
           </div>
         </div>
         

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from "@/app/api/auth/NextAuth"; // Update the path to the correct module
 import { careerService } from '@/lib/services/careerService';
 
 // Get career overview for current user

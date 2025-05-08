@@ -1,8 +1,11 @@
 // app/api/auth/NextAuth.ts
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import TwitterProvider from "next-auth/providers/twitter";
+import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { OAuthConfig } from "next-auth/providers/oauth";
+import { compare } from 'bcrypt';
 
 // Define the profile types for each provider
 interface UdemyProfile {
@@ -67,18 +70,60 @@ export const authOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text" },
+        email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials, req): Promise<any | null> {
-        // Implement your credentials auth logic
-        // Return user object or null
-        return null; // placeholder
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+        
+        try {
+          // Import modules here to avoid circular dependencies
+          const { prisma } = await import('@/lib/db');
+          
+          // Find user by email
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          });
+          
+          // Check if user exists and verify password
+          if (!user || !user.password) {
+            return null;
+          }
+          
+          const isPasswordValid = await compare(credentials.password, user.password);
+          
+          if (!isPasswordValid) {
+            return null;
+          }
+          
+          // Return user object without password
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            setupCompleted: user.setupCompleted
+          };
+        } catch (error) {
+          console.error('Authentication error:', error);
+          return null;
+        }
       }
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID ?? '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    }),
+    TwitterProvider({
+      clientId: process.env.TWITTER_CLIENT_ID ?? '',
+      clientSecret: process.env.TWITTER_CLIENT_SECRET ?? '',
+      version: "2.0", // Use API v2
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID ?? '',
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET ?? '',
     }),
     // Add education providers dynamically
     ...Object.values(educationProviders),
@@ -89,6 +134,10 @@ export const authOptions = {
       if (account && user) {
         // Store provider tokens in the JWT
         token.userId = user.id;
+        token.user = {
+          id: user.id,
+          setupCompleted: user.setupCompleted || false,
+        };
         
         if (account.provider && account.access_token) {
           // Store access tokens with provider as key
@@ -101,11 +150,35 @@ export const authOptions = {
           };
         }
       }
+      
+      // If we already have a token but not the setupCompleted flag (for existing sessions)
+      if (token.userId && !token.user?.setupCompleted) {
+        // Fetch the user from the database to check setupCompleted status
+        try {
+          const res = await fetch(`${process.env.NEXTAUTH_URL}/api/users/${token.userId}`);
+          if (res.ok) {
+            const userData = await res.json();
+            
+            if (userData && userData.user) {
+              if (!token.user) token.user = {};
+              token.user.setupCompleted = userData.user.setupCompleted || false;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user setup status:', error);
+        }
+      }
+      
       return token;
     },
     async session({ session, token }: { session: any; token: any }) {
-      // Add connected providers to session for client-side use
+      // Add connected providers and user data to session for client-side use
       session.user.id = token.userId;
+      
+      // Add setupCompleted flag
+      if (token.user) {
+        session.user.setupCompleted = token.user.setupCompleted || false;
+      }
       
       // Add list of connected providers without exposing tokens
       if (token.providers) {

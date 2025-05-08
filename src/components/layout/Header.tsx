@@ -121,7 +121,7 @@ const Header: FC = () => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm z-10">
+    <header className="bg-white dark:bg-gray-800 shadow-sm z-10 sticky top-0">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Left side - Title */}

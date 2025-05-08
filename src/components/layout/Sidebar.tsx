@@ -37,6 +37,13 @@ export default function Sidebar() {
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
+  // Default to open on initial load for larger screens
+  useEffect(() => {
+    if (!isMobile) {
+      setIsOpen(true);
+    }
+  }, [isMobile]);
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -50,7 +57,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <div
         className={classNames(
-          'fixed lg:relative top-0 left-0 z-30 h-full w-64 transform transition-transform duration-300 ease-in-out bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0',
+          'fixed lg:static top-0 left-0 z-30 h-full w-64 transform transition-transform duration-300 ease-in-out bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-shrink-0',
           isOpen || !isMobile ? 'translate-x-0' : '-translate-x-full'
         )}
       >
