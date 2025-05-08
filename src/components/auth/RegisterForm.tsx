@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/toaster';
 
 interface RegisterFormData {
   name: string;
@@ -86,8 +87,14 @@ export default function RegisterForm() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Redirect to login page on success
-      router.push('/auth/login?registered=true');
+      // After successful registration, redirect to login page
+      toast({
+        title: "Registration successful",
+        description: "Your account has been created. Please log in with your credentials.",
+        variant: "default",
+      });
+      
+      router.push('/auth/login');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
