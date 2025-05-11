@@ -44,10 +44,10 @@ export async function fetchConnectedServices(): Promise<ConnectedService[]> {
  * @param serviceId The ID of the service to disconnect
  */
 export async function disconnectService(serviceId: string): Promise<void> {
-  const response = await fetch(`/api/integrations/services/${serviceId}`, {
+  const response = await fetch(`/api/integrations/services/${serviceId}/disconnect`, {
     method: 'DELETE',
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to disconnect service');
@@ -73,11 +73,53 @@ export async function refreshServices(): Promise<void> {
  */
 export async function getSyncStatus(): Promise<{ status: 'success' | 'in_progress' | 'failed', lastSync: string | null }> {
   const response = await fetch('/api/integrations/sync-status');
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to get sync status');
   }
-  
+
+  return response.json();
+}
+
+/**
+ * Manually triggers a sync for a specific integration
+ * @param integrationId The ID of the integration to sync
+ */
+export async function triggerSync(integrationId: string): Promise<any> {
+  const response = await fetch('/api/integrations/sync/trigger', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ integrationId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to trigger sync');
+  }
+
+  return response.json();
+}
+
+/**
+ * Refreshes the access token for a specific integration
+ * @param integrationId The ID of the integration to refresh
+ */
+export async function refreshToken(integrationId: string): Promise<void> {
+  const response = await fetch('/api/integrations/token/refresh', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ integrationId }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to refresh token');
+  }
+
   return response.json();
 }

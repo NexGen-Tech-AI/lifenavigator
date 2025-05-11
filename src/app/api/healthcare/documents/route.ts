@@ -1,151 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
-import { getToken } from 'next-auth/jwt';
-
-// Document interface
-interface SecureDocument {
-  id: string;
-  userId: string;
-  filename: string;
-  fileType: string;
-  category: string;
-  size: number;
-  uploadDate: string;
-  lastAccessed: string;
-  tags: string[];
-  encrypted: boolean;
-  favorite: boolean;
-}
-
-// Mock database for secure documents
-let mockDocuments: SecureDocument[] = [
-  {
-    id: 'doc1',
-    userId: 'user1',
-    filename: 'Health_Insurance_Policy.pdf',
-    fileType: 'PDF',
-    category: 'insurance',
-    size: 1200000,
-    uploadDate: '2025-04-15',
-    lastAccessed: '2025-05-08',
-    tags: ['insurance', 'healthcare', 'policy'],
-    encrypted: true,
-    favorite: true
-  },
-  {
-    id: 'doc2',
-    userId: 'user1',
-    filename: 'Passport_Scan.pdf',
-    fileType: 'PDF',
-    category: 'identification',
-    size: 3800000,
-    uploadDate: '2025-03-22',
-    lastAccessed: '2025-05-02',
-    tags: ['identification', 'travel', 'government'],
-    encrypted: true,
-    favorite: false
-  }
-];
+import { 
+  listDocuments, 
+  getDocument, 
+  deleteDocument, 
+  DocumentCategory 
+} from '@/lib/services/documentService';
+import { prisma } from '@/lib/db';
 
 /**
- * GET handler - Retrieve user documents
+ * GET - List documents with filtering
  */
 export async function GET(req: NextRequest) {
   try {
-    // Usually we would parse the session and get the user ID
-    const token = await getToken({ req });
-    
-    if (!token) {
+    // Check authentication
+    const session = await getServerSession();
+    if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Filter documents to only show those belonging to this user
-    // In this mock implementation, we just return all documents
-    // In a real implementation, we'd filter by user ID
-    const userId = token.sub || 'user1'; // Fall back to demo user if no sub
-    const userDocuments = mockDocuments.filter(doc => doc.userId === userId);
+    // Get query parameters
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category') as DocumentCategory | undefined;
+    const searchTerm = searchParams.get('search') || undefined;
+    const favorite = searchParams.has('favorite') ? searchParams.get('favorite') === 'true' : undefined;
+    const limit = searchParams.has('limit') ? parseInt(searchParams.get('limit') as string) : 20;
+    const offset = searchParams.has('offset') ? parseInt(searchParams.get('offset') as string) : 0;
     
-    // Convert document sizes to readable format
-    const formattedDocuments = userDocuments.map(doc => ({
-      ...doc,
-      size: formatBytes(doc.size),
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
+    
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 400 });
+    }
+    
+    // Get documents
+    const result = await listDocuments(user.id, {
+      category,
+      searchTerm,
+      favorite,
+      limit,
+      offset
+    });
+    
+    // Format the response
+    const formattedDocuments = result.documents.map(doc => ({
+      id: doc.id,
+      filename: doc.filename,
+      fileType: doc.fileType,
+      category: doc.category,
+      size: doc.size,
+      uploadDate: doc.uploadDate,
+      lastAccessed: doc.lastAccessed,
+      favorite: doc.favorite,
+      shared: doc.shared,
+      tags: doc.documentTags.map(tag => tag.name),
+      shareCount: doc.documentShares.length,
+      accessCount: doc._count.accessLogs
     }));
     
     return NextResponse.json({
-      documents: formattedDocuments
+      documents: formattedDocuments,
+      totalCount: result.totalCount,
+      currentPage: Math.floor(offset / limit) + 1,
+      totalPages: Math.ceil(result.totalCount / limit)
     });
-  } catch (error) {
-    console.error('Error retrieving documents:', error);
-    return NextResponse.json({ error: 'Failed to retrieve documents' }, { status: 500 });
+    
+  } catch (error: any) {
+    console.error('Error listing documents:', error);
+    return NextResponse.json({ 
+      error: 'Failed to list documents', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
 /**
- * POST handler - Upload a new document
- */
-export async function POST(req: NextRequest) {
-  try {
-    const token = await getToken({ req });
-    
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
-    const data = await req.json();
-    
-    // Validate required fields
-    if (!data.filename || !data.category) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-    
-    // In a real implementation:
-    // 1. We would handle file upload
-    // 2. Encrypt the file
-    // 3. Store it securely
-    // 4. Create a database record
-    
-    // For this mock, just create a document record
-    const newDocument: SecureDocument = {
-      id: `doc${Date.now()}`,
-      userId: token.sub || 'user1',
-      filename: data.filename,
-      fileType: data.fileType || 'PDF',
-      category: data.category,
-      size: data.size || 1000000, // Default 1MB
-      uploadDate: new Date().toISOString().split('T')[0],
-      lastAccessed: new Date().toISOString().split('T')[0],
-      tags: data.tags || [],
-      encrypted: true, // Always encrypt documents
-      favorite: false
-    };
-    
-    // Add to our mock database
-    mockDocuments.push(newDocument);
-    
-    return NextResponse.json({
-      message: 'Document uploaded successfully',
-      document: {
-        ...newDocument,
-        size: formatBytes(newDocument.size)
-      }
-    });
-  } catch (error) {
-    console.error('Error uploading document:', error);
-    return NextResponse.json({ error: 'Failed to upload document' }, { status: 500 });
-  }
-}
-
-/**
- * DELETE handler - Delete a document
+ * DELETE - Delete a document
  */
 export async function DELETE(req: NextRequest) {
   try {
-    const token = await getToken({ req });
-    
-    if (!token) {
+    // Check authentication
+    const session = await getServerSession();
+    if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // Get document ID
     const { searchParams } = new URL(req.url);
     const documentId = searchParams.get('id');
     
@@ -153,91 +96,119 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Document ID is required' }, { status: 400 });
     }
     
-    // Check if document exists and belongs to user
-    const userId = token.sub || 'user1';
-    const documentIndex = mockDocuments.findIndex(
-      doc => doc.id === documentId && doc.userId === userId
-    );
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
     
-    if (documentIndex === -1) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 400 });
     }
     
-    // Remove document from mock database
-    mockDocuments.splice(documentIndex, 1);
+    // Delete document
+    await deleteDocument(documentId, user.id);
     
     return NextResponse.json({ message: 'Document deleted successfully' });
-  } catch (error) {
+    
+  } catch (error: any) {
     console.error('Error deleting document:', error);
-    return NextResponse.json({ error: 'Failed to delete document' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to delete document', 
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
 /**
- * PATCH handler - Update document (favorite, tags, etc.)
+ * PATCH - Update document properties
  */
 export async function PATCH(req: NextRequest) {
   try {
-    const token = await getToken({ req });
-    
-    if (!token) {
+    // Check authentication
+    const session = await getServerSession();
+    if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    // Parse request body
     const data = await req.json();
+    const { id, favorite, tags, category } = data;
     
-    if (!data.id) {
+    if (!id) {
       return NextResponse.json({ error: 'Document ID is required' }, { status: 400 });
     }
     
-    // Check if document exists and belongs to user
-    const userId = token.sub || 'user1';
-    const documentIndex = mockDocuments.findIndex(
-      doc => doc.id === data.id && doc.userId === userId
-    );
+    // Get user
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    });
     
-    if (documentIndex === -1) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 400 });
     }
     
-    // Update document fields
-    const updatedDocument = {
-      ...mockDocuments[documentIndex],
-      ...data,
-      // Don't allow these fields to be modified directly
-      id: mockDocuments[documentIndex].id,
-      userId: mockDocuments[documentIndex].userId,
-      fileType: mockDocuments[documentIndex].fileType,
-      uploadDate: mockDocuments[documentIndex].uploadDate,
-      size: mockDocuments[documentIndex].size,
-      // Update lastAccessed
-      lastAccessed: new Date().toISOString().split('T')[0]
-    };
+    // Verify ownership
+    const document = await prisma.secureDocument.findFirst({
+      where: {
+        id,
+        healthRecord: {
+          userId: user.id
+        }
+      },
+      include: {
+        documentTags: true
+      }
+    });
     
-    mockDocuments[documentIndex] = updatedDocument;
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found or access denied' }, { status: 404 });
+    }
+    
+    // Update document 
+    const updates: any = {};
+    
+    if (favorite !== undefined) {
+      updates.favorite = favorite;
+    }
+    
+    if (category) {
+      updates.category = category;
+    }
+    
+    // Update the document
+    const updatedDocument = await prisma.secureDocument.update({
+      where: { id },
+      data: updates
+    });
+    
+    // Update tags if provided
+    if (tags && Array.isArray(tags)) {
+      // Delete existing tags
+      await prisma.documentTag.deleteMany({
+        where: { documentId: id }
+      });
+      
+      // Create new tags
+      if (tags.length > 0) {
+        await prisma.documentTag.createMany({
+          data: tags.map(tag => ({
+            documentId: id,
+            name: tag
+          }))
+        });
+      }
+    }
     
     return NextResponse.json({
       message: 'Document updated successfully',
-      document: {
-        ...updatedDocument,
-        size: formatBytes(updatedDocument.size)
-      }
+      document: updatedDocument
     });
-  } catch (error) {
+    
+  } catch (error: any) {
     console.error('Error updating document:', error);
-    return NextResponse.json({ error: 'Failed to update document' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to update document', 
+      details: error.message 
+    }, { status: 500 });
   }
-}
-
-// Helper function to format bytes into human-readable format
-function formatBytes(bytes: number, decimals = 2): string {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-  
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }

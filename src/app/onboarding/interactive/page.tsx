@@ -3,48 +3,54 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toaster';
+import { AnimatePresence, motion } from 'framer-motion';
 
-// Domain-specific questionnaire steps
+// Enhanced components
+import EnhancedWelcome from '@/components/onboarding/EnhancedWelcome';
+import PersonaSelection from '@/components/onboarding/PersonaSelection';
+import GoalVisualization from '@/components/onboarding/GoalVisualization';
+import AchievementUnlock from '@/components/onboarding/AchievementUnlock';
+
+// Original components for domain-specific questions
 import EducationQuestionnaire from '@/components/onboarding/EducationQuestionnaire';
 import CareerQuestionnaire from '@/components/onboarding/CareerQuestionnaire';
 import FinancialQuestionnaire from '@/components/onboarding/FinancialQuestionnaire';
 import HealthQuestionnaire from '@/components/onboarding/HealthQuestionnaire';
 import RiskAssessment from '@/components/onboarding/RiskAssessment';
-import QuestionnaireIntro from '@/components/onboarding/QuestionnaireIntro';
 import QuestionnaireComplete from '@/components/onboarding/QuestionnaireComplete';
 
-// Define all steps in the questionnaire process
+// Define all steps in the enhanced questionnaire process
 const STEPS = {
-  INTRO: 0,
-  EDUCATION: 1,
-  CAREER: 2,
-  FINANCIAL: 3,
-  HEALTH: 4,
-  RISK: 5,
-  COMPLETE: 6,
+  WELCOME: 0,
+  PERSONA: 1,
+  GOALS: 2,
+  EDUCATION: 3,
+  CAREER: 4,
+  FINANCIAL: 5,
+  HEALTH: 6,
+  RISK: 7,
+  ACHIEVEMENTS: 8,
+  COMPLETE: 9,
 };
 
-export default function QuestionnairePage() {
+export default function InteractiveOnboardingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId');
-  const userName = searchParams.get('name');
+  const userName = searchParams.get('name') || undefined;
   const { addToast } = useToast();
-
-  const [currentStep, setCurrentStep] = useState(STEPS.INTRO);
+  
+  const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
   const [formData, setFormData] = useState({
+    persona: '',
+    goals: {},
     education: {},
     career: {},
     financial: {},
     health: {},
-    risk: { riskTheta: 0 },
+    risk: { riskTheta: 0.5 },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Function to switch to enhanced onboarding
-  const switchToEnhancedOnboarding = () => {
-    router.push(`/onboarding/interactive?userId=${userId}${userName ? `&name=${userName}` : ''}`);
-  };
 
   // Redirect to login if no userId is provided or not authenticated
   useEffect(() => {
@@ -58,7 +64,7 @@ export default function QuestionnairePage() {
     }
   }, [userId, router, addToast]);
 
-  const handleStepDataChange = (step, data) => {
+  const handleStepDataChange = (step: string, data: any) => {
     setFormData(prev => ({
       ...prev,
       [step]: data,
@@ -67,10 +73,14 @@ export default function QuestionnairePage() {
 
   const nextStep = () => {
     setCurrentStep(prev => prev + 1);
+    // Scroll to top when changing steps
+    window.scrollTo(0, 0);
   };
 
   const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
+    setCurrentStep(prev => Math.max(0, prev - 1));
+    // Scroll to top when changing steps
+    window.scrollTo(0, 0);
   };
 
   const handleSubmit = async () => {
@@ -104,6 +114,17 @@ export default function QuestionnairePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, goals: formData.health }),
+      });
+
+      // Submit persona and prioritized goals
+      await fetch('/api/onboarding/persona-goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId, 
+          persona: formData.persona,
+          prioritizedGoals: formData.goals
+        }),
       });
 
       // Submit risk profile
@@ -145,11 +166,31 @@ export default function QuestionnairePage() {
   // Render current step
   const renderStep = () => {
     switch(currentStep) {
-      case STEPS.INTRO:
-        return <QuestionnaireIntro
-          onContinue={nextStep}
-          onSwitchToEnhanced={switchToEnhancedOnboarding}
-        />;
+      case STEPS.WELCOME:
+        return <EnhancedWelcome onContinue={nextStep} userName={userName} />;
+      
+      case STEPS.PERSONA:
+        return (
+          <PersonaSelection
+            onSelect={(persona) => {
+              handleStepDataChange('persona', persona);
+              nextStep();
+            }}
+            onBack={prevStep}
+          />
+        );
+      
+      case STEPS.GOALS:
+        return (
+          <GoalVisualization
+            onComplete={(priorities) => {
+              handleStepDataChange('goals', priorities);
+              nextStep();
+            }}
+            onBack={prevStep}
+            persona={formData.persona}
+          />
+        );
       
       case STEPS.EDUCATION:
         return (
@@ -202,52 +243,106 @@ export default function QuestionnairePage() {
           />
         );
       
+      case STEPS.ACHIEVEMENTS:
+        return (
+          <AchievementUnlock
+            onContinue={nextStep}
+            onBack={prevStep}
+          />
+        );
+      
       case STEPS.COMPLETE:
-        return <QuestionnaireComplete onContinue={() => {
-          // Redirect to dashboard after completion
-          // Use window.location to force a full refresh and update the session
-          window.location.href = '/dashboard';
-        }} />;
+        return (
+          <QuestionnaireComplete onContinue={() => {
+            // Redirect to dashboard after completion
+            // Use window.location to force a full refresh and update the session
+            window.location.href = '/dashboard';
+          }} />
+        );
       
       default:
-        return <QuestionnaireIntro onContinue={nextStep} />;
+        return <EnhancedWelcome onContinue={nextStep} userName={userName} />;
     }
   };
 
   // Calculate progress percentage
   const progress = Math.round((currentStep / (Object.keys(STEPS).length - 1)) * 100);
+  
+  // Step labels for the progress indicator
+  const stepLabels = [
+    'Welcome',
+    'Persona',
+    'Goals',
+    'Education',
+    'Career',
+    'Finance',
+    'Health',
+    'Risk',
+    'Rewards',
+    'Complete'
+  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow">
-        {/* Progress bar */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+        {/* Progress indicator */}
         {currentStep > 0 && currentStep < STEPS.COMPLETE && (
           <div className="w-full">
-            <div className="relative pt-1">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 dark:bg-blue-900 dark:text-blue-200">
-                    Progress
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-xs font-semibold inline-block text-blue-600 dark:text-blue-400">
-                    {progress}%
-                  </span>
-                </div>
-              </div>
-              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200 dark:bg-blue-900">
-                <div 
-                  style={{ width: `${progress}%` }}
-                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-600 transition-all duration-500"
+            <div className="relative mb-6">
+              {/* Visual progress bar */}
+              <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200 dark:bg-blue-900/30">
+                <motion.div 
+                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-blue-500 to-indigo-600"
+                  initial={{ width: `${(currentStep - 1) / (Object.keys(STEPS).length - 1) * 100}%` }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5 }}
                 />
+              </div>
+              
+              {/* Step markers */}
+              <div className="flex justify-between text-xs mt-2">
+                {stepLabels.map((label, index) => (
+                  <div 
+                    key={index} 
+                    className={`relative ${index === stepLabels.length - 1 ? 'right-2' : index === 0 ? 'left-0' : ''}`}
+                    style={{ 
+                      visibility: [0, 2, 4, 6, 8, 9].includes(index) ? 'visible' : 'hidden',
+                      flex: index === 0 || index === stepLabels.length - 1 ? '0 0 auto' : '1 1 0'
+                    }}
+                  >
+                    <div className={`
+                      absolute top-[-20px] left-1/2 transform -translate-x-1/2 
+                      w-3 h-3 rounded-full 
+                      ${currentStep >= index ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}
+                    `} />
+                    {[0, 2, 4, 6, 8, 9].includes(index) && (
+                      <span className={`
+                        absolute top-[-42px] left-1/2 transform -translate-x-1/2 whitespace-nowrap
+                        font-medium text-[10px]
+                        ${currentStep >= index ? 'text-blue-700 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}
+                      `}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
         {/* Current step */}
-        {renderStep()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

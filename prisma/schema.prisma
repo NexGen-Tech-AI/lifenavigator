@@ -18,6 +18,7 @@ model User {
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   setupCompleted Boolean           @default(false)
+  metadata       Json?             // Store persona, badges, and other user-specific data
   accounts       Account[]
   budgets        Budget[]
   careerData     CareerRecord[]
@@ -30,6 +31,7 @@ model User {
   sessions       Session[]
   goals          UserGoals?
   settings       UserSettings?
+  integrations   Integration[]
 
   @@map("users")
 }
@@ -255,18 +257,19 @@ model Certification {
 }
 
 model HealthRecord {
-  id           String               @id @default(cuid())
-  userId       String
-  height       Float?
-  weight       Float?
-  bloodType    String?
-  allergies    String?
-  medications  String?
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments MedicalAppointment[]
-  vitalSigns   VitalSign[]
+  id            String               @id @default(cuid())
+  userId        String
+  height        Float?
+  weight        Float?
+  bloodType     String?
+  allergies     String?
+  medications   String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments  MedicalAppointment[]
+  vitalSigns    VitalSign[]
+  secureDocuments SecureDocument[]
 
   @@map("health_records")
 }
@@ -361,4 +364,140 @@ model RiskProfile {
   user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("risk_profiles")
+}
+
+model SecureDocument {
+  id                String          @id @default(cuid())
+  healthRecordId    String
+  filename          String
+  originalFilename  String
+  fileType          String
+  mimeType          String
+  category          String
+  s3Key             String          @unique
+  s3Bucket          String
+  size              Int
+  encryptionMethod  String
+  encryptionKeyId   String?         // Reference to key in secure key management
+  encryptionIV      String?         // Initialization vector for encryption (if stored)
+  kmsKeyId          String?         // AWS KMS key ID if using KMS
+  uploadDate        DateTime        @default(now())
+  lastAccessed      DateTime?
+  favorite          Boolean         @default(false)
+  shared            Boolean         @default(false)
+  expiresAt         DateTime?       // For temporary access links
+  thumbnailKey      String?         // S3 key for thumbnail, if available
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  healthRecord      HealthRecord    @relation(fields: [healthRecordId], references: [id], onDelete: Cascade)
+  documentTags      DocumentTag[]
+  documentShares    DocumentShare[]
+  accessLogs        DocumentAccessLog[]
+
+  @@map("secure_documents")
+}
+
+model DocumentTag {
+  id               String         @id @default(cuid())
+  documentId       String
+  name             String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, name])
+  @@map("document_tags")
+}
+
+model DocumentShare {
+  id               String         @id @default(cuid())
+  documentId       String
+  recipientEmail   String
+  accessCode       String         @unique  // Unique code for secure access
+  accessLevel      String         // "view", "download", "edit"
+  expiresAt        DateTime
+  accessed         Boolean        @default(false)
+  accessedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_shares")
+}
+
+model DocumentAccessLog {
+  id               String         @id @default(cuid())
+  documentId       String
+  accessType       String         // "view", "download", "edit", "delete", etc.
+  ipAddress        String?
+  userAgent        String?
+  accessedAt       DateTime       @default(now())
+  success          Boolean        @default(true)
+  details          String?
+  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_access_logs")
+}
+
+// Integration models
+model Integration {
+  id             String               @id @default(cuid())
+  userId         String
+  providerId     String               // e.g., "plaid", "ynab", "epic_mychart"
+  providerName   String               // Human-readable name
+  providerCategory String             // "finance", "healthcare", etc.
+  name           String?              // User-provided name
+  status         String               // "active", "needs_attention", "expired"
+  metadata       Json?                // Provider-specific metadata
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  lastSyncedAt   DateTime?
+  expiresAt      DateTime?
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token          IntegrationToken?
+  syncHistory    IntegrationSync[]
+
+  @@unique([userId, providerId])
+  @@map("integrations")
+}
+
+model IntegrationToken {
+  id            String      @id @default(cuid())
+  integrationId String      @unique
+  accessToken   String
+  refreshToken  String?
+  tokenType     String?
+  expiresAt     DateTime?
+  scopes        String?     // Comma-separated list of scopes
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@map("integration_tokens")
+}
+
+model IntegrationSync {
+  id            String      @id @default(cuid())
+  integrationId String
+  status        String      // "success", "in_progress", "failed"
+  startedAt     DateTime
+  completedAt   DateTime?
+  error         String?
+  details       Json?
+  createdAt     DateTime    @default(now())
+  integration   Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@map("integration_syncs")
+}
+
+model OAuthState {
+  id           String    @id @default(cuid())
+  state        String    @unique
+  codeVerifier String?
+  userId       String
+  providerId   String
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+
+  @@map("oauth_states")
 }
