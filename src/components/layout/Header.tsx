@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 type EmailAccount = {
   id: string;
@@ -136,7 +137,7 @@ const Header: FC = () => {
             {/* Calendar Link */}
             <Link
               href="/calendar"
-              className="p-2 text-gray-500 hover:text-gray-700 relative"
+              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 relative"
               aria-label="Calendar"
             >
               <CalendarIcon />
@@ -146,7 +147,7 @@ const Header: FC = () => {
             <div ref={emailDropdownRef} className="relative">
               <button
                 type="button"
-                className="p-2 text-gray-500 hover:text-gray-700 relative"
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 relative"
                 onClick={() => {
                   setShowEmailDropdown(!showEmailDropdown);
                   setShowNotifications(false);
@@ -199,22 +200,31 @@ const Header: FC = () => {
             </div>
 
             {/* Theme toggle */}
-            {mounted && (
-              <button
-                type="button"
-                onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                aria-label="Toggle theme"
-              >
-                {resolvedTheme === 'dark' ? <SunIcon /> : <MoonIcon />}
-              </button>
-            )}
+            <div className="hidden sm:block">
+              {mounted && (
+                <ThemeToggle />
+              )}
+            </div>
+
+            {/* Simple theme toggle for mobile */}
+            <div className="block sm:hidden">
+              {mounted && (
+                <button
+                  type="button"
+                  onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+                  className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Toggle theme"
+                >
+                  {resolvedTheme === 'dark' ? <SunIcon /> : <MoonIcon />}
+                </button>
+              )}
+            </div>
 
             {/* Notifications */}
             <div ref={notificationsRef} className="relative">
               <button
                 type="button"
-                className="p-2 text-gray-500 hover:text-gray-700 relative"
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 relative"
                 onClick={() => {
                   setShowNotifications(!showNotifications);
                   setShowUserMenu(false);
@@ -242,8 +252,8 @@ const Header: FC = () => {
                             key={notification.id}
                             href="#"
                             className={classNames(
-                              'block px-4 py-2 hover:bg-gray-100',
-                              !notification.read ? 'bg-blue-50' : ''
+                              'block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700',
+                              !notification.read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                             )}
                           >
                             <div className="flex justify-between">
@@ -305,19 +315,19 @@ const Header: FC = () => {
                     </div>
                     <Link
                       href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Your Profile
                     </Link>
                     <Link
                       href="/settings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Settings
                     </Link>
                     <button
                       type="button"
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       Sign out
                     </button>

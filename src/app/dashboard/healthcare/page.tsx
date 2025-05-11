@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, 
+import Link from 'next/link';
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts';
+import { LockClosedIcon, DocumentIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 
 const HealthcareDashboard = () => {
   // State for health data
@@ -396,6 +398,76 @@ const HealthcareDashboard = () => {
         </div>
       </div>
       
+      {/* Document Vault Feature */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Secure Document Vault</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Store and manage your sensitive medical documents with end-to-end encryption
+            </p>
+          </div>
+          <Link
+            href="/dashboard/healthcare/documents"
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Access Vault
+          </Link>
+        </div>
+
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
+          <div className="flex items-start">
+            <div className="h-10 w-10 flex-shrink-0 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center mr-4">
+              <LockClosedIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 dark:text-white">Ultra Secure Document Vault</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Your insurance cards, medical records, and important documents - securely encrypted and available when you need them.
+              </p>
+              <div className="mt-3 flex space-x-4">
+                <Link
+                  href="/dashboard/healthcare/documents/scan"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+                >
+                  Scan Documents
+                </Link>
+                <Link
+                  href="/dashboard/healthcare/documents"
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-medium"
+                >
+                  View Documents
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <DocumentIcon className="h-8 w-8 text-gray-400 dark:text-gray-500 mr-3" />
+            <div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">8</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Stored Documents</div>
+            </div>
+          </div>
+          <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <LockClosedIcon className="h-8 w-8 text-green-500 dark:text-green-400 mr-3" />
+            <div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">AES-256</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Encryption</div>
+            </div>
+          </div>
+          <div className="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <CloudArrowUpIcon className="h-8 w-8 text-blue-500 dark:text-blue-400 mr-3" />
+            <div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white">Mobile</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">Scan & Upload</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Health insights and recommendations */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
         <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Health Insights</h2>
@@ -408,7 +480,7 @@ const HealthcareDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4">
             <div className="flex">
               <div>
@@ -417,7 +489,7 @@ const HealthcareDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-400 p-4">
             <div className="flex">
               <div>

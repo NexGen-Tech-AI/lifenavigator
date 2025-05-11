@@ -18,6 +18,34 @@ export const PROVIDER_CONFIG: Provider[] = [
     modalDescription: 'Plaid lets you securely connect your financial accounts to Life Navigator. We never store your bank credentials.'
   },
   {
+    id: 'ynab',
+    name: 'YNAB',
+    description: 'Import budgets from You Need A Budget',
+    category: 'finance',
+    logo: '/images/integrations/ynab.png',
+    connected: false,
+    permissions: [
+      'View your budget categories and allocations',
+      'View your transaction history',
+      'Read-only access to your budget goals'
+    ],
+    modalDescription: 'You Need A Budget (YNAB) is a personal budgeting app that helps you track your spending and allocate money. This integration lets you sync your YNAB budgets with Life Navigator.'
+  },
+  {
+    id: 'mint',
+    name: 'Mint',
+    description: 'Import budgets and financial goals',
+    category: 'finance',
+    logo: '/images/integrations/mint.png',
+    connected: false,
+    permissions: [
+      'View your budget information',
+      'View your spending categories',
+      'View your financial goals'
+    ],
+    modalDescription: 'Mint helps you track your spending, create budgets, and set financial goals. This integration lets you sync your Mint data with Life Navigator.'
+  },
+  {
     id: 'coinbase',
     name: 'Coinbase',
     description: 'Connect your cryptocurrency accounts',
@@ -71,6 +99,20 @@ export const PROVIDER_CONFIG: Provider[] = [
       'Access your lab results and medications'
     ],
     modalDescription: 'MyChart provides secure access to your health information. Life Navigator follows HIPAA guidelines for health data.'
+  },
+  {
+    id: 'docuscan',
+    name: 'DocuScan',
+    description: 'Document scanning and secure storage',
+    category: 'healthcare',
+    logo: '/images/integrations/docuscan.png',
+    connected: false,
+    permissions: [
+      'Scan documents using your device camera',
+      'Convert photos to PDF documents',
+      'Securely store and organize documents'
+    ],
+    modalDescription: 'DocuScan provides advanced document scanning with text recognition (OCR), PDF conversion, and secure cloud storage. All documents are encrypted with AES-256 encryption for maximum security.'
   },
   // Career providers
   {

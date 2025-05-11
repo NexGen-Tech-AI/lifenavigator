@@ -4,6 +4,7 @@ import React from 'react';
 import { ThemeProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/toaster';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { SessionProvider } from 'next-auth/react';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -18,17 +19,19 @@ const queryClient = new QueryClient({
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider 
-        attribute="class" 
-        defaultTheme="system" 
-        enableSystem 
-        disableTransitionOnChange={false}
-      >
-        <ToastProvider>
-          {children}
-        </ToastProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem 
+          disableTransitionOnChange={false}
+        >
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </SessionProvider>
   );
 }

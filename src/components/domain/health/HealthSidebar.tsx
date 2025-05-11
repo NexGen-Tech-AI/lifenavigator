@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  ChartBarIcon, 
+import {
+  ChartBarIcon,
   HeartIcon,
   ClipboardDocumentCheckIcon,
   CalendarIcon,
   UserIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  LockClosedIcon
 } from "@heroicons/react/24/outline";
 
 const healthNavItems = [
@@ -36,6 +37,11 @@ const healthNavItems = [
     title: "Medical Records",
     href: "/dashboard/healthcare/records",
     icon: <UserIcon className="w-5 h-5" />,
+  },
+  {
+    title: "Secure Documents",
+    href: "/dashboard/healthcare/documents",
+    icon: <LockClosedIcon className="w-5 h-5" />,
   },
 ];
 

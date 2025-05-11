@@ -3,17 +3,40 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useUserData } from '@/hooks/useUserData';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
 
-// Main dashboard components
-const Dashboard = () => {
-  const { data: session } = useSession();
-  const { userData, loading: userLoading, error: userError } = useUserData();
-  const [loading, setLoading] = useState(false);
+export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Simple loading effect to ensure session is available
+    if (status === 'loading') {
+      return;
+    }
+    
+    if (status === 'unauthenticated') {
+      setError('You must be logged in to view this page');
+      setLoading(false);
+      return;
+    }
+    
+    // Set user data from session
+    if (session?.user) {
+      setUserData({
+        name: session.user.name || 'User',
+        email: session.user.email,
+        id: session.user.id
+      });
+    }
+    
+    setLoading(false);
+  }, [session, status]);
 
   // Domain summaries with default data
-  const [domainSummaries, setDomainSummaries] = useState([
+  const domainSummaries = [
     {
       title: 'Financial Overview',
       stats: [
@@ -58,58 +81,20 @@ const Dashboard = () => {
       link: '/dashboard/healthcare',
       color: 'from-rose-500 to-red-400',
     },
-  ]);
-  
-  // Update domain summaries based on user data
-  useEffect(() => {
-    if (userData?.goals) {
-      const updatedSummaries = [...domainSummaries];
-      
-      // Update with user-specific financial data if available
-      if (userData.goals.financialGoals) {
-        try {
-          const financialGoals = typeof userData.goals.financialGoals === 'string' 
-            ? JSON.parse(userData.goals.financialGoals)
-            : userData.goals.financialGoals;
-            
-          // Update the financial domain with user data
-          // This is just an example - adjust based on your actual data structure
-          if (financialGoals.netWorth) {
-            updatedSummaries[0].stats[0].value = `$${financialGoals.netWorth.toLocaleString()}`;
-          }
-          if (financialGoals.monthlyExpenses) {
-            updatedSummaries[0].stats[1].value = `$${financialGoals.monthlyExpenses.toLocaleString()}`;
-          }
-          if (financialGoals.investmentReturn) {
-            updatedSummaries[0].stats[2].value = `${financialGoals.investmentReturn}%`;
-          }
-          if (financialGoals.insight) {
-            updatedSummaries[0].insights = financialGoals.insight;
-          }
-        } catch (e) {
-          console.error('Error parsing financial goals:', e);
-        }
-      }
-      
-      // Apply similar updates for other domains
-      // Career, Education, Health...
-      
-      setDomainSummaries(updatedSummaries);
-    }
-  }, [userData]);
+  ];
 
   // Actions for quick access
   const quickActions = [
-    { name: 'Update Budget', icon: '=�', href: '/dashboard/finance/budget' },
-    { name: 'Track Investments', icon: '=�', href: '/dashboard/finance/investments' },
-    { name: 'Log Exercise', icon: '<�', href: '/dashboard/healthcare/wellness' },
-    { name: 'View Learning Path', icon: '<�', href: '/dashboard/education/progress' },
-    { name: 'Network Connections', icon: '>', href: '/dashboard/career/networking' },
-    { name: 'Upcoming Tasks', icon: '=�', href: '/insights' },
+    { name: 'Update Budget', icon: '💰', href: '/dashboard/finance/budget' },
+    { name: 'Track Investments', icon: '📈', href: '/dashboard/finance/investments' },
+    { name: 'Log Exercise', icon: '🏃', href: '/dashboard/healthcare/wellness' },
+    { name: 'Secure Documents', icon: '🔒', href: '/dashboard/healthcare/documents' },
+    { name: 'View Learning Path', icon: '📚', href: '/dashboard/education/progress' },
+    { name: 'Network Connections', icon: '👥', href: '/dashboard/career/networking' },
   ];
 
   // Show loading spinner while fetching user data
-  if (userLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <LoadingSpinner size="large" />
@@ -118,11 +103,11 @@ const Dashboard = () => {
   }
 
   // Show error message if fetching user data failed
-  if (userError) {
+  if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-800 dark:text-red-200 max-w-md text-center">
-          <p className="text-lg font-medium">Failed to load dashboard data</p>
+          <p className="text-lg font-medium">{error}</p>
           <p className="mt-2">Please try refreshing the page or contact support if the problem persists.</p>
         </div>
       </div>
@@ -142,7 +127,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mt-6">
           <h2 className="text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h2>
-          <div className="mt-3 grid grid-cols-1 xs:grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {quickActions.map((action) => (
               <Link
                 key={action.name}
@@ -229,7 +214,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-800/30 dark:text-yellow-400">
-                        �
+                        💳
                       </span>
                       <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Review credit card spending - 23% higher than usual</p>
                     </div>
@@ -245,7 +230,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-800/30 dark:text-green-400">
-                        
+                        💰
                       </span>
                       <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Retirement contribution increase recommended</p>
                     </div>
@@ -261,7 +246,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-800/30 dark:text-blue-400">
-                        =�
+                        👔
                       </span>
                       <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">3 new job opportunities match your profile</p>
                     </div>
@@ -277,7 +262,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-800/30 dark:text-purple-400">
-                        <�
+                        🩺
                       </span>
                       <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Annual physical check-up due in 2 weeks</p>
                     </div>
@@ -296,6 +281,4 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
