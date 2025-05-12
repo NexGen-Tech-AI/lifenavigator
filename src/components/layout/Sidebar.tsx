@@ -7,15 +7,15 @@ import { classNames } from '@/lib/utils/classNames';
 
 // Navigation items with sections and child items
 const navigation = [
-  { 
-    name: 'Dashboard', 
-    href: '/dashboard', 
+  {
+    name: 'Dashboard',
+    href: '/dashboard',
     icon: HomeIcon,
     current: false
   },
-  { 
-    name: 'Finance', 
-    href: '/dashboard/finance', 
+  {
+    name: 'Finance',
+    href: '/dashboard/finance',
     icon: CurrencyDollarIcon,
     current: false,
     children: [
@@ -28,9 +28,9 @@ const navigation = [
       { name: 'Tax', href: '/dashboard/finance/tax' },
     ]
   },
-  { 
-    name: 'Career', 
-    href: '/dashboard/career', 
+  {
+    name: 'Career',
+    href: '/dashboard/career',
     icon: BriefcaseIcon,
     current: false,
     children: [
@@ -39,9 +39,9 @@ const navigation = [
       { name: 'Networking', href: '/dashboard/career/networking' },
     ]
   },
-  { 
-    name: 'Education', 
-    href: '/dashboard/education', 
+  {
+    name: 'Education',
+    href: '/dashboard/education',
     icon: AcademicCapIcon,
     current: false,
     children: [
@@ -50,9 +50,9 @@ const navigation = [
       { name: 'Certifications', href: '/dashboard/education/certifications' },
     ]
   },
-  { 
-    name: 'Healthcare', 
-    href: '/dashboard/healthcare', 
+  {
+    name: 'Healthcare',
+    href: '/dashboard/healthcare',
     icon: HeartIcon,
     current: false,
     children: [
@@ -62,27 +62,33 @@ const navigation = [
       { name: 'Records', href: '/dashboard/healthcare/records' },
     ]
   },
-  { 
-    name: 'Roadmap', 
-    href: '/dashboard/roadmap', 
+  {
+    name: 'Calendar',
+    href: '/dashboard/calendar',
+    icon: CalendarNavIcon,
+    current: false,
+  },
+  {
+    name: 'Roadmap',
+    href: '/dashboard/roadmap',
     icon: MapIcon,
     current: false,
   },
-  { 
-    name: 'Insights', 
-    href: '/dashboard/insights', 
+  {
+    name: 'Insights',
+    href: '/dashboard/insights',
     icon: ChartBarIcon,
     current: false,
   },
-  { 
-    name: 'Integrations', 
-    href: '/dashboard/integrations', 
+  {
+    name: 'Integrations',
+    href: '/dashboard/integrations',
     icon: PuzzlePieceIcon,
     current: false,
   },
-  { 
-    name: 'Settings', 
-    href: '/dashboard/settings', 
+  {
+    name: 'Settings',
+    href: '/dashboard/settings',
     icon: CogIcon,
     current: false,
     children: [
@@ -360,6 +366,17 @@ function HomeIcon(props: React.SVGProps<SVGSVGElement>) {
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
       <polyline points="9 22 9 12 15 12 15 22"></polyline>
+    </svg>
+  );
+}
+
+function CalendarNavIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
     </svg>
   );
 }

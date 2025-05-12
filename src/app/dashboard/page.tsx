@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
+import DailySchedule from '@/components/calendar/DailySchedule';
+import { getTodayEvents } from '@/lib/mock/calendarEvents';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -275,6 +277,21 @@ export default function Dashboard() {
                   </div>
                 </li>
               </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Schedule */}
+        <div className="mt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Daily Schedule Component */}
+            <div className="lg:col-span-1">
+              <DailySchedule events={getTodayEvents()} />
+            </div>
+
+            {/* This column is intentionally left empty to maintain grid layout */}
+            <div className="lg:col-span-2">
+              {/* Future components can be placed here */}
             </div>
           </div>
         </div>

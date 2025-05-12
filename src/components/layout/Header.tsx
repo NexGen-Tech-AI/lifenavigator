@@ -136,7 +136,7 @@ const Header: FC = () => {
           <div className="flex items-center space-x-4">
             {/* Calendar Link */}
             <Link
-              href="/calendar"
+              href="/dashboard/calendar"
               className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 relative"
               aria-label="Calendar"
             >
