@@ -70,7 +70,7 @@ export type FinancialInsight = {
   id: string;
   title: string;
   description: string;
-  domain: 'budget' | 'investment' | 'saving' | 'debt' | 'general';
+  domain: 'budget' | 'investment' | 'saving' | 'debt' | 'tax' | 'general';
   impact: 'positive' | 'negative' | 'neutral';
   priority: 'high' | 'medium' | 'low';
   createdAt: Date;

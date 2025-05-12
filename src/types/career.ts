@@ -27,17 +27,26 @@ export type Skill = {
   updatedAt: Date;
 };
 
+// Updated Job Application type
+export type ApplicationStatus = 'applied' | 'interview' | 'offered' | 'accepted' | 'rejected' | 'declined';
+
 export type JobApplication = {
   id: string;
-  careerRecordId: string;
-  company: string;
-  role: string;
-  appliedDate: Date;
-  status: 'applied' | 'interview' | 'rejected' | 'accepted';
-  notes: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  userId: string;
+  companyName: string;
+  jobTitle: string;
+  jobDescription: string;
+  applicationDate: string;
+  status: ApplicationStatus;
+  contactName: string;
+  contactEmail: string;
+  notes: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
+
+export type JobApplicationCreate = Omit<JobApplication, 'id' | 'userId' | 'createdAt' | 'updatedAt'>;
+export type JobApplicationUpdate = Partial<JobApplicationCreate>;
 
 export type NetworkingEvent = {
   id: string;
@@ -80,4 +89,56 @@ export type JobRecommendation = {
   url: string;
   salaryRange: string | null;
   createdAt: Date;
+};
+
+// New types for job search functionality
+export type JobListing = {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+  salary: string;
+  posted: string;
+  jobType: string;
+  tags: string[];
+  applicants: number;
+  matchPercentage?: number;
+  url?: string;
+};
+
+export type JobSearchParams = {
+  keywords: string;
+  location: string;
+  jobType: string;
+  page: number;
+  limit: number;
+};
+
+export type JobSearchResult = {
+  jobs: JobListing[];
+  total: number;
+  page: number;
+};
+
+// Interview preparation types
+export type InterviewQuestion = {
+  question: string;
+  answer: string;
+  tips?: string;
+};
+
+export type InterviewResource = {
+  title: string;
+  description: string;
+  url: string;
+};
+
+export type InterviewPrepResource = {
+  jobTitle: string;
+  overview: string;
+  keySkills: string[];
+  questions: InterviewQuestion[];
+  resources: InterviewResource[];
+  checklist: string[];
 };

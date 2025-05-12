@@ -7,7 +7,7 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export default function LoadingSpinner({ size = "medium", className = "" }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = "medium", className = "" }: LoadingSpinnerProps) {
   // Map legacy size values to new ones
   const normalizedSize = size === "sm" ? "small" : size === "md" ? "medium" : size === "lg" ? "large" : size;
   
@@ -27,3 +27,5 @@ export default function LoadingSpinner({ size = "medium", className = "" }: Load
     </div>
   );
 }
+
+export default LoadingSpinner;

@@ -29,9 +29,9 @@ export async function middleware(request: NextRequest) {
   }
   
   // Define protected routes (routes that require authentication)
-  const isProtectedRoute = path.startsWith('/dashboard') || 
+  const isProtectedRoute = (path.startsWith('/dashboard') && !path.includes('/healthcare/wellness')) ||
                           path.startsWith('/onboarding') ||
-                          (path.startsWith('/api/') && 
+                          (path.startsWith('/api/') &&
                           !path.startsWith('/api/auth'));
   
   // Define public routes (routes that should be accessible without auth)

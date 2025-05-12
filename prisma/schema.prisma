@@ -32,6 +32,7 @@ model User {
   goals          UserGoals?
   settings       UserSettings?
   integrations   Integration[]
+  taxProfiles    TaxProfile[]
 
   @@map("users")
 }
@@ -348,6 +349,22 @@ model UserGoals {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_goals")
+}
+
+model TaxProfile {
+  id          String   @id @default(cuid())
+  userId      String
+  taxYear     Int
+  w4          Json?
+  income      Json?
+  deductions  Json?
+  credits     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taxYear])
+  @@map("tax_profiles")
 }
 
 model RiskProfile {

@@ -36,6 +36,7 @@
     "bcrypt": "^5.1.1",
     "classnames": "^2.5.1",
     "crypto": "^1.0.1",
+    "date-fns": "^2.30.0",
     "framer-motion": "^12.9.2",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",

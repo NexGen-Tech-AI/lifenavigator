@@ -13,98 +13,86 @@ export default function SettingsPage() {
     {
       id: 'profile',
       name: 'Profile',
-      description: 'Manage your personal information and profile settings',
-      href: '/dashboard/settings/profile',
-      icon: '=d',
-    },
-    {
-      id: 'security',
-      name: 'Security',
-      description: 'Update your password and security preferences',
-      href: '/dashboard/settings/security',
-      icon: '=',
+      description: 'Manage your personal information',
+      url: '/dashboard/settings/profile',
+      icon: '👤',
     },
     {
       id: 'preferences',
       name: 'Preferences',
-      description: 'Configure display settings and app behavior',
-      href: '/dashboard/settings/preferences',
-      icon: '�',
+      description: 'Customize your dashboard experience',
+      url: '/dashboard/settings/preferences',
+      icon: '⚙️',
     },
     {
       id: 'notifications',
       name: 'Notifications',
-      description: 'Manage how and when we contact you',
-      href: '/dashboard/settings/notifications',
-      icon: '=',
+      description: 'Configure your notification settings',
+      url: '/dashboard/settings/notifications',
+      icon: '🔔',
     },
     {
-      id: 'integrations',
-      name: 'Integrations',
-      description: 'Connect with third-party services and apps',
-      href: '/dashboard/integrations',
-      icon: '=',
+      id: 'security',
+      name: 'Security',
+      description: 'Manage your account security',
+      url: '/dashboard/settings/security',
+      icon: '🔒',
     },
   ];
 
+  // Handle sections that might not be implemented yet
+  const handleCardClick = (url) => {
+    router.push(url);
+  };
+
   return (
-    <div className="py-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="mx-auto px-4 sm:px-6 md:px-8 max-w-6xl">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Settings</h1>
-        </div>
-        
-        <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {settingsSections.map((section) => (
-            <Link
-              key={section.id}
-              href={section.href}
-              className="relative block p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center mb-3">
-                <span className="text-2xl mr-3">{section.icon}</span>
-                <h2 className="text-lg font-medium text-gray-900 dark:text-white">{section.name}</h2>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {settingsSections.map((section) => (
+          <div
+            key={section.id}
+            onClick={() => handleCardClick(section.url)}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 cursor-pointer hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start">
+              <div className="bg-blue-100 dark:bg-blue-900/20 rounded-lg p-3 mr-4">
+                <span className="text-xl">{section.icon}</span>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{section.description}</p>
-            </Link>
-          ))}
-        </div>
-        
-        <div className="mt-10 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Account Settings</h3>
+              <div>
+                <h3 className="font-medium text-lg">{section.name}</h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">{section.description}</p>
+              </div>
+            </div>
           </div>
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+        ))}
+      </div>
+      
+      <div className="mt-10">
+        <h2 className="text-xl font-semibold mb-4">Advanced Settings</h2>
+        
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Email address</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{session?.user?.email || 'Email not available'}</p>
+                <h3 className="font-medium">Data Export</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Download all your data in a portable format</p>
               </div>
-              <button 
-                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                onClick={() => router.push('/dashboard/settings/profile')}
-              >
-                Update
+              <button className="bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:hover:bg-blue-800/30 text-blue-800 dark:text-blue-200 py-2 px-4 rounded-md transition-colors">
+                Export Data
               </button>
             </div>
-            
-            <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Delete account</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Permanently delete your account and all data</p>
+                <h3 className="font-medium">Delete Account</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Permanently delete your account and all data</p>
               </div>
-              <button className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-500 border border-red-600 hover:border-red-500 rounded-md">
-                Delete
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Export data</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Download a copy of your personal data</p>
-              </div>
-              <button className="px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
-                Export
+              <button className="bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-800/30 text-red-800 dark:text-red-200 py-2 px-4 rounded-md transition-colors">
+                Delete Account
               </button>
             </div>
           </div>
