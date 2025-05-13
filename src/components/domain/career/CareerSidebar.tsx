@@ -62,7 +62,7 @@ export function CareerSidebar() {
             href={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive(item.href)
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                ? "bg-purple-50 text-purple-900 dark:bg-purple-600 dark:text-white font-semibold"
                 : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
@@ -80,7 +80,7 @@ export function CareerSidebar() {
           href="/dashboard/career/insights"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/career/insights")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-purple-50 text-purple-900 dark:bg-purple-600 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -94,7 +94,7 @@ export function CareerSidebar() {
           href="/dashboard/career/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/career/settings")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-purple-50 text-purple-900 dark:bg-purple-600 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -106,12 +106,12 @@ export function CareerSidebar() {
       </div>
       
       {/* Career stats */}
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Profile Strength</h3>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-          <div className="bg-purple-600 h-2.5 rounded-full" style={{ width: '78%' }}></div>
+      <div className="mt-6 p-4 bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-purple-900 rounded-lg border border-purple-100 dark:border-purple-800">
+        <h3 className="text-sm font-medium text-purple-900 dark:text-purple-200 mb-2">Profile Strength</h3>
+        <div className="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-2.5">
+          <div className="bg-purple-500 dark:bg-purple-400 h-2.5 rounded-full" style={{ width: '78%' }}></div>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">78% - Add more skills to improve</p>
+        <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">78% - Add more skills to improve</p>
       </div>
     </div>
   );

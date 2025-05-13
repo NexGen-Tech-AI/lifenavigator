@@ -66,7 +66,7 @@ export function FinanceSidebar() {
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Finance</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">Manage your financial life</p>
       </div>
-      
+
       <nav className="flex-1 space-y-1">
         {financeNavItems.map((item) => (
           <Link
@@ -74,7 +74,7 @@ export function FinanceSidebar() {
             href={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive(item.href)
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                ? "bg-blue-50 text-blue-800 dark:bg-blue-600 dark:text-white font-semibold"
                 : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
@@ -92,7 +92,7 @@ export function FinanceSidebar() {
           href="/dashboard/finance/connections"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/finance/connections")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-blue-50 text-blue-800 dark:bg-blue-600 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -119,7 +119,7 @@ export function FinanceSidebar() {
           href="/dashboard/finance/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/finance/settings")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-blue-50 text-blue-800 dark:bg-blue-600 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -131,11 +131,11 @@ export function FinanceSidebar() {
       </div>
       
       {/* Account summary section */}
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Connected Accounts</h3>
+      <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-800 dark:to-indigo-800 rounded-lg border border-blue-100 dark:border-blue-600">
+        <h3 className="text-sm font-medium text-blue-800 dark:text-white mb-2">Connected Accounts</h3>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-slate-500 dark:text-slate-400">5 accounts</span>
-          <span className="text-sm font-medium text-slate-900 dark:text-white">$124,350.28</span>
+          <span className="text-sm text-blue-600 dark:text-blue-200">5 accounts</span>
+          <span className="text-sm font-medium text-blue-900 dark:text-white">$124,350.28</span>
         </div>
       </div>
     </div>

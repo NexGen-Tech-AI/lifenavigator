@@ -61,7 +61,7 @@ export function EducationSidebar() {
             href={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive(item.href)
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                ? "bg-amber-50 text-amber-900 dark:bg-amber-600 dark:text-white font-semibold"
                 : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
@@ -79,7 +79,7 @@ export function EducationSidebar() {
           href="/dashboard/education/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/education/settings")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-amber-50 text-amber-900 dark:bg-amber-600 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -91,17 +91,17 @@ export function EducationSidebar() {
       </div>
       
       {/* Education progress */}
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Learning Progress</h3>
+      <div className="mt-6 p-4 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950 dark:to-amber-900 rounded-lg border border-amber-100 dark:border-amber-800">
+        <h3 className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-2">Learning Progress</h3>
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-slate-500 dark:text-slate-400">Current Course</span>
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">67%</span>
+          <span className="text-xs text-amber-700 dark:text-amber-300">Current Course</span>
+          <span className="text-xs font-medium text-amber-900 dark:text-amber-100">67%</span>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-          <div className="bg-amber-600 h-2.5 rounded-full" style={{ width: '67%' }}></div>
+        <div className="w-full bg-amber-200 dark:bg-amber-800 rounded-full h-2.5">
+          <div className="bg-amber-500 dark:bg-amber-400 h-2.5 rounded-full" style={{ width: '67%' }}></div>
         </div>
-        <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          <p>Next Assignment Due: <span className="font-medium text-slate-700 dark:text-slate-300">2 days</span></p>
+        <div className="mt-3 text-xs text-amber-700 dark:text-amber-300">
+          <p>Next Assignment Due: <span className="font-medium text-amber-900 dark:text-amber-200">2 days</span></p>
         </div>
       </div>
     </div>

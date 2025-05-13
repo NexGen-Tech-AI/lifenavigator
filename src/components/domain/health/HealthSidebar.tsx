@@ -67,7 +67,7 @@ export function HealthSidebar() {
             href={item.href}
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive(item.href)
-                ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+                ? "bg-red-50 text-red-900 dark:bg-red-500 dark:text-white font-semibold"
                 : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
@@ -85,7 +85,7 @@ export function HealthSidebar() {
           href="/dashboard/healthcare/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/healthcare/settings")
-              ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white"
+              ? "bg-red-50 text-red-900 dark:bg-red-500 dark:text-white font-semibold"
               : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           }`}
         >
@@ -97,8 +97,8 @@ export function HealthSidebar() {
       </div>
       
       {/* Health score */}
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
-        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Health Score</h3>
+      <div className="mt-6 p-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-red-900 rounded-lg border border-red-100 dark:border-red-800">
+        <h3 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">Health Score</h3>
         <div className="flex justify-center">
           <div className="relative w-24 h-24">
             <svg className="w-full h-full" viewBox="0 0 36 36">
@@ -120,7 +120,7 @@ export function HealthSidebar() {
             </svg>
           </div>
         </div>
-        <p className="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">Good - Improved 5% this month</p>
+        <p className="text-xs text-center text-red-700 dark:text-red-300 mt-2">Good - Improved 5% this month</p>
       </div>
     </div>
   );
