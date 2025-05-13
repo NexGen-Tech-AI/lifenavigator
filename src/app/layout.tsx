@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./dark-mode.css"; // Import the dark mode styles
 import { Providers } from "@/providers";
 import { Analytics } from "@/components/analytics/Analytics";
 import { Toaster } from "@/components/ui/toaster";
+import { getThemeScript } from "./theme-script";
 
 // Font configuration
 const geistSans = Geist({
@@ -55,7 +57,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: getThemeScript() }} />
+        <script src="/force-dark-mode.js" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

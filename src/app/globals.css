@@ -45,26 +45,26 @@
   --border: #e5e7eb;
   --primary: #4f46e5;
   --primary-fg: #ffffff;
-  
+
   /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  
+
   /* Component variables */
   --chart-height: 240px;
 }
 
 /* Dark mode variables - applied with .dark class */
 .dark {
-  --background: #0f172a;
-  --foreground: #f1f5f9;
-  --card-bg: #1e293b;
-  --card-fg: #f1f5f9;
-  --muted: #334155;
-  --muted-fg: #94a3b8;
-  --border: #475569;
-  --primary: #6366f1;
-  --primary-fg: #ffffff;
+  --background: #0f172a !important;
+  --foreground: #f1f5f9 !important;
+  --card-bg: #1e293b !important;
+  --card-fg: #f1f5f9 !important;
+  --muted: #334155 !important;
+  --muted-fg: #94a3b8 !important;
+  --border: #475569 !important;
+  --primary: #6366f1 !important;
+  --primary-fg: #ffffff !important;
 }
 
 /**
@@ -74,6 +74,18 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Ensure dark mode styles are applied */
+.dark body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Ensure light mode styles are applied */
+:root:not(.dark) body {
+  background-color: var(--background);
+  color: var(--foreground);
 }
 
 /**
