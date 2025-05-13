@@ -1,106 +1,158 @@
-// src/app/email/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/buttons/Button';
+import { Card } from '@/components/ui/cards/Card';
+import { LoadingSpinner } from '@/components/ui/loaders/LoadingSpinner';
+import { EmailAccountModal } from '@/components/email/EmailAccountModal';
+import { EmailInbox } from '@/components/email/EmailInbox';
+import { EmailSidebar } from '@/components/email/EmailSidebar';
+import { useConnectedServices } from '@/hooks/useConnectedServices';
 
 export default function EmailPage() {
-  const [emailAccounts, setEmailAccounts] = useState([
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeAccount, setActiveAccount] = useState<string | null>(null);
+  const [activeFolder, setActiveFolder] = useState('inbox');
+  
+  const { services, loading: servicesLoading } = useConnectedServices('email');
+  
+  const emailAccounts = [
     {
       id: '1',
       provider: 'Gmail',
       email: 'thomas.riffe@gmail.com',
       connected: true,
-      lastSync: 'Just now'
+      lastSync: 'Just now',
+      unread: 5,
+      folders: ['inbox', 'sent', 'drafts', 'trash', 'spam', 'important']
     },
     {
       id: '2',
       provider: 'Outlook',
       email: 'thomas.riffe@outlook.com',
       connected: true,
-      lastSync: '5 minutes ago'
+      lastSync: '5 minutes ago',
+      unread: 2,
+      folders: ['inbox', 'sent', 'drafts', 'trash', 'junk', 'archive']
     },
     {
       id: '3',
       provider: 'Work',
       email: 'thomas.riffe@company.com',
       connected: true,
-      lastSync: '10 minutes ago'
+      lastSync: '10 minutes ago',
+      unread: 8,
+      folders: ['inbox', 'sent', 'drafts', 'trash', 'spam', 'work', 'projects']
     }
-  ]);
+  ];
 
+  // Set the first account as active if none is selected
+  useEffect(() => {
+    if (emailAccounts.length > 0 && !activeAccount) {
+      setActiveAccount(emailAccounts[0].id);
+    }
+  }, [emailAccounts, activeAccount]);
+
+  // Handle account connection
   const toggleEmailConnection = (id: string) => {
-    setEmailAccounts(
-      emailAccounts.map(account => 
-        account.id === id ? { ...account, connected: !account.connected } : account
-      )
-    );
+    // This would be replaced with actual API calls in production
+    console.log(`Toggling connection for account ${id}`);
+    // Update UI immediately for better UX
+    // setEmailAccounts(...);
   };
 
+  // Handle connecting a new account
+  const handleConnectNewEmail = () => {
+    setIsModalOpen(true);
+  };
+
+  // Handle selecting an account
+  const handleSelectAccount = (accountId: string) => {
+    setActiveAccount(accountId);
+    setActiveFolder('inbox'); // Reset to inbox when switching accounts
+  };
+
+  // Handle selecting a folder
+  const handleSelectFolder = (folder: string) => {
+    setActiveFolder(folder);
+  };
+
+  // Get the active account details
+  const activeAccountDetails = emailAccounts.find(account => account.id === activeAccount);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Email Accounts</h1>
-          <button className="bg-blue-500 text-white px-4 py-2 rounded-md text-sm">
-            Connect New Email
-          </button>
-        </div>
+    <div className="flex h-full">
+      {/* Email Sidebar */}
+      <EmailSidebar 
+        accounts={emailAccounts}
+        activeAccount={activeAccount}
+        activeFolder={activeFolder}
+        onSelectAccount={handleSelectAccount}
+        onSelectFolder={handleSelectFolder}
+        onConnectEmail={handleConnectNewEmail}
+      />
 
-        <div className="space-y-4">
-          {emailAccounts.map(account => (
-            <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <h3 className="font-medium">{account.provider}</h3>
-                <p className="text-sm text-gray-600">{account.email}</p>
-                <p className="text-xs text-gray-500">Last synced: {account.lastSync}</p>
-              </div>
-              <div className="flex space-x-3">
-                <button 
-                  onClick={() => toggleEmailConnection(account.id)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    account.connected ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {account.connected ? 'Connected' : 'Connect'}
-                </button>
-                <button className="px-3 py-1 rounded text-sm bg-gray-100 text-gray-800">
-                  Settings
-                </button>
-              </div>
+      {/* Main Content */}
+      <div className="flex-1 p-4 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow h-full flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {activeAccountDetails ? activeAccountDetails.email : 'Email'}
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {activeAccountDetails ? `Last synced: ${activeAccountDetails.lastSync}` : ''}
+              </p>
             </div>
-          ))}
-        </div>
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleConnectNewEmail}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                Connect New Email
+              </Button>
+              <Button className="bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white">
+                Sync Now
+              </Button>
+            </div>
+          </div>
 
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h2 className="text-lg font-medium mb-2">What you can do</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Connect multiple email accounts in one place
-            </li>
-            <li className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Receive notifications for all accounts
-            </li>
-            <li className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Smart filtering and organization
-            </li>
-            <li className="flex items-center">
-              <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Life Navigator AI assistance with your emails
-            </li>
-          </ul>
+          {/* Email Content */}
+          {loading || servicesLoading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <LoadingSpinner />
+            </div>
+          ) : !activeAccount ? (
+            <div className="flex-1 flex items-center justify-center">
+              <Card className="p-6 max-w-md text-center">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">No Email Accounts Connected</h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Connect your email accounts to view all your messages in one place and automatically sync your calendars.
+                </p>
+                <Button 
+                  onClick={handleConnectNewEmail}
+                  className="bg-blue-500 hover:bg-blue-600 text-white mx-auto"
+                >
+                  Connect Email Account
+                </Button>
+              </Card>
+            </div>
+          ) : (
+            <EmailInbox 
+              accountId={activeAccount}
+              folder={activeFolder}
+            />
+          )}
         </div>
       </div>
+
+      {/* New Email Account Modal */}
+      <EmailAccountModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </div>
   );
 }

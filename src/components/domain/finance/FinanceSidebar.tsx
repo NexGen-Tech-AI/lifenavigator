@@ -3,14 +3,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  ChartBarIcon, 
+import {
+  ChartBarIcon,
   BanknotesIcon,
   BuildingLibraryIcon,
   CalculatorIcon,
   ArrowPathIcon,
   CreditCardIcon,
-  CogIcon
+  CogIcon,
+  HomeIcon
 } from "@heroicons/react/24/outline";
 
 const financeNavItems = [
@@ -18,6 +19,21 @@ const financeNavItems = [
     title: "Overview",
     href: "/dashboard/finance/overview",
     icon: <ChartBarIcon className="w-5 h-5" />,
+  },
+  {
+    title: "Accounts",
+    href: "/dashboard/finance/accounts",
+    icon: <CreditCardIcon className="w-5 h-5" />,
+  },
+  {
+    title: "Transactions",
+    href: "/dashboard/finance/transactions",
+    icon: <ArrowPathIcon className="w-5 h-5" />,
+  },
+  {
+    title: "Assets",
+    href: "/dashboard/finance/assets",
+    icon: <HomeIcon className="w-5 h-5" />,
   },
   {
     title: "Investments",
@@ -33,11 +49,6 @@ const financeNavItems = [
     title: "Tax Planning",
     href: "/dashboard/finance/tax",
     icon: <CalculatorIcon className="w-5 h-5" />,
-  },
-  {
-    title: "Transactions",
-    href: "/dashboard/finance/transactions",
-    icon: <ArrowPathIcon className="w-5 h-5" />,
   },
 ];
 
@@ -77,7 +88,7 @@ export function FinanceSidebar() {
       
       {/* Connection and Settings section at the bottom */}
       <div className="pt-6 mt-6 border-t border-slate-200 dark:border-slate-800 space-y-1">
-        <Link 
+        <Link
           href="/dashboard/finance/connections"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/finance/connections")
@@ -86,12 +97,25 @@ export function FinanceSidebar() {
           }`}
         >
           <span className={isActive("/dashboard/finance/connections") ? "text-blue-600 dark:text-blue-400" : ""}>
-            <CreditCardIcon className="w-5 h-5" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5"
+            >
+              <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A8 8 0 1 0 4 16.2" />
+              <path d="M12 12v9" />
+              <path d="M8 17h8" />
+            </svg>
           </span>
           <span>Connect Accounts</span>
         </Link>
-        
-        <Link 
+
+        <Link
           href="/dashboard/finance/settings"
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
             isActive("/dashboard/finance/settings")

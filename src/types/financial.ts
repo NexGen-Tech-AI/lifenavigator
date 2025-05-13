@@ -88,3 +88,82 @@ export type Transaction = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+/**
+ * Enhanced financial account types
+ */
+export type AccountType =
+  | 'bank'
+  | 'credit'
+  | 'loan'
+  | 'investment'
+  | 'retirement'
+  | 'crypto'
+  | 'other';
+
+export interface FinancialAccount {
+  id: string;
+  userId: string;
+  name: string;
+  type: AccountType;
+  subtype?: string;
+  institution: {
+    id: string;
+    name: string;
+    logo?: string;
+  };
+  balance: number;
+  currency: string;
+  lastUpdated: Date;
+  accountNumber?: string;
+  maskedAccountNumber?: string;
+  isHidden?: boolean;
+  isPrimary?: boolean;
+  status: 'active' | 'inactive' | 'closed';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AccountGroup {
+  institution: {
+    id: string;
+    name: string;
+    logo?: string;
+  };
+  accounts: FinancialAccount[];
+}
+
+export interface EnhancedTransaction {
+  id: string;
+  accountId: string;
+  date: Date;
+  description: string;
+  category: string;
+  amount: number;
+  currency: string;
+  isIncome: boolean;
+  isPending: boolean;
+  merchant?: {
+    name: string;
+    logo?: string;
+  };
+  tags?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Asset {
+  id: string;
+  userId: string;
+  name: string;
+  type: 'real_estate' | 'vehicle' | 'collectible' | 'business' | 'other';
+  value: number;
+  currency: string;
+  purchaseDate?: Date;
+  purchasePrice?: number;
+  appreciationRate?: number;
+  location?: string;
+  details?: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+}

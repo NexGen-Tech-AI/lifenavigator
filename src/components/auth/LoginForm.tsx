@@ -64,9 +64,9 @@ export default function LoginForm() {
       if (result?.error) {
         setError('Demo login failed. Please try again or contact support.');
       } else {
-        // Successful login, redirect to root which will handle navigation
-        // based on user setup status (dashboard or onboarding questionnaire)
-        router.push('/');
+        // Successful demo login - we assume demo account has setup completed
+        // so we redirect directly to dashboard
+        router.push('/dashboard');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

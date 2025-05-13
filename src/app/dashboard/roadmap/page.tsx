@@ -1,263 +1,107 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/cards/Card';
-import { Button } from '@/components/ui/buttons/Button';
-import { RoadmapSummary, RoadmapType, RoadmapProgress } from '@/types/roadmap';
-import { LoadingSpinner } from '@/components/ui/loaders/LoadingSpinner';
-import { getUserRoadmaps, getRoadmapProgress } from '@/lib/api/roadmap';
+import { useState } from 'react';
+import Link from 'next/link';
+import { MapIcon, ArrowPathIcon, ChartBarIcon, PresentationChartLineIcon } from '@heroicons/react/24/outline';
 
-export default function RoadmapPage() {
-  const [roadmaps, setRoadmaps] = useState<RoadmapSummary[]>([]);
-  const [progress, setProgress] = useState<RoadmapProgress | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [roadmapsData, progressData] = await Promise.all([
-          getUserRoadmaps(),
-          getRoadmapProgress()
-        ]);
-        setRoadmaps(roadmapsData);
-        setProgress(progressData);
-      } catch (err) {
-        console.error('Error fetching roadmap data:', err);
-        setError('Failed to load roadmap data. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const navigateToRoadmap = (type: RoadmapType) => {
-    router.push(`/dashboard/roadmap/${type}`);
+export default function RoadmapComingSoonPage() {
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, you would send this to your API
+    console.log('Submitted email for roadmap notification:', email);
+    setSubmitted(true);
+    setEmail('');
   };
-
-  const getDomainColor = (type: RoadmapType) => {
-    switch (type) {
-      case 'career':
-        return 'bg-blue-500';
-      case 'education':
-        return 'bg-purple-500';
-      case 'finance':
-        return 'bg-green-500';
-      case 'healthcare':
-        return 'bg-red-500';
-      case 'comprehensive':
-        return 'bg-gray-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const calculateProgressColor = (progressValue: number) => {
-    if (progressValue < 25) return 'bg-red-500';
-    if (progressValue < 50) return 'bg-orange-500';
-    if (progressValue < 75) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <Card className="p-6 text-center text-red-500">
-          <p>{error}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="mt-4"
-          >
-            Try Again
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
-  // For demo purposes, if no roadmaps exist yet
-  const mockDomains: RoadmapType[] = ['career', 'education', 'finance', 'healthcare', 'comprehensive'];
-  const hasRoadmaps = roadmaps.length > 0;
-
+  
   return (
-    <div className="space-y-8 p-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Life Roadmaps</h1>
-        <Button onClick={() => router.push('/dashboard/roadmap/generate')}>
-          Create New Roadmap
-        </Button>
-      </div>
-
-      {/* Overall Progress */}
-      <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Overall Progress</h2>
-        <div className="mb-4">
-          <div className="flex justify-between mb-1">
-            <span>Total Progress</span>
-            <span>{progress?.overall || 0}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-4">
-            <div 
-              className={`${calculateProgressColor(progress?.overall || 0)} h-4 rounded-full`}
-              style={{ width: `${progress?.overall || 0}%` }}
-            ></div>
+    <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8 flex justify-center">
+          <div className="p-4 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+            <MapIcon className="h-16 w-16 text-indigo-500 dark:text-indigo-400" />
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockDomains.filter(d => d !== 'comprehensive').map((domain) => (
-            <div key={domain} className="mb-2">
-              <div className="flex justify-between mb-1">
-                <span className="capitalize">{domain}</span>
-                <span>{progress?.byDomain?.[domain] || 0}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div 
-                  className={`${calculateProgressColor(progress?.byDomain?.[domain] || 0)} h-3 rounded-full`}
-                  style={{ width: `${progress?.byDomain?.[domain] || 0}%` }}
-                ></div>
-              </div>
-            </div>
-          ))}
+        
+        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
+          Life Roadmaps Coming Soon
+        </h1>
+        
+        <p className="text-lg mb-8 text-gray-600 dark:text-gray-300">
+          We're building comprehensive roadmaps to help you navigate each area of your life with confidence.
+        </p>
+        
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <ArrowPathIcon className="h-10 w-10 text-indigo-500 mb-4 mx-auto" />
+            <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Custom Roadmaps</h2>
+            <p className="text-gray-600 dark:text-gray-300">Personalized roadmaps for career, education, finance, and health, tailored to your goals and preferences.</p>
+          </div>
+          
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <PresentationChartLineIcon className="h-10 w-10 text-indigo-500 mb-4 mx-auto" />
+            <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Milestone Tracking</h2>
+            <p className="text-gray-600 dark:text-gray-300">Track your progress with detailed milestone management and achievement metrics.</p>
+          </div>
         </div>
-      </Card>
-
-      {/* Domain Roadmaps */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Domain Roadmaps</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mockDomains.map((domain) => {
-            const domainRoadmap = roadmaps.find(r => r.type === domain);
-            
-            return (
-              <Card key={domain} className="p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center mb-4">
-                  <div className={`w-4 h-4 rounded-full ${getDomainColor(domain)} mr-2`}></div>
-                  <h3 className="text-lg font-medium capitalize">{domain} Roadmap</h3>
-                </div>
-                
-                {domainRoadmap ? (
-                  <>
-                    <p className="text-gray-600 mb-4">{domainRoadmap.title}</p>
-                    <div className="flex items-center mb-4">
-                      <div className="w-full bg-gray-200 rounded-full h-3 mr-2">
-                        <div 
-                          className={`${calculateProgressColor(domainRoadmap.progress)} h-3 rounded-full`}
-                          style={{ width: `${domainRoadmap.progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">{domainRoadmap.progress}%</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-gray-500 mb-4">
-                      <span>Start: {new Date(domainRoadmap.startDate).toLocaleDateString()}</span>
-                      <span>Target: {new Date(domainRoadmap.targetDate).toLocaleDateString()}</span>
-                    </div>
-                    <div className="text-sm mb-4">
-                      <span className="text-green-600 font-medium">{domainRoadmap.completedMilestones}</span> of {domainRoadmap.completedMilestones + domainRoadmap.activeMilestones} milestones completed
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-gray-600 mb-4">No {domain} roadmap created yet.</p>
-                )}
-                
-                <Button 
-                  onClick={() => navigateToRoadmap(domain)}
-                  variant={domainRoadmap ? "default" : "outline"}
-                  className="w-full"
+        
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg border border-indigo-100 dark:border-indigo-800 mb-8">
+          <h3 className="text-lg font-semibold mb-2 text-indigo-800 dark:text-indigo-300">
+            Launching Soon
+          </h3>
+          <p className="text-indigo-700 dark:text-indigo-200 mb-4">
+            Our roadmap feature is in final development and will be available soon. 
+            The Life Navigator roadmaps will help you visualize your journey and stay on track towards achieving your goals.
+          </p>
+          
+          {!submitted ? (
+            <form onSubmit={handleSubmit} className="mt-4">
+              <label htmlFor="notification-email" className="block text-sm font-medium text-indigo-700 dark:text-indigo-300 text-left mb-1">
+                Get notified when roadmaps launch:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="notification-email"
+                  type="email"
+                  placeholder="Your email address"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-indigo-300 dark:border-indigo-700 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors"
                 >
-                  {domainRoadmap ? 'View Details' : 'Create Roadmap'}
-                </Button>
-              </Card>
-            );
-          })}
+                  Notify Me
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-md">
+              Thanks! We'll notify you when roadmaps launch.
+            </div>
+          )}
+        </div>
+        
+        <div className="flex justify-center space-x-4">
+          <Link 
+            href="/dashboard" 
+            className="px-5 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md font-medium transition-colors"
+          >
+            Back to Dashboard
+          </Link>
+          
+          <Link 
+            href="/dashboard/download" 
+            className="px-5 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md font-medium transition-colors"
+          >
+            Join Desktop Waitlist
+          </Link>
         </div>
       </div>
-
-      {/* Recent Activity */}
-      {progress && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          
-          {/* Recently Completed */}
-          {progress.recentlyCompleted.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3">Recently Completed</h3>
-              <div className="space-y-2">
-                {progress.recentlyCompleted.map((milestone) => (
-                  <div key={milestone.id} className="flex items-center p-2 bg-green-50 rounded-md">
-                    <div className="bg-green-500 w-3 h-3 rounded-full mr-3"></div>
-                    <div>
-                      <p className="font-medium">{milestone.title}</p>
-                      <p className="text-sm text-gray-600 capitalize">{milestone.domain}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Upcoming */}
-          {progress.upcoming.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-medium mb-3">Upcoming Milestones</h3>
-              <div className="space-y-2">
-                {progress.upcoming.map((milestone) => (
-                  <div key={milestone.id} className="flex items-center p-2 bg-blue-50 rounded-md">
-                    <div className="bg-blue-500 w-3 h-3 rounded-full mr-3"></div>
-                    <div>
-                      <p className="font-medium">{milestone.title}</p>
-                      <div className="flex justify-between">
-                        <p className="text-sm text-gray-600 capitalize">{milestone.domain}</p>
-                        <p className="text-sm text-gray-600">Due: {new Date(milestone.targetDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* Delayed */}
-          {progress.delayed.length > 0 && (
-            <div>
-              <h3 className="text-lg font-medium mb-3">Delayed Milestones</h3>
-              <div className="space-y-2">
-                {progress.delayed.map((milestone) => (
-                  <div key={milestone.id} className="flex items-center p-2 bg-red-50 rounded-md">
-                    <div className="bg-red-500 w-3 h-3 rounded-full mr-3"></div>
-                    <div>
-                      <p className="font-medium">{milestone.title}</p>
-                      <div className="flex justify-between">
-                        <p className="text-sm text-gray-600 capitalize">{milestone.domain}</p>
-                        <p className="text-sm text-red-600">Overdue: {new Date(milestone.targetDate).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {progress.recentlyCompleted.length === 0 && 
-           progress.upcoming.length === 0 && 
-           progress.delayed.length === 0 && (
-            <p className="text-center text-gray-500 py-8">No recent roadmap activity to display.</p>
-          )}
-        </Card>
-      )}
     </div>
   );
 }

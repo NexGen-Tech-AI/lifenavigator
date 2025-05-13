@@ -3,7 +3,19 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/NextAuth';
 
 export default async function Home() {
-  // The middleware will handle all redirections based on authentication status
-  // This page should never be directly rendered
-  redirect('/auth/login');
+  // Get the user's session
+  const session = await getServerSession(authOptions);
+
+  // If user is not authenticated, redirect to login
+  if (!session) {
+    redirect('/auth/login');
+  }
+
+  // If user is authenticated but hasn't completed setup, redirect to onboarding
+  if (session.user && !session.user.setupCompleted) {
+    redirect(`/onboarding/questionnaire?userId=${session.user.id}`);
+  }
+
+  // If user is authenticated and has completed setup, redirect to dashboard
+  redirect('/dashboard');
 }

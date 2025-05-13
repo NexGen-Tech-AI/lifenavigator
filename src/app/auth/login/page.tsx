@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   description: 'Sign in to your Life Navigator account',
 };
 
-export default function LoginPage() {
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: { registered?: string };
+}) {
+  const justRegistered = searchParams.registered === 'true';
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
@@ -35,9 +40,16 @@ export default function LoginPage() {
           </p>
         </div>
         
+        {/* Success message for newly registered users */}
+        {justRegistered && (
+          <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 text-sm rounded-md">
+            Account created successfully! Please sign in with your credentials.
+          </div>
+        )}
+
         {/* Login Form */}
         <LoginForm />
-        
+
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
           <p>

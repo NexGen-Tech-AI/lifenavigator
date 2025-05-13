@@ -3,28 +3,34 @@ import { useState, useEffect } from 'react';
 import { fetchConnectedServices, disconnectService, refreshServices } from '../lib/api/integrations';
 import { ConnectedService } from '@/types/integration';
 
-export function useConnectedServices() {
+export function useConnectedServices(category?: string) {
   const [services, setServices] = useState<ConnectedService[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   const loadServices = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       const data = await fetchConnectedServices();
-      setServices(data);
+      
+      // Filter by category if provided
+      const filteredData = category 
+        ? data.filter(service => service.category === category)
+        : data;
+        
+      setServices(filteredData);
     } catch (err) {
       setError('Failed to load connected services');
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
   
   useEffect(() => {
     loadServices();
-  }, []);
+  }, [category]);
   
   const removeService = async (serviceId: string) => {
     try {
@@ -48,7 +54,7 @@ export function useConnectedServices() {
   
   return {
     services,
-    isLoading,
+    loading,
     error,
     removeService,
     refreshData,

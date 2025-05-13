@@ -88,14 +88,15 @@ export default function RegisterForm() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // After successful registration, redirect to login page
+      // After successful registration, redirect to login page with a success message
       addToast({
         title: "Registration successful",
         description: "Your account has been created. Please log in with your credentials.",
         type: "success",
       });
-      
-      router.push('/auth/login');
+
+      // Redirect to login page with a query parameter to show a success message
+      router.push('/auth/login?registered=true');
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);

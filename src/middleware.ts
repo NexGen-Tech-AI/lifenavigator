@@ -4,28 +4,32 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  
+
   // Root path handling - redirect based on authentication status
   if (path === '/') {
     // Get the user token
-    const token = await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET 
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET
     });
-    
+
     // If no token exists, redirect to login
     if (!token) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
-    
+
     // If user is authenticated and has completed setup, go to dashboard
     if (token.user?.setupCompleted) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    
+
     // If user is authenticated but hasn't completed setup, go to onboarding
-    // This will be handled by the requiresSetup check below
-    // This allows the workflow to follow: register -> login -> onboarding -> dashboard
+    if (token && token.user && !token.user.setupCompleted) {
+      const userId = token.sub || '';
+      return NextResponse.redirect(
+        new URL(`/onboarding/questionnaire?userId=${userId}`, request.url)
+      );
+    }
   }
   
   // Define protected routes (routes that require authentication)

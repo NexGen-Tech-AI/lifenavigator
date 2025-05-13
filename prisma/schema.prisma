@@ -33,6 +33,9 @@ model User {
   settings       UserSettings?
   integrations   Integration[]
   taxProfiles    TaxProfile[]
+  emailConnections EmailConnection[]
+  calendarConnections CalendarConnection[]
+  calendarEvents CalendarEvent[]
 
   @@map("users")
 }
@@ -258,18 +261,18 @@ model Certification {
 }
 
 model HealthRecord {
-  id            String               @id @default(cuid())
-  userId        String
-  height        Float?
-  weight        Float?
-  bloodType     String?
-  allergies     String?
-  medications   String?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  appointments  MedicalAppointment[]
-  vitalSigns    VitalSign[]
+  id              String               @id @default(cuid())
+  userId          String
+  height          Float?
+  weight          Float?
+  bloodType       String?
+  allergies       String?
+  medications     String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments    MedicalAppointment[]
+  vitalSigns      VitalSign[]
   secureDocuments SecureDocument[]
 
   @@map("health_records")
@@ -384,29 +387,29 @@ model RiskProfile {
 }
 
 model SecureDocument {
-  id                String          @id @default(cuid())
+  id                String              @id @default(cuid())
   healthRecordId    String
   filename          String
   originalFilename  String
   fileType          String
   mimeType          String
   category          String
-  s3Key             String          @unique
+  s3Key             String              @unique
   s3Bucket          String
   size              Int
   encryptionMethod  String
-  encryptionKeyId   String?         // Reference to key in secure key management
-  encryptionIV      String?         // Initialization vector for encryption (if stored)
-  kmsKeyId          String?         // AWS KMS key ID if using KMS
-  uploadDate        DateTime        @default(now())
+  encryptionKeyId   String?             // Reference to key in secure key management
+  encryptionIV      String?             // Initialization vector for encryption (if stored)
+  kmsKeyId          String?             // AWS KMS key ID if using KMS
+  uploadDate        DateTime            @default(now())
   lastAccessed      DateTime?
-  favorite          Boolean         @default(false)
-  shared            Boolean         @default(false)
-  expiresAt         DateTime?       // For temporary access links
-  thumbnailKey      String?         // S3 key for thumbnail, if available
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  healthRecord      HealthRecord    @relation(fields: [healthRecordId], references: [id], onDelete: Cascade)
+  favorite          Boolean             @default(false)
+  shared            Boolean             @default(false)
+  expiresAt         DateTime?           // For temporary access links
+  thumbnailKey      String?             // S3 key for thumbnail, if available
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  healthRecord      HealthRecord        @relation(fields: [healthRecordId], references: [id], onDelete: Cascade)
   documentTags      DocumentTag[]
   documentShares    DocumentShare[]
   accessLogs        DocumentAccessLog[]
@@ -415,64 +418,64 @@ model SecureDocument {
 }
 
 model DocumentTag {
-  id               String         @id @default(cuid())
-  documentId       String
-  name             String
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  documentId     String
+  name           String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  secureDocument SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, name])
   @@map("document_tags")
 }
 
 model DocumentShare {
-  id               String         @id @default(cuid())
-  documentId       String
-  recipientEmail   String
-  accessCode       String         @unique  // Unique code for secure access
-  accessLevel      String         // "view", "download", "edit"
-  expiresAt        DateTime
-  accessed         Boolean        @default(false)
-  accessedAt       DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  documentId     String
+  recipientEmail String
+  accessCode     String         @unique // Unique code for secure access
+  accessLevel    String         // "view", "download", "edit"
+  expiresAt      DateTime
+  accessed       Boolean        @default(false)
+  accessedAt     DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  secureDocument SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("document_shares")
 }
 
 model DocumentAccessLog {
-  id               String         @id @default(cuid())
-  documentId       String
-  accessType       String         // "view", "download", "edit", "delete", etc.
-  ipAddress        String?
-  userAgent        String?
-  accessedAt       DateTime       @default(now())
-  success          Boolean        @default(true)
-  details          String?
-  secureDocument   SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  id             String         @id @default(cuid())
+  documentId     String
+  accessType     String         // "view", "download", "edit", "delete", etc.
+  ipAddress      String?
+  userAgent      String?
+  accessedAt     DateTime       @default(now())
+  success        Boolean        @default(true)
+  details        String?
+  secureDocument SecureDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@map("document_access_logs")
 }
 
 // Integration models
 model Integration {
-  id             String               @id @default(cuid())
-  userId         String
-  providerId     String               // e.g., "plaid", "ynab", "epic_mychart"
-  providerName   String               // Human-readable name
+  id               String             @id @default(cuid())
+  userId           String
+  providerId       String             // e.g., "plaid", "ynab", "epic_mychart"
+  providerName     String             // Human-readable name
   providerCategory String             // "finance", "healthcare", etc.
-  name           String?              // User-provided name
-  status         String               // "active", "needs_attention", "expired"
-  metadata       Json?                // Provider-specific metadata
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-  lastSyncedAt   DateTime?
-  expiresAt      DateTime?
-  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token          IntegrationToken?
-  syncHistory    IntegrationSync[]
+  name             String?            // User-provided name
+  status           String             // "active", "needs_attention", "expired"
+  metadata         Json?              // Provider-specific metadata
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  lastSyncedAt     DateTime?
+  expiresAt        DateTime?
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token            IntegrationToken?
+  syncHistory      IntegrationSync[]
 
   @@unique([userId, providerId])
   @@map("integrations")
@@ -508,13 +511,145 @@ model IntegrationSync {
 }
 
 model OAuthState {
-  id           String    @id @default(cuid())
-  state        String    @unique
+  id           String   @id @default(cuid())
+  state        String   @unique
   codeVerifier String?
   userId       String
   providerId   String
-  createdAt    DateTime  @default(now())
+  createdAt    DateTime @default(now())
   expiresAt    DateTime
 
   @@map("oauth_states")
+}
+
+// Email and Calendar integration models
+model EmailConnection {
+  id                String               @id @default(cuid())
+  userId            String
+  provider          String               // e.g., "gmail", "outlook", "yahoo"
+  email             String
+  connected         Boolean              @default(true)
+  lastSync          DateTime             @default(now())
+  credentials       String?              // Encrypted credentials for non-OAuth connections
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendarConnections CalendarConnection[]
+  folders           EmailFolder[]
+  messages          EmailMessage[]
+
+  @@unique([userId, email])
+  @@map("email_connections")
+}
+
+model EmailFolder {
+  id                String          @id @default(cuid())
+  emailConnectionId String
+  name              String          // e.g., "inbox", "sent", "drafts"
+  path              String          // Full path if nested folder
+  unread            Int             @default(0)
+  total             Int             @default(0)
+  system            Boolean         @default(false)  // Whether it's a system folder
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  emailConnection   EmailConnection @relation(fields: [emailConnectionId], references: [id], onDelete: Cascade)
+  messages          EmailMessage[]
+
+  @@unique([emailConnectionId, path])
+  @@map("email_folders")
+}
+
+model EmailMessage {
+  id                String          @id @default(cuid())
+  emailConnectionId String
+  folderId          String
+  messageId         String          // Email header Message-ID
+  threadId          String?         // For conversation threading
+  subject           String
+  fromName          String
+  fromEmail         String
+  to                String          // JSON array of recipients
+  cc                String?         // JSON array of CC recipients
+  bcc               String?         // JSON array of BCC recipients
+  date              DateTime
+  body              String?         // Text body
+  htmlBody          String?         // HTML body
+  snippet           String?         // Preview snippet
+  read              Boolean         @default(false)
+  starred           Boolean         @default(false)
+  hasAttachments    Boolean         @default(false)
+  labels            String?         // JSON array of labels/tags
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  emailConnection   EmailConnection @relation(fields: [emailConnectionId], references: [id], onDelete: Cascade)
+  folder            EmailFolder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  attachments       EmailAttachment[]
+
+  @@unique([emailConnectionId, messageId])
+  @@map("email_messages")
+}
+
+model EmailAttachment {
+  id              String        @id @default(cuid())
+  messageId       String
+  filename        String
+  contentType     String
+  size            Int
+  contentId       String?       // For inline attachments
+  s3Key           String?       // If stored in S3
+  s3Bucket        String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  message         EmailMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("email_attachments")
+}
+
+model CalendarConnection {
+  id                String          @id @default(cuid())
+  userId            String
+  provider          String          // e.g., "google", "outlook", "apple"
+  name              String          // Display name for the calendar
+  email             String          // Associated email address
+  connected         Boolean         @default(true)
+  lastSync          DateTime?
+  color             String?         // Color code for the calendar
+  isDefault         Boolean         @default(false)
+  emailConnectionId String?         // Link to email if connected that way
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailConnection   EmailConnection? @relation(fields: [emailConnectionId], references: [id], onDelete: SetNull)
+  events            CalendarEvent[]
+
+  @@unique([userId, email])
+  @@map("calendar_connections")
+}
+
+model CalendarEvent {
+  id                String             @id @default(cuid())
+  userId            String
+  calendarId        String
+  externalId        String?            // Original ID from the provider
+  title             String
+  description       String?
+  location          String?
+  startTime         DateTime
+  endTime           DateTime
+  timezone          String?
+  isAllDay          Boolean            @default(false)
+  recurrence        String?            // RRULE format
+  status            String?            // "confirmed", "tentative", "cancelled"
+  color             String?
+  url               String?
+  organizer         String?            // JSON with name and email
+  attendees         String?            // JSON array of attendees
+  alerts            String?            // JSON array of reminders
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  calendar          CalendarConnection @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@unique([calendarId, externalId])
+  @@map("calendar_events")
 }

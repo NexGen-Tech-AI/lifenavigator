@@ -1,4 +1,3 @@
-// src/components/theme/ThemeToggle.tsx
 'use client';
 
 import { useTheme } from 'next-themes';
@@ -14,8 +13,9 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
   
+  // If not mounted yet, return a placeholder to avoid layout shift
   if (!mounted) {
-    return <div className="w-[106px] h-[38px]" />; // Placeholder with same dimensions to prevent layout shift
+    return <div className="w-[106px] h-[38px]" />; 
   }
   
   return (
@@ -23,7 +23,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme('light')}
         className={`rounded p-1.5 ${
-          resolvedTheme === 'light' 
+          theme === 'light' || (theme === 'system' && resolvedTheme === 'light') 
             ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white' 
             : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
         }`}
@@ -36,7 +36,7 @@ export function ThemeToggle() {
       <button
         onClick={() => setTheme('dark')}
         className={`rounded p-1.5 ${
-          resolvedTheme === 'dark' 
+          theme === 'dark' || (theme === 'system' && resolvedTheme === 'dark') 
             ? 'bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white' 
             : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
         }`}
