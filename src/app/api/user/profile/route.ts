@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
 import { prisma } from '@/lib/db';
 import { userService } from '@/lib/services/userService';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-export async function GET(request: NextRequest) {
+// Handler for GET request - get user profile
+async function getHandler(request: NextRequest) {
   try {
-    // Get the session
-    const session = await getServerSession(authOptions);
-
-    // Check if user is authenticated
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get user ID from session
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
 
     // Fetch user data from the database
     const user = await prisma.user.findUnique({
@@ -59,21 +48,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PUT(request: NextRequest) {
+// Handler for PUT request - update user profile
+async function putHandler(request: NextRequest) {
   try {
-    // Get the session
-    const session = await getServerSession(authOptions);
-
-    // Check if user is authenticated
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get user ID from session
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
+    const currentEmail = (request as any).user.email;
 
     // Parse request body
     const body = await request.json();
@@ -88,7 +68,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if email is already in use by another user
-    if (email !== session.user.email) {
+    if (email !== currentEmail) {
       const existingUser = await userService.getUserByEmail(email);
       if (existingUser && existingUser.id !== userId) {
         return NextResponse.json(
@@ -118,3 +98,9 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// Create secure route handlers
+export const { GET, PUT } = createSecureHandlers(
+  { GET: getHandler, PUT: putHandler },
+  { requireSetupComplete: true }
+);

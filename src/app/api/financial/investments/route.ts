@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
 import { financialService } from '@/lib/services/financialService';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-// Get all investments for the current user
-export async function GET(request: NextRequest) {
+// Handler for GET request - gets all investments for the current user
+async function getHandler(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Get investments
     const investments = await financialService.getInvestments(userId);
@@ -42,19 +33,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Create a new investment
-export async function POST(request: NextRequest) {
+// Handler for POST request - creates a new investment
+async function postHandler(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     const body = await request.json();
     
     // Validate input
@@ -90,3 +73,9 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Create secure route handlers
+export const { GET, POST } = createSecureHandlers(
+  { GET: getHandler, POST: postHandler },
+  { requireSetupComplete: true }
+);

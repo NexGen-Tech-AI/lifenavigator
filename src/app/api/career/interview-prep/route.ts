@@ -1,7 +1,6 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { NextRequest, NextResponse } from 'next/server';
 import { InterviewPrepResource } from '@/types/career';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
 // Mock interview preparation data by job title
 const mockInterviewPrep: Record<string, InterviewPrepResource> = {
@@ -211,17 +210,12 @@ const mockInterviewPrep: Record<string, InterviewPrepResource> = {
 };
 
 /**
- * GET /api/career/interview-prep
- * Get interview preparation resources for a specific job title
+ * Handler for GET request - get interview preparation resources for specific job title
  */
-export async function GET(request: Request) {
+async function getHandler(request: NextRequest) {
   try {
-    // Get the authenticated user
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Get URL parameters
     const { searchParams } = new URL(request.url);
@@ -270,3 +264,9 @@ export async function GET(request: Request) {
     );
   }
 }
+
+// Create secure route handlers
+export const { GET } = createSecureHandlers(
+  { GET: getHandler },
+  { requireSetupComplete: true }
+);

@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
 import { healthService } from '@/lib/services/healthService';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-// Get health overview for current user
-export async function GET(request: NextRequest) {
+// Handler for GET request - get health overview for current user
+async function getHandler(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Get health data
     const healthRecord = await healthService.getHealthRecord(userId);
@@ -58,6 +49,9 @@ export async function GET(request: NextRequest) {
       bmi = Math.round(bmi * 10) / 10; // Round to 1 decimal place
     }
     
+    // Log PHI access for compliance
+    await logPhiAccess(userId, 'health_overview', request);
+    
     return NextResponse.json({
       healthRecord: {
         id: healthRecord.id,
@@ -97,3 +91,30 @@ function getBmiCategory(bmi: number | null): string | null {
   if (bmi < 30) return 'Overweight';
   return 'Obese';
 }
+
+// Helper function to log PHI access for HIPAA compliance
+async function logPhiAccess(userId: string, dataType: string, request: NextRequest) {
+  try {
+    // This would integrate with your compliance logging system
+    // For now, we'll log to console as a placeholder
+    console.log(`PHI ACCESS: User ${userId} accessed ${dataType} data from ${request.ip || 'unknown IP'}`);
+    
+    // In a real implementation, this would:
+    // 1. Write to a secure audit log
+    // 2. Include full request details
+    // 3. Handle HIPAA-required metadata
+  } catch (error) {
+    // Log error but don't fail the main request
+    console.error('Error logging PHI access:', error);
+  }
+}
+
+// Create secure route handlers with additional protection for health data
+export const { GET } = createSecureHandlers(
+  { GET: getHandler },
+  { 
+    requireSetupComplete: true,
+    // Additional permissions could be added here for healthcare data
+    // For example: requiredPermissions: ['health.read']
+  }
+);

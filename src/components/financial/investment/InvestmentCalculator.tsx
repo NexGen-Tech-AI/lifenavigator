@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/cards/Card';
 import { Button } from '@/components/ui/buttons/Button';
 import {
@@ -18,6 +18,22 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { exportToPdf, exportToCsv } from '@/lib/utils/export-utils';
+import { CalculatorType } from '@/lib/utils/calculator-storage';
+import {
   LineChart,
   Line,
   AreaChart,
@@ -36,7 +52,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { toast } from '@/components/ui/toaster';
-import { useInvestmentCalculator } from '@/hooks/useInvestmentCalculator';
+import { useInvestmentCalculatorWithCache } from '@/hooks/useInvestmentCalculatorWithCache';
 
 // Enum types
 enum ContributionFrequency {
@@ -58,6 +74,15 @@ enum RiskLevel {
 
 // Component
 const InvestmentCalculator: React.FC = () => {
+  // State for saved calculations
+  const [savedCalculations, setSavedCalculations] = useState<any[]>([]);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  
+  // Load saved calculations on component mount
+  useEffect(() => {
+    const calculations = loadSavedCalculations();
+    setSavedCalculations(calculations);
+  }, []);
   // Investment form state
   const [formData, setFormData] = useState({
     name: "Investment Scenario",
@@ -100,39 +125,219 @@ const InvestmentCalculator: React.FC = () => {
   // State for active inner tab
   const [activeInnerTab, setActiveInnerTab] = useState("input");
 
-  // Use the investment calculator hook
+  // Use the enhanced investment calculator hook with caching
   const {
+    // Core API-compatible functions
     calculateInvestmentGrowth,
     calculateAssetAllocation,
     optimizeLumpSumVsDca,
     compareInvestmentScenarios,
     getHistoricalReturns,
+    
+    // React Query hooks (can be used for more declarative code)
+    useInvestmentGrowth,
+    useAssetAllocation,
+    useLumpSumVsDca,
+    
+    // Prefetching capabilities
+    prefetchInvestmentGrowth,
+    
+    // State
     isLoading,
     results,
-  } = useInvestmentCalculator();
+  } = useInvestmentCalculatorWithCache();
+  
+  // Use the React Query hooks for the current active tab data
+  const investmentGrowthQuery = useInvestmentGrowth(
+    activeTab === "growth" ? formData : undefined, 
+    activeTab === "growth" && activeInnerTab === "results"
+  );
+  
+  const assetAllocationQuery = useAssetAllocation(
+    activeTab === "allocation" ? allocationData : undefined,
+    activeTab === "allocation" && activeInnerTab === "results"
+  );
+  
+  const lumpSumQuery = useLumpSumVsDca(
+    activeTab === "lump_sum" ? lumpSumData : undefined,
+    activeTab === "lump_sum" && activeInnerTab === "results"
+  );
 
-  // Handle investment form changes
+  // Handle investment form changes with debounced prefetching
   const handleInvestmentChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      // Prefetch results if the change is significant enough
+      // This helps to have data ready when the user clicks "Calculate"
+      const significantFields = ['initial_investment', 'annual_return_rate', 'time_horizon_years'];
+      if (significantFields.includes(field) && activeTab === "growth") {
+        // Debounce the prefetch to avoid too many API calls
+        const timer = setTimeout(() => {
+          prefetchInvestmentGrowth(newData);
+        }, 1000); // 1 second debounce
+        
+        return () => clearTimeout(timer);
+      }
+      
+      return newData;
+    });
+  };
+  
+  // Save the current calculation to browser storage
+  const saveCurrentCalculation = () => {
+    const calculationType = activeTab;
+    const calculationData = {
+      tab: activeTab,
+      formData: activeTab === "growth" ? formData : undefined,
+      allocationData: activeTab === "allocation" ? allocationData : undefined,
+      lumpSumData: activeTab === "lump_sum" ? lumpSumData : undefined,
+      results: results
+    };
+    
+    // Generate a unique name based on the current date/time if not provided
+    const name = `${activeTab.replace('_', ' ')} - ${new Date().toLocaleString()}`;
+    
+    // Save to localStorage
+    try {
+      // Get existing saved calculations
+      const savedCalculationsStr = localStorage.getItem('ln_saved_calculations');
+      const savedCalculations = savedCalculationsStr 
+        ? JSON.parse(savedCalculationsStr) 
+        : [];
+      
+      // Add the new calculation
+      savedCalculations.push({
+        id: Date.now().toString(),
+        name,
+        type: calculationType,
+        data: calculationData,
+        timestamp: Date.now()
+      });
+      
+      // Trim to max 20 items
+      if (savedCalculations.length > 20) {
+        savedCalculations.shift(); // Remove oldest
+      }
+      
+      // Save back to localStorage
+      localStorage.setItem('ln_saved_calculations', JSON.stringify(savedCalculations));
+      
+      toast({
+        title: 'Calculation Saved',
+        description: 'Your calculation has been saved for later use',
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving calculation:', error);
+      
+      toast({
+        title: 'Save Failed',
+        description: 'Unable to save your calculation',
+        variant: 'destructive'
+      });
+      
+      return false;
+    }
   };
 
   // Handle asset allocation form changes
   const handleAllocationChange = (field: string, value: any) => {
-    setAllocationData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setAllocationData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      return newData;
+    });
   };
 
   // Handle lump sum form changes
   const handleLumpSumChange = (field: string, value: any) => {
-    setLumpSumData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setLumpSumData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value
+      };
+      
+      return newData;
+    });
+  };
+  
+  // Load saved calculations
+  const loadSavedCalculations = () => {
+    try {
+      const savedCalculationsStr = localStorage.getItem('ln_saved_calculations');
+      if (!savedCalculationsStr) {
+        return [];
+      }
+      
+      const savedCalculations = JSON.parse(savedCalculationsStr);
+      return savedCalculations;
+    } catch (error) {
+      console.error('Error loading saved calculations:', error);
+      return [];
+    }
+  };
+  
+  // Load a specific saved calculation
+  const loadCalculation = (savedCalculation: any) => {
+    try {
+      const { data } = savedCalculation;
+      
+      // Set the active tab
+      if (data.tab) {
+        setActiveTab(data.tab);
+      }
+      
+      // Load the appropriate data
+      if (data.formData && data.tab === "growth") {
+        setFormData(data.formData);
+      }
+      
+      if (data.allocationData && data.tab === "allocation") {
+        setAllocationData(data.allocationData);
+      }
+      
+      if (data.lumpSumData && data.tab === "lump_sum") {
+        setLumpSumData(data.lumpSumData);
+      }
+      
+      // Set results if available
+      if (data.results) {
+        // The hook handles results management
+        // Just trigger a recalculation
+        if (data.tab === "growth" && data.formData) {
+          calculateInvestmentGrowth(data.formData);
+        } else if (data.tab === "allocation" && data.allocationData) {
+          calculateAssetAllocation(data.allocationData);
+        } else if (data.tab === "lump_sum" && data.lumpSumData) {
+          optimizeLumpSumVsDca(data.lumpSumData);
+        }
+      }
+      
+      toast({
+        title: 'Calculation Loaded',
+        description: 'Your saved calculation has been loaded',
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error loading calculation:', error);
+      
+      toast({
+        title: 'Load Failed',
+        description: 'Unable to load your calculation',
+        variant: 'destructive'
+      });
+      
+      return false;
+    }
   };
 
   // Handle calculate investment growth
@@ -301,9 +506,86 @@ const InvestmentCalculator: React.FC = () => {
     }));
   };
 
+  // Handle saving the current calculation
+  const handleSaveCalculation = () => {
+    saveCurrentCalculation();
+    // Refresh the saved calculations list
+    setSavedCalculations(loadSavedCalculations());
+  };
+  
+  // Handle loading a saved calculation
+  const handleLoadCalculation = (calculation: any) => {
+    loadCalculation(calculation);
+    setLoadDialogOpen(false);
+  };
+  
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Investment Calculator</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Investment Calculator</h1>
+        
+        <div className="flex space-x-2">
+          {/* Save button */}
+          <Button 
+            onClick={handleSaveCalculation}
+            variant="outline"
+            disabled={!results}
+            title={!results ? "Calculate first to save" : "Save calculation"}
+          >
+            Save
+          </Button>
+          
+          {/* Load dialog */}
+          <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline"
+                disabled={savedCalculations.length === 0}
+                title={savedCalculations.length === 0 ? "No saved calculations" : "Load saved calculation"}
+              >
+                Load
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Saved Calculations</DialogTitle>
+              </DialogHeader>
+              
+              {savedCalculations.length > 0 ? (
+                <div className="max-h-[60vh] overflow-y-auto">
+                  <div className="space-y-2">
+                    {savedCalculations.map((calc) => (
+                      <div 
+                        key={calc.id}
+                        className="p-3 border rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex items-center justify-between"
+                        onClick={() => handleLoadCalculation(calc)}
+                      >
+                        <div>
+                          <h3 className="font-medium">{calc.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(calc.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="ghost">Load</Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center">
+                  <p className="text-muted-foreground">No saved calculations found.</p>
+                </div>
+              )}
+              
+              <div className="flex justify-end gap-2 mt-4">
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
       
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

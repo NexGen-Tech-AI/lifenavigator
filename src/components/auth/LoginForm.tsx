@@ -12,9 +12,14 @@ export default function LoginForm() {
     email: '',
     password: '',
     rememberMe: false,
+    mfaToken: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isAccountLocked, setIsAccountLocked] = useState(false);
+  const [lockoutTimeRemaining, setLockoutTimeRemaining] = useState(0);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -24,24 +29,100 @@ export default function LoginForm() {
     });
   };
 
+  // Check account lockout status
+  const checkLockoutStatus = async (email: string) => {
+    try {
+      const response = await fetch('/api/auth/lockout-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      setIsAccountLocked(data.locked);
+      setLockoutTimeRemaining(data.remainingTime);
+      
+      return data.locked;
+    } catch (error) {
+      console.error('Error checking lockout status:', error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: formData.email,
-        password: formData.password,
-      });
+      // Check if account is locked
+      if (await checkLockoutStatus(formData.email)) {
+        const minutes = Math.floor(lockoutTimeRemaining / 60);
+        const seconds = lockoutTimeRemaining % 60;
+        setError(`Account is temporarily locked due to too many failed attempts. Try again in ${minutes}m ${seconds}s.`);
+        setIsLoading(false);
+        return;
+      }
 
-      if (result?.error) {
-        setError('Invalid email or password. Please try again.');
+      // If MFA is required, verify the token first
+      if (mfaRequired) {
+        if (!formData.mfaToken) {
+          setError('MFA token is required');
+          setIsLoading(false);
+          return;
+        }
+
+        // Proceed with login including MFA token
+        const result = await signIn('credentials', {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+          mfaToken: formData.mfaToken,
+        });
+
+        if (result?.error) {
+          setError('Invalid credentials or MFA token. Please try again.');
+          // Check if account is now locked after this failed attempt
+          await checkLockoutStatus(formData.email);
+        } else {
+          // Successful login with MFA
+          router.push('/');
+        }
       } else {
-        // Successful login, redirect to root which will handle navigation
-        // based on user setup status (dashboard or onboarding questionnaire)
-        router.push('/');
+        // Check if MFA is required for this user
+        const mfaCheckResponse = await fetch('/api/auth/mfa/challenge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email }),
+        });
+
+        const mfaData = await mfaCheckResponse.json();
+
+        if (mfaData.requiresMfa) {
+          // MFA is required, store the userId and show MFA input
+          setMfaRequired(true);
+          setUserId(mfaData.userId);
+          setIsLoading(false);
+          return;
+        }
+
+        // No MFA required, proceed with normal login
+        const result = await signIn('credentials', {
+          redirect: false,
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (result?.error) {
+          setError('Invalid email or password. Please try again.');
+          // Check if account is now locked after this failed attempt
+          await checkLockoutStatus(formData.email);
+        } else {
+          // Successful login, redirect to root which will handle navigation
+          // based on user setup status (dashboard or onboarding questionnaire)
+          router.push('/');
+        }
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -104,7 +185,7 @@ export default function LoginForm() {
             required
             value={formData.email}
             onChange={handleChange}
-            disabled={isLoading}
+            disabled={isLoading || mfaRequired}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm placeholder-gray-400 
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
@@ -129,13 +210,38 @@ export default function LoginForm() {
             required
             value={formData.password}
             onChange={handleChange}
-            disabled={isLoading}
+            disabled={isLoading || mfaRequired}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm placeholder-gray-400 
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             placeholder="Enter your password"
           />
         </div>
+
+        {mfaRequired && (
+          <div>
+            <label htmlFor="mfaToken" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Authentication Code
+            </label>
+            <input
+              id="mfaToken"
+              name="mfaToken"
+              type="text"
+              autoComplete="one-time-code"
+              required
+              value={formData.mfaToken}
+              onChange={handleChange}
+              disabled={isLoading}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm placeholder-gray-400 
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+              bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+              placeholder="Enter 6-digit code from your authenticator app"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Enter the 6-digit code from your authenticator app
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center">
           <input
@@ -160,7 +266,7 @@ export default function LoginForm() {
             text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
             disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? 'Signing in...' : mfaRequired ? 'Verify' : 'Sign in'}
           </button>
         </div>
       </form>

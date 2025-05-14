@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { subDays, format } from 'date-fns';
 import { SleepData } from '@/types/health';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-export async function GET(req: NextRequest) {
+// Handler for GET request - get sleep data for current user
+async function getHandler(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (req as any).user.id;
+    
     // Get time range from query parameters
     const searchParams = req.nextUrl.searchParams;
     const timeRange = searchParams.get('timeRange') || '7d';
@@ -25,6 +22,9 @@ export async function GET(req: NextRequest) {
     // In production, this would fetch from a database
     const mockSleepData = generateMockSleepData(days);
     
+    // Log PHI access for compliance
+    await logPhiAccess(userId, 'sleep_data', req);
+    
     return NextResponse.json(mockSleepData);
   } catch (error) {
     console.error('Error fetching sleep data:', error);
@@ -35,14 +35,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(req: NextRequest) {
+// Handler for POST request - log new sleep data
+async function postHandler(req: NextRequest) {
   try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (req as any).user.id;
+    
     // Parse request body
     const sleepData = await req.json();
     
@@ -56,6 +54,9 @@ export async function POST(req: NextRequest) {
     
     // Process and calculate sleep metrics
     // In production, this would save to a database
+    
+    // Log PHI access for compliance
+    await logPhiAccess(userId, 'sleep_data_create', req);
     
     // For development, just return the data that would be saved
     return NextResponse.json({
@@ -103,3 +104,30 @@ function generateMockSleepData(days: number): SleepData[] {
     };
   });
 }
+
+// Helper function to log PHI access for HIPAA compliance
+async function logPhiAccess(userId: string, dataType: string, request: NextRequest) {
+  try {
+    // This would integrate with your compliance logging system
+    // For now, we'll log to console as a placeholder
+    console.log(`PHI ACCESS: User ${userId} accessed ${dataType} data from ${request.ip || 'unknown IP'}`);
+    
+    // In a real implementation, this would:
+    // 1. Write to a secure audit log
+    // 2. Include full request details
+    // 3. Handle HIPAA-required metadata
+  } catch (error) {
+    // Log error but don't fail the main request
+    console.error('Error logging PHI access:', error);
+  }
+}
+
+// Create secure route handlers with additional protection for health data
+export const { GET, POST } = createSecureHandlers(
+  { GET: getHandler, POST: postHandler },
+  { 
+    requireSetupComplete: true,
+    // Additional permissions could be added here for healthcare data
+    // For example: requiredPermissions: ['health.read', 'health.write']
+  }
+);

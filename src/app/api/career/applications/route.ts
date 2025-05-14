@@ -1,8 +1,7 @@
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { JobApplication, JobApplicationCreate } from '@/types/career';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
 // Mock data for job applications
 const mockApplications: JobApplication[] = [
@@ -62,19 +61,12 @@ function generateId(): string {
 }
 
 /**
- * GET /api/career/applications
- * Get all job applications for the current user
+ * Handler for GET request - get all job applications for the current user
  */
-export async function GET(request: Request) {
+async function getHandler(request: NextRequest) {
   try {
-    // Get the authenticated user
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // For now, return mock data
     // In production, we would fetch from database
@@ -91,19 +83,12 @@ export async function GET(request: Request) {
 }
 
 /**
- * POST /api/career/applications
- * Create a new job application
+ * Handler for POST request - create a new job application
  */
-export async function POST(request: Request) {
+async function postHandler(request: NextRequest) {
   try {
-    // Get the authenticated user
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user?.id) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Parse the request body
     const body: JobApplicationCreate = await request.json();
@@ -136,3 +121,9 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// Create secure route handlers
+export const { GET, POST } = createSecureHandlers(
+  { GET: getHandler, POST: postHandler },
+  { requireSetupComplete: true }
+);

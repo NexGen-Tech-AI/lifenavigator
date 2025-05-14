@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from "@/app/api/auth/NextAuth"; // Update the path to the correct module
 import { careerService } from '@/lib/services/careerService';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-// Get career overview for current user
-export async function GET(request: NextRequest) {
+// Handler for GET request - get career overview for current user
+async function getHandler(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Get career data
     const careerRecord = await careerService.getCareerRecord(userId);
@@ -62,3 +53,9 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// Create secure route handlers
+export const { GET } = createSecureHandlers(
+  { GET: getHandler },
+  { requireSetupComplete: true }
+);

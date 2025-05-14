@@ -1,4 +1,10 @@
 import { prisma } from "@/lib/db";
+import { encryptObjectFields, decryptObjectFields } from "@/lib/encryption/model-encryption";
+
+// Define sensitive fields for each model
+const HEALTH_RECORD_SENSITIVE_FIELDS = ['bloodType', 'allergies', 'medications'] as const;
+const VITAL_SIGN_SENSITIVE_FIELDS = ['value', 'notes'] as const;
+const APPOINTMENT_SENSITIVE_FIELDS = ['reason', 'notes'] as const;
 
 // Health record types
 export interface CreateHealthRecordInput {
@@ -71,30 +77,100 @@ export const healthService = {
       },
     });
     
+    // No need to decrypt manually if Prisma middleware is active
+    // This serves as a fallback if middleware isn't enabled
+    if (record && process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      // Decrypt sensitive fields in the main record
+      const decryptedRecord = decryptObjectFields(
+        record, 
+        'HealthRecord', 
+        HEALTH_RECORD_SENSITIVE_FIELDS
+      );
+      
+      // Decrypt sensitive fields in vital signs
+      if (decryptedRecord.vitalSigns) {
+        decryptedRecord.vitalSigns = decryptedRecord.vitalSigns.map(sign => 
+          decryptObjectFields(sign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+        );
+      }
+      
+      // Decrypt sensitive fields in appointments
+      if (decryptedRecord.appointments) {
+        decryptedRecord.appointments = decryptedRecord.appointments.map(appointment => 
+          decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+        );
+      }
+      
+      return decryptedRecord;
+    }
+    
     return record;
   },
   
   async createHealthRecord(data: CreateHealthRecordInput) {
+    // Encrypt sensitive fields before saving
+    // Only needed if Prisma middleware isn't enabled
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true' 
+      ? encryptObjectFields(data, 'HealthRecord', HEALTH_RECORD_SENSITIVE_FIELDS)
+      : data;
+    
     const record = await prisma.healthRecord.create({
-      data,
+      data: dataToSave,
       include: {
         vitalSigns: true,
         appointments: true,
       },
     });
     
+    // Decrypt response if needed (if middleware isn't enabled)
+    if (record && process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(record, 'HealthRecord', HEALTH_RECORD_SENSITIVE_FIELDS);
+    }
+    
     return record;
   },
   
   async updateHealthRecord(id: string, data: UpdateHealthRecordInput) {
+    // Encrypt sensitive fields before saving
+    // Only needed if Prisma middleware isn't enabled
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true' 
+      ? encryptObjectFields(data, 'HealthRecord', HEALTH_RECORD_SENSITIVE_FIELDS)
+      : data;
+    
     const record = await prisma.healthRecord.update({
       where: { id },
-      data,
+      data: dataToSave,
       include: {
         vitalSigns: true,
         appointments: true,
       },
     });
+    
+    // Decrypt response if needed
+    if (record && process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      // Decrypt sensitive fields in the main record
+      const decryptedRecord = decryptObjectFields(
+        record, 
+        'HealthRecord', 
+        HEALTH_RECORD_SENSITIVE_FIELDS
+      );
+      
+      // Decrypt sensitive fields in vital signs
+      if (decryptedRecord.vitalSigns) {
+        decryptedRecord.vitalSigns = decryptedRecord.vitalSigns.map(sign => 
+          decryptObjectFields(sign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+        );
+      }
+      
+      // Decrypt sensitive fields in appointments
+      if (decryptedRecord.appointments) {
+        decryptedRecord.appointments = decryptedRecord.appointments.map(appointment => 
+          decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+        );
+      }
+      
+      return decryptedRecord;
+    }
     
     return record;
   },
@@ -105,6 +181,13 @@ export const healthService = {
       where: { healthRecordId },
       orderBy: { recordedAt: 'desc' },
     });
+    
+    // Decrypt if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true' && vitalSigns.length > 0) {
+      return vitalSigns.map(sign => 
+        decryptObjectFields(sign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+      );
+    }
     
     return vitalSigns;
   },
@@ -118,22 +201,49 @@ export const healthService = {
       orderBy: { recordedAt: 'desc' },
     });
     
+    // Decrypt if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true' && vitalSigns.length > 0) {
+      return vitalSigns.map(sign => 
+        decryptObjectFields(sign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+      );
+    }
+    
     return vitalSigns;
   },
   
   async createVitalSign(data: CreateVitalSignInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+      : data;
+    
     const vitalSign = await prisma.vitalSign.create({
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(vitalSign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS);
+    }
     
     return vitalSign;
   },
   
   async updateVitalSign(id: string, data: UpdateVitalSignInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS)
+      : data;
+    
     const vitalSign = await prisma.vitalSign.update({
       where: { id },
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(vitalSign, 'VitalSign', VITAL_SIGN_SENSITIVE_FIELDS);
+    }
     
     return vitalSign;
   },
@@ -153,6 +263,13 @@ export const healthService = {
       orderBy: { date: 'asc' },
     });
     
+    // Decrypt if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true' && appointments.length > 0) {
+      return appointments.map(appointment => 
+        decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+      );
+    }
+    
     return appointments;
   },
   
@@ -168,6 +285,13 @@ export const healthService = {
       orderBy: { date: 'asc' },
     });
     
+    // Decrypt if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true' && appointments.length > 0) {
+      return appointments.map(appointment => 
+        decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+      );
+    }
+    
     return appointments;
   },
   
@@ -176,22 +300,47 @@ export const healthService = {
       where: { id },
     });
     
+    // Decrypt if middleware isn't active
+    if (appointment && process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS);
+    }
+    
     return appointment;
   },
   
   async createMedicalAppointment(data: CreateMedicalAppointmentInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+      : data;
+    
     const appointment = await prisma.medicalAppointment.create({
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS);
+    }
     
     return appointment;
   },
   
   async updateMedicalAppointment(id: string, data: UpdateMedicalAppointmentInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS)
+      : data;
+    
     const appointment = await prisma.medicalAppointment.update({
       where: { id },
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(appointment, 'MedicalAppointment', APPOINTMENT_SENSITIVE_FIELDS);
+    }
     
     return appointment;
   },

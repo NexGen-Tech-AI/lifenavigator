@@ -5,7 +5,7 @@ import TwitterProvider from "next-auth/providers/twitter";
 import FacebookProvider from "next-auth/providers/facebook";
 import CredentialsProvider from "next-auth/providers/credentials";
 import type { OAuthConfig } from "next-auth/providers/oauth";
-// import { compare } from 'bcrypt';
+import { comparePasswords } from '@/lib/utils/password';
 
 // Define the profile types for each provider
 interface UdemyProfile {
@@ -81,6 +81,15 @@ export const authOptions = {
         try {
           // Import modules here to avoid circular dependencies
           const { prisma } = await import('@/lib/db');
+          const { verifyToken, isMfaEnabled } = await import('@/lib/auth/mfa');
+          const { isAccountLocked, recordFailedLoginAttempt, resetFailedLoginAttempts } = await import('@/lib/auth/lockout');
+          
+          // Check if account is locked
+          const locked = await isAccountLocked(credentials.email);
+          if (locked) {
+            console.warn(`Login attempt for locked account: ${credentials.email}`);
+            return null;
+          }
           
           // Find user by email
           const user = await prisma.user.findUnique({
@@ -89,20 +98,40 @@ export const authOptions = {
           
           // Check if user exists and verify password
           if (!user || !user.password) {
+            // Record failed login attempt but don't reveal user existence
+            await recordFailedLoginAttempt(credentials.email);
             return null;
           }
           
-          // Temporarily bypass password check for development
-          // const isPasswordValid = await compare(credentials.password, user.password);
-
-          // if (!isPasswordValid) {
-          //   return null;
-          // }
-
-          // Just check if passwords match directly (only for development)
-          if (credentials.password !== 'password123') {
+          // Verify password using bcrypt
+          const isPasswordValid = await comparePasswords(credentials.password, user.password);
+          
+          if (!isPasswordValid) {
+            // Record failed login attempt
+            await recordFailedLoginAttempt(credentials.email);
             return null;
           }
+          
+          // Check if MFA is enabled and verify MFA token if provided
+          const mfaEnabled = await isMfaEnabled(user.id);
+          
+          if (mfaEnabled) {
+            // If MFA is enabled, verify the MFA token
+            if (!credentials.mfaToken) {
+              return null;
+            }
+            
+            const isValidToken = await verifyToken(user.id, credentials.mfaToken);
+            
+            if (!isValidToken) {
+              // Record failed login attempt for invalid MFA token
+              await recordFailedLoginAttempt(credentials.email);
+              return null;
+            }
+          }
+          
+          // Reset failed login attempts after successful login
+          await resetFailedLoginAttempts(credentials.email);
           
           // Return user object without password
           return {
@@ -205,7 +234,37 @@ export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt" as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 8 * 60 * 60, // 8 hours instead of 30 days
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        maxAge: 8 * 60 * 60 // 8 hours
+      }
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    csrfToken: {
+      name: `__Host-next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
   },
 };
 

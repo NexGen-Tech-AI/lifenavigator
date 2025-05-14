@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../auth/[...nextauth]/route';
 import { financialService } from '@/lib/services/financialService';
+import { withAuth } from '@/lib/auth/session';
 
-// Get financial overview for current user
-export async function GET(request: NextRequest) {
+// Handler for the GET request
+async function handler(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const userId = session.user.id;
+    // User is guaranteed to be available by withAuth middleware
+    const userId = (request as any).user.id;
     
     // Get financial data
     const financialRecord = await financialService.getFinancialRecord(userId);
@@ -44,3 +35,9 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// Apply the withAuth middleware to the GET handler
+export const GET = withAuth(handler, {
+  allowedMethods: ['GET'],
+  requireSetupComplete: true,
+});

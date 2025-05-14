@@ -1,23 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { ToastProvider } from '@/components/ui/toaster';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { SessionProvider } from 'next-auth/react';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+import { createPersistentQueryClient } from '@/lib/cache/persistQueryClient';
+import { CsrfProvider } from '@/components/ui/csrf-provider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Create the client in a state to ensure it's only created once on the client side
+  // This is important for Next.js to avoid hydration mismatches
+  const [queryClient] = useState(() => createPersistentQueryClient());
+  
   return (
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
@@ -27,9 +22,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           enableSystem
           disableTransitionOnChange={false}
         >
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <CsrfProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </CsrfProvider>
         </NextThemesProvider>
       </QueryClientProvider>
     </SessionProvider>

@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/db";
+import { encryptObjectFields, decryptObjectFields } from "@/lib/encryption/model-encryption";
+
+// Define sensitive fields for each model
+const INVESTMENT_SENSITIVE_FIELDS = ['notes'] as const;
 
 // Financial record types
 export interface CreateFinancialRecordInput {
@@ -176,6 +180,13 @@ export const financialService = {
       orderBy: { createdAt: 'desc' },
     });
     
+    // Decrypt if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true' && investments.length > 0) {
+      return investments.map(investment => 
+        decryptObjectFields(investment, 'Investment', INVESTMENT_SENSITIVE_FIELDS)
+      );
+    }
+    
     return investments;
   },
   
@@ -184,22 +195,47 @@ export const financialService = {
       where: { id },
     });
     
+    // Decrypt if middleware isn't active
+    if (investment && process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(investment, 'Investment', INVESTMENT_SENSITIVE_FIELDS);
+    }
+    
     return investment;
   },
   
   async createInvestment(data: CreateInvestmentInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'Investment', INVESTMENT_SENSITIVE_FIELDS)
+      : data;
+    
     const investment = await prisma.investment.create({
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(investment, 'Investment', INVESTMENT_SENSITIVE_FIELDS);
+    }
     
     return investment;
   },
   
   async updateInvestment(id: string, data: UpdateInvestmentInput) {
+    // Encrypt sensitive fields if middleware isn't active
+    const dataToSave = process.env.ENABLE_FIELD_ENCRYPTION !== 'true'
+      ? encryptObjectFields(data, 'Investment', INVESTMENT_SENSITIVE_FIELDS)
+      : data;
+    
     const investment = await prisma.investment.update({
       where: { id },
-      data,
+      data: dataToSave,
     });
+    
+    // Decrypt response if middleware isn't active
+    if (process.env.ENABLE_FIELD_ENCRYPTION !== 'true') {
+      return decryptObjectFields(investment, 'Investment', INVESTMENT_SENSITIVE_FIELDS);
+    }
     
     return investment;
   },
