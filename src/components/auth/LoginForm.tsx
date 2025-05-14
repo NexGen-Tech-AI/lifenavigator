@@ -57,11 +57,26 @@ export default function LoginForm() {
 
     try {
       // Check if account is locked
-      if (await checkLockoutStatus(formData.email)) {
+      const locked = await checkLockoutStatus(formData.email);
+      if (locked) {
         const minutes = Math.floor(lockoutTimeRemaining / 60);
         const seconds = lockoutTimeRemaining % 60;
         setError(`Account is temporarily locked due to too many failed attempts. Try again in ${minutes}m ${seconds}s.`);
         setIsLoading(false);
+        
+        // Setup a countdown timer to update the remaining time
+        const countdownInterval = setInterval(() => {
+          setLockoutTimeRemaining(prev => {
+            if (prev <= 1) {
+              clearInterval(countdownInterval);
+              setIsAccountLocked(false);
+              setError(null);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        
         return;
       }
 

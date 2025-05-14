@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
 import { prisma } from '@/lib/db';
 import { compare, hash } from 'bcrypt';
+import { createSecureHandlers } from '@/lib/auth/route-helpers';
 
-export async function PUT(request: NextRequest) {
+async function handlePasswordUpdate(request: NextRequest, session: any) {
   try {
-    // Get the session
-    const session = await getServerSession(authOptions);
-
-    // Check if user is authenticated
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     // Get user ID from session
     const userId = session.user.id;
 
@@ -89,3 +77,8 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// Export secure handlers with CSRF protection
+export const { PUT } = createSecureHandlers({
+  PUT: handlePasswordUpdate
+});

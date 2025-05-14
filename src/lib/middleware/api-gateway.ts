@@ -320,8 +320,8 @@ export const apiGateways = {
   standard: createApiGateway({
     cors: defaultCorsOptions,
     rateLimit: {
-      limit: 100,
-      windowMs: 60 * 1000, // 1 minute
+      limit: parseInt(process.env.RATE_LIMIT_STANDARD?.split(':')[0] || '100'),
+      windowMs: parseInt(process.env.RATE_LIMIT_STANDARD?.split(':')[1] || '60000'),
       headers: true,
     },
     enableLogging: process.env.API_LOGGING === 'true',
@@ -335,11 +335,108 @@ export const apiGateways = {
       credentials: false,
     },
     rateLimit: {
-      limit: 50,
-      windowMs: 60 * 1000, // 1 minute
+      limit: parseInt(process.env.RATE_LIMIT_PUBLIC?.split(':')[0] || '50'),
+      windowMs: parseInt(process.env.RATE_LIMIT_PUBLIC?.split(':')[1] || '60000'),
       headers: true,
     },
     enableLogging: process.env.API_LOGGING === 'true',
+  }),
+  
+  // Auth API gateway with stricter limits to prevent brute force attacks
+  auth: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_AUTH?.split(':')[0] || '20'),
+      windowMs: parseInt(process.env.RATE_LIMIT_AUTH?.split(':')[1] || '60000'),
+      headers: true,
+      keyGenerator: (req) => {
+        // Use IP address as the key for auth endpoints to prevent brute force
+        const ip = req.ip || '127.0.0.1';
+        return `auth:${ip}`;
+      },
+    },
+    enableLogging: true,
+  }),
+  
+  // Registration-specific rate limiting (very strict)
+  register: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_REGISTER?.split(':')[0] || '5'),
+      windowMs: parseInt(process.env.RATE_LIMIT_REGISTER?.split(':')[1] || '1800000'), // 30 minutes
+      headers: true,
+      keyGenerator: (req) => {
+        const ip = req.ip || '127.0.0.1';
+        return `register:${ip}`;
+      },
+    },
+    enableLogging: true,
+  }),
+  
+  // Password and MFA operations rate limiting
+  passwordOps: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_PASSWORD_OPS?.split(':')[0] || '5'),
+      windowMs: parseInt(process.env.RATE_LIMIT_PASSWORD_OPS?.split(':')[1] || '900000'), // 15 minutes
+      headers: true,
+      keyGenerator: (req) => {
+        const ip = req.ip || '127.0.0.1';
+        const token = (req as any).token;
+        // Include user ID if authenticated for more accurate limiting
+        return token?.sub ? `password:${token.sub}` : `password:${ip}`;
+      },
+    },
+    enableLogging: true,
+  }),
+  
+  // User account operations (deletion, export) rate limiting
+  userAccountOps: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_USER_ACCOUNT_OPS?.split(':')[0] || '10'),
+      windowMs: parseInt(process.env.RATE_LIMIT_USER_ACCOUNT_OPS?.split(':')[1] || '3600000'), // 1 hour
+      headers: true,
+      keyGenerator: (req) => {
+        const token = (req as any).token;
+        const ip = req.ip || '127.0.0.1';
+        // Use user ID for authenticated requests
+        return token?.sub ? `account:${token.sub}` : `account:${ip}`;
+      },
+    },
+    enableLogging: true,
+  }),
+  
+  // Document upload/download rate limiting
+  documentOps: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_DOCUMENT_OPS?.split(':')[0] || '20'),
+      windowMs: parseInt(process.env.RATE_LIMIT_DOCUMENT_OPS?.split(':')[1] || '600000'), // 10 minutes
+      headers: true,
+      keyGenerator: (req) => {
+        const token = (req as any).token;
+        const ip = req.ip || '127.0.0.1';
+        return token?.sub ? `document:${token.sub}` : `document:${ip}`;
+      },
+    },
+    enableLogging: true,
+  }),
+  
+  // OAuth and token operations rate limiting
+  oauth: createApiGateway({
+    cors: defaultCorsOptions,
+    rateLimit: {
+      limit: parseInt(process.env.RATE_LIMIT_OAUTH?.split(':')[0] || '10'),
+      windowMs: parseInt(process.env.RATE_LIMIT_OAUTH?.split(':')[1] || '300000'), // 5 minutes
+      headers: true,
+      keyGenerator: (req) => {
+        const ip = req.ip || '127.0.0.1';
+        const token = (req as any).token;
+        return token?.sub ? `oauth:${token.sub}` : `oauth:${ip}`;
+      },
+    },
+    enableLogging: true,
   }),
   
   // Admin API gateway with strict security
@@ -353,8 +450,8 @@ export const apiGateways = {
       strictOriginCheck: true,
     },
     rateLimit: {
-      limit: 300,
-      windowMs: 60 * 1000, // 1 minute
+      limit: parseInt(process.env.RATE_LIMIT_ADMIN?.split(':')[0] || '300'),
+      windowMs: parseInt(process.env.RATE_LIMIT_ADMIN?.split(':')[1] || '60000'),
       headers: true,
     },
     apiKey: {
@@ -380,8 +477,8 @@ export const apiGateways = {
       strictOriginCheck: true,
     },
     rateLimit: {
-      limit: 500,
-      windowMs: 60 * 1000, // 1 minute
+      limit: parseInt(process.env.RATE_LIMIT_INTERNAL?.split(':')[0] || '500'),
+      windowMs: parseInt(process.env.RATE_LIMIT_INTERNAL?.split(':')[1] || '60000'),
       headers: true,
     },
     apiKey: {

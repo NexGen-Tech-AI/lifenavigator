@@ -33,7 +33,11 @@ The API gateway provides a comprehensive security layer for all API endpoints, i
 - Per-endpoint limits with customizable windows
 - IP-based rate limiting with configurable thresholds
 - Different limits for different endpoints (higher for admin, lower for public)
+- Stricter rate limits for sensitive operations (auth, registration, etc.)
+- User-based rate limiting for authenticated requests
+- Progressive rate limiting with longer windows for sensitive operations
 - Rate limit headers for client awareness
+- Configurable via environment variables
 
 ### IP Filtering
 
@@ -82,6 +86,74 @@ export const GET = apiGateways.public(handler);
 export const GET = apiGateways.standard(handler);
 ```
 
+### Authentication Endpoints (`/api/auth/*`)
+
+- IP-based rate limiting to prevent brute force attacks
+- Moderate rate limits (20 requests per minute)
+- Special handling for authentication cookies
+- CSRF protection
+
+```typescript
+// Example usage
+export const POST = apiGateways.auth(handler);
+```
+
+### Registration Endpoint (`/api/auth/register`)
+
+- Very strict rate limiting (5 requests per 30 minutes)
+- IP-based tracking to prevent abuse
+- Extended cooldown period after multiple attempts
+
+```typescript
+// Example usage
+export const POST = apiGateways.register(handler);
+```
+
+### Password and MFA Operations
+
+- Strict limits (5 requests per 15 minutes)
+- User-based tracking when authenticated
+- IP-based when not authenticated
+- Progressive cooldown periods
+
+```typescript
+// Example usage
+export const POST = apiGateways.passwordOps(handler);
+```
+
+### User Account Operations
+
+- Operations like account deletion, data export
+- Moderate limits (10 requests per hour)
+- User-based tracking when authenticated
+
+```typescript
+// Example usage
+export const POST = apiGateways.userAccountOps(handler);
+```
+
+### Document Operations
+
+- Document uploads, downloads, and sharing
+- Higher limits (20 requests per 10 minutes)
+- User-based tracking for authenticated requests
+
+```typescript
+// Example usage
+export const POST = apiGateways.documentOps(handler);
+```
+
+### OAuth Operations
+
+- OAuth initialization and token management
+- Moderate limits (10 requests per 5 minutes)
+- User-based tracking when authenticated
+
+```typescript
+// Example usage
+export const POST = apiGateways.oauth(handler);
+```
+
 ### Admin Endpoints (`/api/admin/*`)
 
 - Strictly limited to admin domains
@@ -121,6 +193,20 @@ ADMIN_ALLOWED_IPS=127.0.0.1,::1
 # API Gateway Security
 API_LOGGING=true
 ADMIN_API_KEYS=admin-key-1,admin-key-2
+
+# Rate Limiting Configuration (format: requests:window_ms)
+RATE_LIMIT_STANDARD=100:60000       # 100 requests per minute for standard API endpoints
+RATE_LIMIT_PUBLIC=50:60000          # 50 requests per minute for public API endpoints
+RATE_LIMIT_AUTH=20:60000            # 20 requests per minute for auth endpoints
+RATE_LIMIT_ADMIN=300:60000          # 300 requests per minute for admin endpoints
+RATE_LIMIT_INTERNAL=500:60000       # 500 requests per minute for internal services
+
+# Sensitive Endpoint Rate Limiting
+RATE_LIMIT_REGISTER=5:1800000       # 5 requests per 30 minutes for registration
+RATE_LIMIT_PASSWORD_OPS=5:900000    # 5 requests per 15 minutes for password/MFA operations
+RATE_LIMIT_USER_ACCOUNT_OPS=10:3600000  # 10 requests per hour for account operations
+RATE_LIMIT_DOCUMENT_OPS=20:600000   # 20 requests per 10 minutes for document operations
+RATE_LIMIT_OAUTH=10:300000          # 10 requests per 5 minutes for OAuth operations
 ```
 
 ## Implementation Details
@@ -166,3 +252,21 @@ To test the API gateway security and CORS policy:
 3. Add new origins to allowlists with caution
 4. Monitor logs for suspicious activity
 5. Regularly review and update security configurations
+6. Adjust rate limits based on production traffic patterns
+7. Set stricter limits for sensitive operations
+8. Use progressive rate limiting for authentication endpoints
+9. Implement both IP-based and user-based rate limiting
+10. Consider persistent storage for rate limiting in distributed environments
+
+## Rate Limiting Architecture
+
+The rate limiting implementation in LifeNavigator follows a layered approach:
+
+1. **Memory-Based Storage**: In-memory rate limiter for single-instance deployments
+2. **Configurable Thresholds**: Environment-specific rate limits
+3. **Path-Based Rules**: Different limits based on endpoint sensitivity
+4. **Progressive Limits**: Stricter limits for sensitive operations
+5. **Hybrid Tracking**: IP-based for unauthenticated requests, user-based for authenticated
+6. **Header Feedback**: Rate limit headers to help clients adapt
+
+For production deployment with multiple server instances, the in-memory rate limiter can be replaced with a Redis-based implementation sharing the same interface. This ensures consistent rate limiting across a distributed environment.

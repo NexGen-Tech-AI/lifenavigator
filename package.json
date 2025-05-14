@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "node scripts/validate-env.js && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -25,7 +25,12 @@
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
     "db:migrate-to-pg": "bash ./scripts/migrate-to-postgres.sh",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "env:generate": "bash ./scripts/generate-env.sh",
+    "env:generate:dev": "bash ./scripts/generate-env.sh --env dev",
+    "env:generate:staging": "bash ./scripts/generate-env.sh --env staging",
+    "env:generate:prod": "bash ./scripts/generate-env.sh --env prod",
+    "env:validate": "node scripts/validate-env.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",
@@ -39,6 +44,7 @@
     "@tanstack/react-query": "^5.74.11",
     "@types/lodash": "^4.17.16",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "classnames": "^2.5.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^12.9.2",
@@ -68,6 +74,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@types/bcrypt": "^5.0.2",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.11.3",
     "@types/react": "^19",

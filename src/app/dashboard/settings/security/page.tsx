@@ -21,6 +21,30 @@ export default function SecuritySettingsPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   
+  // Check MFA status on component mount
+  React.useEffect(() => {
+    const checkMfaStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/mfa/status');
+        if (response.ok) {
+          const data = await response.json();
+          setTwoFactorEnabled(data.enabled);
+          
+          // If recovery codes are available, store them
+          if (data.recoveryCodes && data.recoveryCodes.length > 0) {
+            setBackupCodes(data.recoveryCodes);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking MFA status:', error);
+      }
+    };
+    
+    if (session?.user?.id) {
+      checkMfaStatus();
+    }
+  }, [session]);
+  
   // State for session management
   const [activeSessions, setActiveSessions] = useState([
     { id: '1', device: 'Chrome on Windows 10', location: 'Los Angeles, USA', lastActive: 'Just now', current: true },
@@ -121,17 +145,50 @@ export default function SecuritySettingsPage() {
   
   // Handle enabling two-factor authentication
   const handleEnableTwoFactor = async () => {
-    // This would actually generate a QR code and store the TOTP secret
-    // For demo purposes, we'll just simulate it
-    setQrCodeUrl('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/LifeNavigator:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=LifeNavigator');
-    setBackupCodes(['ABCD-EFGH-IJKL', 'MNOP-QRST-UVWX', 'YZAB-CDEF-GHIJ', 'KLMN-OPQR-STUV', 'WXYZ-ABCD-EFGH']);
-    setShowTwoFactorSetup(true);
+    try {
+      // Call the API to set up MFA for the current user
+      const response = await fetch('/api/auth/mfa/setup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to set up MFA');
+      }
+      
+      const data = await response.json();
+      
+      // Set the QR code URL and show the setup UI
+      setQrCodeUrl(data.qrCode);
+      setShowTwoFactorSetup(true);
+      
+      // Get recovery codes
+      const recoveryResponse = await fetch('/api/auth/mfa/status', {
+        method: 'GET',
+      });
+      
+      if (recoveryResponse.ok) {
+        const recoveryData = await recoveryResponse.json();
+        if (recoveryData.recoveryCodes) {
+          setBackupCodes(recoveryData.recoveryCodes);
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up MFA:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to set up MFA",
+        type: "error",
+      });
+    }
   };
   
   // Handle verifying two-factor setup
   const handleVerifyTwoFactor = async () => {
-    // This would verify the TOTP code against the stored secret
-    // For demo purposes, we'll accept any 6-digit code
+    // Verify the TOTP code
     if (verificationCode.length !== 6 || !/^\d+$/.test(verificationCode)) {
       toast({
         title: "Error",
@@ -141,27 +198,87 @@ export default function SecuritySettingsPage() {
       return;
     }
     
-    // Simulate verification success
-    setTwoFactorEnabled(true);
-    setShowTwoFactorSetup(false);
-    
-    toast({
-      title: "Success",
-      description: "Two-factor authentication has been enabled.",
-      type: "success",
-    });
+    try {
+      // Call the API to verify the MFA token
+      const response = await fetch('/api/auth/mfa/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: verificationCode,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Invalid verification code');
+      }
+      
+      // Call the API to enable MFA
+      const enableResponse = await fetch('/api/auth/mfa/enable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!enableResponse.ok) {
+        const error = await enableResponse.json();
+        throw new Error(error.message || 'Failed to enable MFA');
+      }
+      
+      // Update UI state
+      setTwoFactorEnabled(true);
+      setShowTwoFactorSetup(false);
+      
+      toast({
+        title: "Success",
+        description: "Two-factor authentication has been enabled.",
+        type: "success",
+      });
+    } catch (error) {
+      console.error('Error verifying MFA:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to verify MFA code",
+        type: "error",
+      });
+    }
   };
   
   // Handle disabling two-factor authentication
   const handleDisableTwoFactor = async () => {
-    // This would disable 2FA in the backend
-    setTwoFactorEnabled(false);
-
-    toast({
-      title: "Success",
-      description: "Two-factor authentication has been disabled.",
-      type: "success",
-    });
+    try {
+      // Call the API to disable MFA
+      const response = await fetch('/api/auth/mfa/disable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to disable MFA');
+      }
+      
+      // Update UI state
+      setTwoFactorEnabled(false);
+      
+      toast({
+        title: "Success",
+        description: "Two-factor authentication has been disabled.",
+        type: "success",
+      });
+    } catch (error) {
+      console.error('Error disabling MFA:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to disable MFA",
+        type: "error",
+      });
+    }
   };
 
   // State for delete account modal

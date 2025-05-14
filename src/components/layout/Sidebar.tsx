@@ -442,9 +442,11 @@ export default function Sidebar() {
             "flex items-center space-x-2",
             isCollapsed && !isMobile ? "justify-center" : ""
           )}>
-            <div className="w-8 h-8 rounded-md bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-xl font-bold">L</span>
-            </div>
+            <img 
+              src="/logo.svg"
+              alt="LifeNavigator Logo" 
+              className="w-8 h-8 flex-shrink-0" 
+            />
             {(!isCollapsed || isMobile) && (
               <span className="text-lg font-semibold text-gray-900 dark:text-white">LifeNavigator</span>
             )}

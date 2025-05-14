@@ -1,96 +1,78 @@
 /**
- * Route helpers for applying authentication and authorization to API routes
+ * Route helpers for API routes
+ * Includes middleware for CSRF validation and authentication
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth } from './session';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/NextAuth';
+import { validateCsrfToken } from '@/lib/auth/csrf';
 
-// Define types for route handlers
-type RouteHandler = (request: NextRequest) => Promise<NextResponse>;
-
-// Auth options type
-interface AuthOptions {
-  requireSetupComplete?: boolean;
-  requiredRole?: string;
-  requiredPermissions?: string[];
+/**
+ * Middleware to validate CSRF tokens for API routes
+ * This should be used on all API routes that accept POST, PUT, DELETE methods
+ */
+export function withCsrfProtection(handler: Function) {
+  return async (request: NextRequest) => {
+    // Only check non-GET requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+      // Validate CSRF token
+      if (!validateCsrfToken(request)) {
+        return NextResponse.json(
+          { error: 'Invalid CSRF token' },
+          { status: 403 }
+        );
+      }
+    }
+    
+    // Call the handler function
+    return handler(request);
+  };
 }
 
 /**
- * Create secure route handlers for an API endpoint
- * @param handlers - Object containing HTTP method handlers
- * @param options - Auth options to apply to all handlers
- * @returns Object with protected route handlers
+ * Middleware to require authentication for API routes
  */
-export function createSecureHandlers(
-  handlers: {
-    GET?: RouteHandler;
-    POST?: RouteHandler;
-    PUT?: RouteHandler;
-    DELETE?: RouteHandler;
-    PATCH?: RouteHandler;
-  },
-  options: AuthOptions = {}
-) {
-  const secureHandlers: Record<string, RouteHandler> = {};
-  
-  // Apply withAuth middleware to each handler with method restriction
-  if (handlers.GET) {
-    secureHandlers.GET = withAuth(handlers.GET, {
-      ...options,
-      allowedMethods: ['GET'],
-    });
-  }
-  
-  if (handlers.POST) {
-    secureHandlers.POST = withAuth(handlers.POST, {
-      ...options,
-      allowedMethods: ['POST'],
-    });
-  }
-  
-  if (handlers.PUT) {
-    secureHandlers.PUT = withAuth(handlers.PUT, {
-      ...options,
-      allowedMethods: ['PUT'],
-    });
-  }
-  
-  if (handlers.DELETE) {
-    secureHandlers.DELETE = withAuth(handlers.DELETE, {
-      ...options,
-      allowedMethods: ['DELETE'],
-    });
-  }
-  
-  if (handlers.PATCH) {
-    secureHandlers.PATCH = withAuth(handlers.PATCH, {
-      ...options,
-      allowedMethods: ['PATCH'],
-    });
-  }
-  
-  return secureHandlers;
+export function withAuth(handler: Function) {
+  return async (request: NextRequest) => {
+    // Get session
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is authenticated
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Call the handler function with session
+    return handler(request, session);
+  };
 }
 
 /**
- * Create a secure API endpoint that allows certain HTTP methods
- * @param handler - The route handler function
- * @param methods - Array of allowed HTTP methods
- * @param options - Auth options
- * @returns Object with protected route handlers for specified methods
+ * Combined middleware for both authentication and CSRF protection
  */
-export function createMethodLimitedEndpoint(
-  handler: RouteHandler,
-  methods: ('GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH')[],
-  options: AuthOptions = {}
-) {
-  const secureHandlers: Record<string, RouteHandler> = {};
+export function withAuthAndCsrf(handler: Function) {
+  return withAuth(withCsrfProtection(handler));
+}
+
+/**
+ * Helper to create secure API route handlers with appropriate middleware
+ */
+export function createSecureHandlers(handlers: Record<string, Function>) {
+  const secureHandlers: Record<string, Function> = {};
   
-  methods.forEach(method => {
-    secureHandlers[method] = withAuth(handler, {
-      ...options,
-      allowedMethods: [method],
-    });
-  });
+  // Apply middleware based on HTTP method
+  for (const [method, handler] of Object.entries(handlers)) {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+      // For safe methods, just require authentication
+      secureHandlers[method.toLowerCase()] = withAuth(handler);
+    } else {
+      // For methods that modify state, require both auth and CSRF
+      secureHandlers[method.toLowerCase()] = withAuthAndCsrf(handler);
+    }
+  }
   
   return secureHandlers;
 }

@@ -52,6 +52,10 @@ const getIndexKey = (type: CalculatorType): string => {
  * Get or create the storage index for a calculator type
  */
 const getStorageIndex = (type: CalculatorType): StorageIndex => {
+  if (!isLocalStorageAvailable()) {
+    return { keys: [], lastUpdated: Date.now() };
+  }
+  
   try {
     const indexKey = getIndexKey(type);
     const storedIndex = localStorage.getItem(indexKey);
@@ -71,6 +75,8 @@ const getStorageIndex = (type: CalculatorType): StorageIndex => {
  * Save the storage index
  */
 const saveStorageIndex = (type: CalculatorType, index: StorageIndex): void => {
+  if (!isLocalStorageAvailable()) return;
+  
   try {
     const indexKey = getIndexKey(type);
     localStorage.setItem(indexKey, JSON.stringify({
@@ -157,6 +163,10 @@ export const saveCalculatorData = <T>(
   input: any,
   data: T
 ): boolean => {
+  if (!isLocalStorageAvailable()) {
+    return false;
+  }
+  
   try {
     // Clean up old entries periodically
     if (Math.random() < 0.1) { // 10% chance to run cleanup
@@ -190,6 +200,10 @@ export const getCalculatorData = <T>(
   type: CalculatorType,
   input: any
 ): { data: T | null; timestamp: number } => {
+  if (!isLocalStorageAvailable()) {
+    return { data: null, timestamp: 0 };
+  }
+  
   try {
     const key = generateStorageKey(type, input);
     const storedItem = localStorage.getItem(key);
@@ -281,6 +295,8 @@ export const getAllCalculatorData = <T>(
  * Check if the browser supports localStorage
  */
 export const isLocalStorageAvailable = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  
   try {
     const test = 'test';
     localStorage.setItem(test, test);
@@ -295,6 +311,10 @@ export const isLocalStorageAvailable = (): boolean => {
  * Get the total size of calculator data in localStorage (in bytes)
  */
 export const getCalculatorStorageSize = (): number => {
+  if (!isLocalStorageAvailable()) {
+    return 0;
+  }
+  
   try {
     let totalSize = 0;
     

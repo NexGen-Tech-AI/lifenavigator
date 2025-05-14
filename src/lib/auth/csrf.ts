@@ -21,12 +21,15 @@ const CSRF_COOKIE_OPTS = {
  * Generate a CSRF token
  * Uses a double submit cookie pattern with a secret
  */
-export function generateCsrfToken(): string {
+export async function generateCsrfToken(): Promise<string> {
   // Generate a random secret
   const secret = randomBytes(32).toString('hex');
   
+  // Get the cookies instance
+  const cookieStore = cookies();
+  
   // Set the secret in a secure cookie
-  cookies().set(CSRF_SECRET_COOKIE, secret, CSRF_COOKIE_OPTS);
+  cookieStore.set(CSRF_SECRET_COOKIE, secret, CSRF_COOKIE_OPTS);
   
   // Generate a token based on the secret
   return createCsrfToken(secret);

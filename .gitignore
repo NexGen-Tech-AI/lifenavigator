@@ -32,6 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# sensitive environment files
+env-values/prod.env
+env-values/staging.env
+
+# database files
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.backup
+
+# encryption keys
+*.key
 
 # vercel
 .vercel

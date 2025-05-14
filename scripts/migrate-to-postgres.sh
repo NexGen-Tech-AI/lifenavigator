@@ -13,17 +13,15 @@ DOCKER_COMPOSE_FILE="docker-compose.postgres.yml"
 # Check if PostgreSQL is available
 echo "Checking PostgreSQL connection..."
 if ! command -v pg_isready &> /dev/null; then
-    echo "pg_isready command not found. Installing PostgreSQL client..."
-    sudo apt-get update
-    sudo apt-get install -y postgresql-client
+    echo "pg_isready command not found. Using Docker for PostgreSQL..."
+    # Skip installing PostgreSQL client - we'll just use Docker
 fi
 
-# Try to connect to PostgreSQL
-pg_isready -d ${PG_CONNECTION_STRING} || {
-    echo "PostgreSQL is not available. Starting PostgreSQL with Docker..."
-    
-    # Create Docker Compose file for PostgreSQL
-    cat > ${DOCKER_COMPOSE_FILE} << EOF
+# Use Docker for PostgreSQL
+echo "Starting PostgreSQL with Docker..."
+
+# Create Docker Compose file for PostgreSQL
+cat > ${DOCKER_COMPOSE_FILE} << EOF
 version: '3.8'
 services:
   postgres:
@@ -40,18 +38,13 @@ services:
 volumes:
   postgres_data:
 EOF
-    
-    # Start PostgreSQL
-    docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
-    
-    # Wait for PostgreSQL to be ready
-    echo "Waiting for PostgreSQL to start..."
-    sleep 5
-    pg_isready -d ${PG_CONNECTION_STRING} -t 30 || {
-        echo "Failed to connect to PostgreSQL. Check your connection string."
-        exit 1
-    }
-}
+
+# Start PostgreSQL
+docker-compose -f ${DOCKER_COMPOSE_FILE} up -d
+
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to start..."
+sleep 10
 
 # Create new .env file for PostgreSQL
 echo "Creating new .env file with PostgreSQL connection string..."

@@ -2,6 +2,9 @@ import React from 'react';
 import LoginForm from '@/components/auth/LoginForm';
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/NextAuth';
+import { redirect } from 'next/navigation';
 
 // Metadata for the page
 export const metadata: Metadata = {
@@ -9,21 +12,36 @@ export const metadata: Metadata = {
   description: 'Sign in to your Life Navigator account',
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
   searchParams: { registered?: string };
 }) {
-  const justRegistered = searchParams.registered === 'true';
+  // Check if user is already authenticated
+  const session = await getServerSession(authOptions);
+  
+  // If user is authenticated, redirect them appropriately
+  if (session) {
+    if (!session.user.setupCompleted) {
+      redirect(`/onboarding/questionnaire?userId=${session.user.id}`);
+    } else {
+      redirect('/dashboard');
+    }
+  }
+  
+  // Safely access searchParams
+  const justRegistered = searchParams?.registered === 'true';
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         {/* Logo/Branding */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center space-x-2">
-            <div className="w-10 h-10 rounded-md bg-blue-600 flex items-center justify-center">
-              <span className="text-white text-2xl font-bold">L</span>
-            </div>
+            <img 
+              src="/logo.svg" 
+              alt="LifeNavigator Logo" 
+              className="w-10 h-10" 
+            />
             <span className="text-2xl font-bold text-gray-900 dark:text-white">LifeNavigator</span>
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
