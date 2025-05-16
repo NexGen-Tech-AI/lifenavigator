@@ -1,64 +1,55 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { compare } from "bcrypt";
 import { authOptions } from "../NextAuth";
+import { db } from "@/lib/db";
 
-// Create a handler for the next-auth routes
-const handler = NextAuth({
+// Create NextAuth handler with additional providers
+export const handler = NextAuth({
   ...authOptions,
+  adapter: PrismaAdapter(db as any), // Cast to PrismaClient
   providers: [
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // This is a simple authorization for development
-        console.log("Auth attempt with:", credentials?.email);
-        
         if (!credentials?.email || !credentials?.password) {
-          console.log("Missing email or password");
           return null;
         }
 
-        // For development, accept demo login (hardcoded credentials)
-        // Explicitly check for exact match, trimming any whitespace
-        const email = credentials.email.trim();
-        const password = credentials.password.trim();
-        
-        console.log("Checking credentials:", email, password);
-        
-        if (email === "demo@example.com" && password === "password") {
-          console.log("Demo login successful");
-          return {
-            id: "demo-user-id",
-            email: "demo@example.com",
-            name: "Demo User",
-            setupCompleted: true
-          };
+        const user = await db.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!user || !user.password) {
+          return null;
         }
-        
-        // For development, accept test login
-        if (email === "test@example.com" && password === "password") {
-          console.log("Test login successful");
-          return {
-            id: "test-user-id",
-            email: "test@example.com",
-            name: "Test User",
-            setupCompleted: true
-          };
+
+        const passwordValid = await compare(credentials.password, user.password);
+
+        if (!passwordValid) {
+          return null;
         }
-        
-        console.log("Login failed - invalid credentials");
-        return null;
-      }
+
+        // Update last login timestamp
+        await db.user.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() },
+        });
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          setupCompleted: user.setupCompleted,
+        };
+      },
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    }),
-    // Add other providers as needed
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -69,12 +60,12 @@ const handler = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.setupCompleted = token.setupCompleted as boolean;
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.setupCompleted = token.setupCompleted;
       }
       return session;
-    }
+    },
   },
 });
 
