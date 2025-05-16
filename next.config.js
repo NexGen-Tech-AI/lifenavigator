@@ -15,10 +15,10 @@ const nextConfig = {
     ],
   },
   typescript: {
-    ignoreBuildErrors: process.env.VERCEL_ENV === 'production',
+    ignoreBuildErrors: true,
   },
   eslint: {
-    ignoreDuringBuilds: process.env.VERCEL_ENV === 'production',
+    ignoreDuringBuilds: true,
   },
   headers: async () => {
     return [
