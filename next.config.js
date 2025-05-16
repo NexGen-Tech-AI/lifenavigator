@@ -23,10 +23,7 @@ const nextConfig = {
     'bcrypt',
     'crypto',
     '@prisma/client'
-  ],
-  experimental: {
-    esmExternals: 'loose'
-  }
+  ]
 };
 
 module.exports = nextConfig;
