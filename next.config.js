@@ -69,8 +69,7 @@ const nextConfig = {
     '@prisma/client'
   ],
   experimental: {
-    esmExternals: 'loose',
-    serverComponentsExternalPackages: [] // Not used in Next.js 15.3.1, replaced by serverExternalPackages above
+    esmExternals: 'loose'
   }
 };
 
