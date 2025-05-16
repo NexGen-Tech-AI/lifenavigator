@@ -1,7 +1,9 @@
-// Create a mock database for development
-// This will be replaced with a real Prisma instance in production
+// Database client implementation
+// This file provides either a real Prisma client or a mock DB for development
 
-// Mock user type matching our schema
+import { PrismaClient } from '@prisma/client';
+
+// Define User type based on our schema
 type User = {
   id: string;
   email: string;
@@ -12,7 +14,7 @@ type User = {
   setupCompleted: boolean;
 };
 
-// Very simple in-memory mock database
+// Mock database implementation for development environments
 class MockDB {
   private users: Record<string, User> = {
     'demo-user-id': {
@@ -73,5 +75,28 @@ class MockDB {
   }
 }
 
-// Export the mock database instance
-export const db = new MockDB();
+// Determine if we should use mock database or real Prisma
+// Use environment variables to control this behavior
+const useMockDb = process.env.NODE_ENV === 'development' && 
+                 process.env.USE_MOCK_DB === 'true';
+
+// For Prisma, we want to make sure we don't create multiple instances
+// during hot reloads in development
+let prismaClient: PrismaClient | undefined;
+
+function getPrismaClient() {
+  // If we already have a client, return it
+  if (prismaClient) {
+    return prismaClient;
+  }
+
+  // Otherwise, create a new client
+  prismaClient = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+
+  return prismaClient;
+}
+
+// Export the appropriate database client
+export const db = useMockDb ? new MockDB() : getPrismaClient();

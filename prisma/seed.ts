@@ -1,340 +1,294 @@
 import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
+/**
+ * Seed database with initial data for development and testing
+ */
 async function main() {
-  console.log('Seeding database...');
+  console.log('Starting database seeding...');
 
-  // Create a demo user
-  const demoUserPassword = await hash('password123', 10);
-  
+  // Create a demo user with password hash
+  const hashedPassword = await bcrypt.hash('password', 10);
   const demoUser = await prisma.user.upsert({
-    where: { email: 'demo@lifenavigator.com' },
+    where: { email: 'demo@example.com' },
     update: {},
     create: {
-      email: 'demo@lifenavigator.com',
+      email: 'demo@example.com',
       name: 'Demo User',
-      password: demoUserPassword,
-      settings: {
-        create: {
-          theme: 'system',
-          currency: 'USD',
-          notificationsEnabled: true,
-        },
-      },
+      password: hashedPassword,
+      setupCompleted: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
   });
-  
-  console.log('Created demo user:', demoUser.id);
-  
-  // Add financial data
-  const financialRecord = await prisma.financialRecord.upsert({
+
+  console.log(`Created demo user with ID: ${demoUser.id}`);
+
+  // Create user preferences
+  await prisma.userPreference.upsert({
+    where: { userId: demoUser.id },
+    update: {},
+    create: {
+      userId: demoUser.id,
+      theme: 'system',
+      currency: 'USD',
+      language: 'en',
+      timezone: 'America/New_York',
+    },
+  });
+
+  // Create sample financial accounts
+  const checkingAccount = await prisma.financialAccount.upsert({
     where: {
-      id: 'demo-financial-record',
+      userId_name: {
+        userId: demoUser.id,
+        name: 'Main Checking'
+      }
     },
     update: {},
     create: {
-      id: 'demo-financial-record',
       userId: demoUser.id,
-      totalNetWorth: 127492,
-      totalAssets: 152824,
-      totalLiabilities: 25332,
+      name: 'Main Checking',
+      type: 'checking',
+      institution: 'Demo Bank',
+      accountNumber: '****4567',
+      balance: 5829.42,
+      currency: 'USD',
     },
   });
-  
-  console.log('Created financial record:', financialRecord.id);
-  
-  // Add a budget
-  const budget = await prisma.budget.upsert({
+
+  const savingsAccount = await prisma.financialAccount.upsert({
     where: {
-      id: 'demo-budget',
+      userId_name: {
+        userId: demoUser.id,
+        name: 'Emergency Savings'
+      }
     },
     update: {},
     create: {
-      id: 'demo-budget',
       userId: demoUser.id,
-      name: 'Monthly Budget',
-      totalBudget: 4000,
-      startDate: new Date('2025-05-01'),
-      endDate: new Date('2025-05-31'),
-      isActive: true,
-      categories: {
-        create: [
-          { name: 'Housing', allocated: 1500, spent: 1500 },
-          { name: 'Groceries', allocated: 600, spent: 450 },
-          { name: 'Transportation', allocated: 400, spent: 350 },
-          { name: 'Entertainment', allocated: 300, spent: 275 },
-          { name: 'Dining Out', allocated: 400, spent: 320 },
-          { name: 'Savings', allocated: 500, spent: 500 },
-          { name: 'Utilities', allocated: 300, spent: 280 },
-        ],
-      },
+      name: 'Emergency Savings',
+      type: 'savings',
+      institution: 'Demo Bank',
+      accountNumber: '****7890',
+      balance: 15420.65,
+      currency: 'USD',
     },
   });
-  
-  console.log('Created budget:', budget.id);
-  
-  // Add investments
-  const investments = await Promise.all([
-    prisma.investment.upsert({
-      where: { id: 'demo-investment-1' },
-      update: {},
-      create: {
-        id: 'demo-investment-1',
+
+  const investmentAccount = await prisma.financialAccount.upsert({
+    where: {
+      userId_name: {
         userId: demoUser.id,
-        name: 'Total Stock Market ETF',
-        type: 'stock',
-        value: 45000,
-        purchasePrice: 40000,
-        purchaseDate: new Date('2023-01-15'),
-      },
-    }),
-    prisma.investment.upsert({
-      where: { id: 'demo-investment-2' },
-      update: {},
-      create: {
-        id: 'demo-investment-2',
-        userId: demoUser.id,
-        name: 'International Stock ETF',
-        type: 'stock',
-        value: 25000,
-        purchasePrice: 24000,
-        purchaseDate: new Date('2023-02-20'),
-      },
-    }),
-    prisma.investment.upsert({
-      where: { id: 'demo-investment-3' },
-      update: {},
-      create: {
-        id: 'demo-investment-3',
-        userId: demoUser.id,
-        name: 'Bond ETF',
-        type: 'bond',
-        value: 15000,
-        purchasePrice: 15500,
-        purchaseDate: new Date('2023-03-10'),
-      },
-    }),
-  ]);
-  
-  console.log('Created investments:', investments.length);
-  
-  // Add career data
-  const careerRecord = await prisma.careerRecord.upsert({
-    where: { id: 'demo-career-record' },
+        name: 'Investment Portfolio'
+      }
+    },
     update: {},
     create: {
-      id: 'demo-career-record',
       userId: demoUser.id,
-      currentRole: 'Senior Software Engineer',
-      company: 'Tech Solutions Inc.',
-      industry: 'Software Development',
-      yearsExperience: 8,
-      salaryRange: '$120,000 - $150,000',
-      skills: {
-        create: [
-          { name: 'JavaScript', proficiency: 5, yearsExperience: 8 },
-          { name: 'TypeScript', proficiency: 5, yearsExperience: 5 },
-          { name: 'React', proficiency: 5, yearsExperience: 6 },
-          { name: 'Node.js', proficiency: 4, yearsExperience: 6 },
-          { name: 'Python', proficiency: 3, yearsExperience: 3 },
-          { name: 'AWS', proficiency: 4, yearsExperience: 4 },
-          { name: 'Docker', proficiency: 4, yearsExperience: 3 },
-        ],
-      },
-      jobApplications: {
-        create: [
-          {
-            company: 'Innovate Tech',
-            role: 'Lead Developer',
-            appliedDate: new Date('2025-04-10'),
-            status: 'interview',
-            notes: 'Second interview scheduled for May 15',
-          },
-          {
-            company: 'Global Solutions',
-            role: 'Senior Full Stack Developer',
-            appliedDate: new Date('2025-04-05'),
-            status: 'applied',
-            notes: 'Waiting for response',
-          },
-        ],
-      },
-      networkingEvents: {
-        create: [
-          {
-            name: 'Tech Conference 2025',
-            date: new Date('2025-07-15'),
-            location: 'San Francisco, CA',
-            description: 'Annual tech conference with networking opportunities',
-          },
-          {
-            name: 'Local Meetup',
-            date: new Date('2025-05-20'),
-            location: 'Downtown Tech Hub',
-            description: 'Monthly tech meetup for local developers',
-          },
-        ],
-      },
+      name: 'Investment Portfolio',
+      type: 'investment',
+      institution: 'Demo Investments',
+      balance: 103642.18,
+      currency: 'USD',
     },
   });
+
+  console.log(`Created financial accounts for demo user`);
+
+  // Create sample transactions
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const lastWeek = new Date(today);
+  lastWeek.setDate(lastWeek.getDate() - 7);
+
+  // Checking account transactions
+  await prisma.transaction.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        userId: demoUser.id,
+        accountId: checkingAccount.id,
+        amount: -125.43,
+        description: 'Grocery Store',
+        category: 'groceries',
+        date: yesterday,
+        type: 'expense',
+        merchantName: 'Whole Foods',
+      },
+      {
+        userId: demoUser.id,
+        accountId: checkingAccount.id,
+        amount: -82.15,
+        description: 'Restaurant',
+        category: 'dining',
+        date: lastWeek,
+        type: 'expense',
+        merchantName: 'Local Bistro',
+      },
+      {
+        userId: demoUser.id,
+        accountId: checkingAccount.id,
+        amount: 2450.00,
+        description: 'Paycheck',
+        category: 'income',
+        date: lastWeek,
+        type: 'income',
+        merchantName: 'Employer',
+      },
+    ],
+  });
+
+  // Create sample health metrics
+  const oneWeekAgo = new Date(today);
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   
-  console.log('Created career record:', careerRecord.id);
-  
-  // Add education data
-  const educationRecord = await prisma.educationRecord.upsert({
-    where: { id: 'demo-education-record' },
-    update: {},
-    create: {
-      id: 'demo-education-record',
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(oneWeekAgo);
+    date.setDate(date.getDate() + i);
+    
+    await prisma.healthMetric.create({
+      data: {
+        userId: demoUser.id,
+        type: 'weight',
+        value: 70.5 - (i * 0.1), // Slight decrease each day
+        unit: 'kg',
+        date: date,
+        source: 'manual',
+      }
+    });
+
+    await prisma.healthMetric.create({
+      data: {
+        userId: demoUser.id,
+        type: 'steps',
+        value: 8000 + (Math.random() * 2000), // Random steps each day
+        unit: 'count',
+        date: date,
+        source: 'device',
+        deviceId: 'fitbit-123',
+      }
+    });
+  }
+
+  console.log(`Created health metrics for demo user`);
+
+  // Create sample health record
+  await prisma.healthRecord.create({
+    data: {
       userId: demoUser.id,
-      highestDegree: 'Bachelor of Science',
+      type: 'medical_visit',
+      providerName: 'Dr. Smith',
+      date: lastWeek,
+      description: 'Annual physical checkup',
+      notes: 'Everything looks good, follow up in 12 months',
+    }
+  });
+
+  // Create sample education history
+  await prisma.educationRecord.create({
+    data: {
+      userId: demoUser.id,
+      institution: 'Demo University',
+      degree: 'Bachelor of Science',
       fieldOfStudy: 'Computer Science',
-      institution: 'State University',
-      courses: {
-        create: [
-          {
-            name: 'Advanced Machine Learning',
-            provider: 'Coursera',
-            startDate: new Date('2025-03-01'),
-            status: 'in_progress',
-            notes: 'Working on final project',
-          },
-          {
-            name: 'Cloud Architecture',
-            provider: 'AWS Training',
-            startDate: new Date('2025-02-15'),
-            endDate: new Date('2025-04-01'),
-            status: 'completed',
-            grade: 'A',
-          },
-        ],
-      },
-      certifications: {
-        create: [
-          {
-            name: 'AWS Certified Solutions Architect',
-            issuer: 'Amazon Web Services',
-            issueDate: new Date('2024-12-10'),
-            expirationDate: new Date('2027-12-10'),
-            credentialId: 'AWS-123456',
-          },
-          {
-            name: 'Professional Scrum Master',
-            issuer: 'Scrum.org',
-            issueDate: new Date('2024-08-15'),
-            credentialId: 'PSM-987654',
-          },
-        ],
-      },
-    },
+      startDate: new Date('2016-09-01'),
+      endDate: new Date('2020-05-30'),
+      grade: '3.8 GPA',
+    }
   });
-  
-  console.log('Created education record:', educationRecord.id);
-  
-  // Add health data
-  const healthRecord = await prisma.healthRecord.upsert({
-    where: { id: 'demo-health-record' },
-    update: {},
-    create: {
-      id: 'demo-health-record',
+
+  // Create sample ongoing course
+  await prisma.educationCourse.create({
+    data: {
       userId: demoUser.id,
-      height: 180, // cm
-      weight: 75, // kg
-      bloodType: 'A+',
-      vitalSigns: {
-        create: [
-          {
-            type: 'blood_pressure',
-            value: '120/80',
-            unit: 'mmHg',
-            recordedAt: new Date('2025-05-01'),
-          },
-          {
-            type: 'heart_rate',
-            value: '68',
-            unit: 'bpm',
-            recordedAt: new Date('2025-05-01'),
-          },
-          {
-            type: 'weight',
-            value: '75',
-            unit: 'kg',
-            recordedAt: new Date('2025-05-01'),
-          },
-        ],
-      },
-      appointments: {
-        create: [
-          {
-            doctor: 'Dr. Smith',
-            specialty: 'Primary Care',
-            date: new Date('2025-06-15'),
-            reason: 'Annual physical',
-          },
-          {
-            doctor: 'Dr. Johnson',
-            specialty: 'Dentist',
-            date: new Date('2025-07-01'),
-            reason: 'Teeth cleaning',
-          },
-        ],
-      },
-    },
+      title: 'Advanced Machine Learning',
+      provider: 'Coursera',
+      url: 'https://www.coursera.org/learn/machine-learning',
+      startDate: lastWeek,
+      status: 'in_progress',
+      progress: 35.0,
+    }
   });
-  
-  console.log('Created health record:', healthRecord.id);
-  
-  // Add roadmap
-  const roadmap = await prisma.roadmap.upsert({
-    where: { id: 'demo-roadmap' },
-    update: {},
-    create: {
-      id: 'demo-roadmap',
+
+  console.log(`Created education records for demo user`);
+
+  // Create sample career profile
+  await prisma.careerProfile.create({
+    data: {
       userId: demoUser.id,
-      title: 'Financial Independence Plan',
-      description: 'Steps to achieve financial independence within 10 years',
-      domain: 'financial',
-      status: 'active',
-      milestones: {
-        create: [
-          {
-            title: 'Establish emergency fund',
-            description: 'Save 6 months of expenses in a high-yield savings account',
-            targetDate: new Date('2025-08-01'),
-            status: 'in_progress',
-            priority: 1,
-          },
-          {
-            title: 'Max out retirement accounts',
-            description: 'Contribute maximum allowed to 401(k) and IRA',
-            targetDate: new Date('2025-12-31'),
-            status: 'not_started',
-            priority: 2,
-          },
-          {
-            title: 'Pay off student loans',
-            description: 'Eliminate all student loan debt',
-            targetDate: new Date('2026-06-30'),
-            status: 'not_started',
-            priority: 3,
-          },
-        ],
-      },
-    },
+      title: 'Software Engineer',
+      company: 'Tech Company Inc.',
+      industry: 'Technology',
+      yearsExperience: 3,
+      skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'PostgreSQL'],
+      jobSearchStatus: 'passive',
+    }
   });
-  
-  console.log('Created roadmap:', roadmap.id);
-  
-  console.log('Database seeding completed successfully!');
+
+  // Create sample job application
+  await prisma.jobApplication.create({
+    data: {
+      userId: demoUser.id,
+      companyName: 'Innovative Startup',
+      position: 'Senior Developer',
+      applicationDate: lastWeek,
+      status: 'interviewing',
+      contactName: 'Jane Recruiter',
+      contactEmail: 'jane@example.com',
+      salary: 120000,
+      location: 'San Francisco, CA',
+      remote: true,
+      nextStep: 'Technical Interview',
+      nextStepDate: today,
+    }
+  });
+
+  console.log(`Created career profile and job application for demo user`);
+
+  // Create sample financial goal
+  await prisma.financialGoal.create({
+    data: {
+      userId: demoUser.id,
+      name: 'Emergency Fund',
+      description: 'Save 6 months of expenses for emergency fund',
+      targetAmount: 25000,
+      currentAmount: 15420.65,
+      currency: 'USD',
+      deadline: new Date(today.getFullYear(), today.getMonth() + 6, 1),
+      category: 'emergency',
+    }
+  });
+
+  // Create sample asset
+  await prisma.asset.create({
+    data: {
+      userId: demoUser.id,
+      name: 'Primary Residence',
+      type: 'real_estate',
+      value: 350000,
+      purchasePrice: 300000,
+      currentValue: 350000,
+      purchaseDate: new Date(today.getFullYear() - 3, today.getMonth(), 1),
+      lastValuationDate: today,
+      currency: 'USD',
+    }
+  });
+
+  console.log(`Created financial goal and asset for demo user`);
+
+  console.log('Database seeding completed successfully');
 }
 
 main()
-  .catch((e) => {
-    console.error('Error seeding database:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error(e);
+    await prisma.$disconnect();
+    process.exit(1);
   });

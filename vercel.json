@@ -40,18 +40,18 @@
     }
   ],
   "env": {
+    "SKIP_ENV_VALIDATION": "true",
+    "ENABLE_FIELD_ENCRYPTION": "false",
+    "USE_MOCK_DB": "false",
     "NEXTAUTH_URL": {
       "development": "http://localhost:3000",
       "preview": "https://${VERCEL_URL}",
       "production": "https://${VERCEL_URL}"
-    },
-    "SKIP_ENV_VALIDATION": "true",
-    "ENABLE_FIELD_ENCRYPTION": "false"
-  },
-  "builds": [
-    {
-      "src": "prisma/schema.prisma",
-      "use": "@prisma/next-adapter"
     }
-  ]
+  },
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096"
+    }
+  }
 }

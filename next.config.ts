@@ -63,6 +63,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  swcMinify: true, // Use SWC minification for better performance
   images: {
     remotePatterns: [
       {
@@ -93,6 +94,20 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Improve handling of client components
+  compiler: {
+    // Enables the styled-components SWC transform
+    styledComponents: true
+  },
+  // Ensure client components are built correctly
+  experimental: {
+    // External packages that should be processed by webpack
+    serverComponentsExternalPackages: [
+      'bcrypt',
+      'crypto',
+      '@prisma/client'
+    ]
+  }
 };
 
 export default nextConfig;
