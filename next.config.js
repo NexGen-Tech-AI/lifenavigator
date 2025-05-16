@@ -60,11 +60,18 @@ const nextConfig = {
   compiler: {
     styledComponents: true
   },
+  webpack: (config) => {
+    return config;
+  },
   serverExternalPackages: [
     'bcrypt',
     'crypto',
     '@prisma/client'
-  ]
+  ],
+  experimental: {
+    esmExternals: 'loose',
+    serverComponentsExternalPackages: [] // Not used in Next.js 15.3.1, replaced by serverExternalPackages above
+  }
 };
 
 module.exports = nextConfig;
