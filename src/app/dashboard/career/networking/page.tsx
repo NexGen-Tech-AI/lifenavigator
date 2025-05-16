@@ -1,6 +1,6 @@
 "use client";
 
-import ComingSoon from '@/components/coming-soon/ComingSoon';
+import ComingSoon from '../../../../placeholders/ComingSoon';
 
 export default function CareerNetworkingPage() {
   return <ComingSoon />;

@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-export default function ComingSoon() {
+export default function ComingSoon({ title = "Coming Soon", description = "We're working hard to bring you this feature. Please check back soon!" }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] p-6 text-center">
       <div className="w-20 h-20 mb-8 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
@@ -12,9 +12,9 @@ export default function ComingSoon() {
         </svg>
       </div>
       
-      <h1 className="text-3xl font-bold mb-4">Coming Soon</h1>
+      <h1 className="text-3xl font-bold mb-4">{title}</h1>
       <p className="mb-8 text-lg text-gray-600 dark:text-gray-400 max-w-md">
-        We're working hard to bring you this feature. Please check back soon!
+        {description}
       </p>
       
       <Link 
