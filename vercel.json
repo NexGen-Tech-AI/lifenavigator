@@ -44,6 +44,14 @@
       "development": "http://localhost:3000",
       "preview": "https://${VERCEL_URL}",
       "production": "https://${VERCEL_URL}"
+    },
+    "SKIP_ENV_VALIDATION": "true",
+    "ENABLE_FIELD_ENCRYPTION": "false"
+  },
+  "builds": [
+    {
+      "src": "prisma/schema.prisma",
+      "use": "@prisma/next-adapter"
     }
-  }
+  ]
 }
