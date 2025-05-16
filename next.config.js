@@ -60,7 +60,6 @@ const nextConfig = {
   compiler: {
     styledComponents: true
   },
-  // Updated from serverComponentsExternalPackages to serverExternalPackages
   serverExternalPackages: [
     'bcrypt',
     'crypto',
