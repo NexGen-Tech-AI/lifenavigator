@@ -2,7 +2,6 @@
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     remotePatterns: [
       {
@@ -61,13 +60,12 @@ const nextConfig = {
   compiler: {
     styledComponents: true
   },
-  experimental: {
-    serverComponentsExternalPackages: [
-      'bcrypt',
-      'crypto',
-      '@prisma/client'
-    ]
-  }
+  // Updated from serverComponentsExternalPackages to serverExternalPackages
+  serverExternalPackages: [
+    'bcrypt',
+    'crypto',
+    '@prisma/client'
+  ]
 };
 
 module.exports = nextConfig;
