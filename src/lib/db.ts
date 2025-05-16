@@ -72,7 +72,7 @@ class MockDB {
   };
   
   // Mock the $queryRaw method for testing database connectivity
-  $queryRaw: async <T = any>(...args: any[]) => {
+  $queryRaw = async <T = any>(...args: any[]): Promise<T> => {
     return [{ result: 2 }] as T;
   }
 }

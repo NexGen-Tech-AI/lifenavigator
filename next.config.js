@@ -40,9 +40,7 @@ const nextConfig = {
     '@prisma/client',
     'pg'
   ],
-  experimental: {
-    esmExternals: 'loose' // Help with ESM/CJS compatibility issues
-  }
+  // Removed experimental.esmExternals as it's not recommended
 };
 
 module.exports = nextConfig;
