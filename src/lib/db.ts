@@ -2,6 +2,8 @@
 // This file provides either a real Prisma client or a mock DB for development
 
 import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 // Define User type based on our schema
 type User = {
@@ -90,10 +92,33 @@ function getPrismaClient() {
     return prismaClient;
   }
 
-  // Otherwise, create a new client
-  prismaClient = new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
+  // Check if we're using Vercel Postgres
+  const postgresUrl = process.env.POSTGRES_PRISMA_URL;
+  
+  if (postgresUrl) {
+    // Using Vercel Postgres with connection pooling
+    console.log("Using Vercel PostgreSQL with connection pooling");
+    
+    const pool = new Pool({
+      connectionString: postgresUrl,
+      max: 10,
+      ssl: true,
+    });
+    
+    const adapter = new PrismaPg(pool);
+    
+    prismaClient = new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+  } else {
+    // Using standard DATABASE_URL connection
+    console.log("Using standard DATABASE_URL connection");
+    
+    prismaClient = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
+  }
 
   return prismaClient;
 }

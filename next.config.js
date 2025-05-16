@@ -16,14 +16,27 @@ const nextConfig = {
     styledComponents: true
   },
   webpack: (config) => {
+    // Needed for better compatibility with Node.js built-ins
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      crypto: require.resolve('crypto-browserify'),
+      stream: require.resolve('stream-browserify'),
+    };
     return config;
   },
   poweredByHeader: false,
-  serverExternalPackages: [
-    'bcrypt',
-    'crypto',
-    '@prisma/client'
-  ]
+  experimental: {
+    serverComponentsExternalPackages: [
+      'bcrypt',
+      'crypto',
+      '@prisma/client',
+      'pg'
+    ],
+    esmExternals: 'loose', // Help with ESM/CJS compatibility issues
+  }
 };
 
 module.exports = nextConfig;

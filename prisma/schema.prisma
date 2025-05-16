@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // Uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Uses a direct connection
 }
 
 // The rest of your schema model definitions remain the same
@@ -19,8 +20,16 @@ model User {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   setupCompleted      Boolean               @default(false)
+  lastLogin           DateTime?
+  failedLoginAttempts Int                   @default(0)
+  lockedUntil         DateTime?
+  mfaEnabled          Boolean               @default(false)
+  mfaSecret           String?
   accounts            Account[]
   sessions            Session[]
+  userDevices         UserDevice[]
+  securityAuditLogs   SecurityAuditLog[]
+  revokedTokens       RevokedToken[]
   
   @@map("users")
 }
@@ -31,16 +40,17 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -49,8 +59,10 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  deviceId     String?
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
@@ -61,4 +73,93 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model RevokedToken {
+  id        String   @id @default(cuid())
+  userId    String
+  jti       String   @unique
+  expiresAt DateTime
+  revokedAt DateTime @default(now())
+  reason    String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("revoked_tokens")
+}
+
+model UserDevice {
+  id         String    @id @default(cuid())
+  userId     String
+  deviceId   String
+  ipAddress  String?
+  userAgent  String?
+  lastUsedAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  isRevoked  Boolean   @default(false)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([deviceId])
+  @@map("user_devices")
+}
+
+model SecurityAuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  eventType String
+  ipAddress String?
+  userAgent String?
+  deviceId  String?
+  data      Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([eventType])
+  @@map("security_audit_log")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId])
+}
+
+model MfaSecret {
+  id        String   @id @default(cuid())
+  userId    String
+  secret    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("mfa_secrets")
+}
+
+model MfaSetup {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  secret    String
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mfa_setup")
+}
+
+model MfaRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  code      String
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("mfa_recovery_codes")
 }
