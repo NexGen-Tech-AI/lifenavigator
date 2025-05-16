@@ -17,25 +17,31 @@ const nextConfig = {
   },
   webpack: (config) => {
     // Needed for better compatibility with Node.js built-ins
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      fs: false,
-      net: false,
-      tls: false,
-      crypto: require.resolve('crypto-browserify'),
-      stream: require.resolve('stream-browserify'),
-    };
+    if (config.resolve.fallback) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    } else {
+      config.resolve.fallback = {
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
     return config;
   },
   poweredByHeader: false,
+  serverExternalPackages: [
+    'bcrypt',
+    'crypto',
+    '@prisma/client',
+    'pg'
+  ],
   experimental: {
-    serverComponentsExternalPackages: [
-      'bcrypt',
-      'crypto',
-      '@prisma/client',
-      'pg'
-    ],
-    esmExternals: 'loose', // Help with ESM/CJS compatibility issues
+    esmExternals: 'loose' // Help with ESM/CJS compatibility issues
   }
 };
 
