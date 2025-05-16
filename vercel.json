@@ -43,11 +43,7 @@
     "SKIP_ENV_VALIDATION": "true",
     "ENABLE_FIELD_ENCRYPTION": "false",
     "USE_MOCK_DB": "false",
-    "NEXTAUTH_URL": {
-      "development": "http://localhost:3000",
-      "preview": "https://${VERCEL_URL}",
-      "production": "https://${VERCEL_URL}"
-    }
+    "NEXTAUTH_URL": "https://${VERCEL_URL}"
   },
   "build": {
     "env": {
