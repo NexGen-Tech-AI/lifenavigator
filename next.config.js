@@ -35,7 +35,6 @@ const nextConfig = {
   },
   poweredByHeader: false,
   serverExternalPackages: [
-    'bcrypt',
     'crypto',
     '@prisma/client',
     'pg'

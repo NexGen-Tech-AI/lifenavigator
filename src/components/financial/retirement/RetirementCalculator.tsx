@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/forms/Select';
 import { Input } from '@/components/ui/forms/Input';
-import { SliderInput } from '@/components/ui/forms/SliderInput';
+import SliderInput from '@/components/ui/forms/SliderInput';
 import { LoadingSpinner } from '@/components/ui/loaders/LoadingSpinner';
 import {
   LineChart,
