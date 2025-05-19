@@ -1,14 +1,17 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { authOptions } from "../NextAuth";
 import { db } from "@/lib/db";
 
+// Demo account details for direct check (fallback)
+const DEMO_EMAIL = "demo@example.com";
+const DEMO_PASSWORD = "password";
+const DEMO_HASH = "$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi"; // Hashed 'password'
+
 // Create NextAuth handler with additional providers
 export const handler = NextAuth({
   ...authOptions,
-  adapter: PrismaAdapter(db as any), // Cast to PrismaClient
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -17,37 +20,59 @@ export const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
+
+          // Special case for demo account
+          if (credentials.email === DEMO_EMAIL && credentials.password === DEMO_PASSWORD) {
+            // If demo account, return hardcoded user
+            return {
+              id: "demo-user-id",
+              email: DEMO_EMAIL,
+              name: "Demo User",
+              setupCompleted: true,
+            };
+          }
+
+          // Otherwise, check database
+          const user = await db.user.findUnique({
+            where: { email: credentials.email },
+          });
+
+          if (!user || !user.password) {
+            return null;
+          }
+
+          const passwordValid = await compare(credentials.password, user.password);
+
+          if (!passwordValid) {
+            return null;
+          }
+
+          // Update last login timestamp
+          try {
+            await db.user.update({
+              where: { id: user.id },
+              data: { lastLogin: new Date() },
+            });
+          } catch (error) {
+            console.error("Failed to update last login time:", error);
+            // Don't block login if update fails
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            setupCompleted: user.setupCompleted || false,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
           return null;
         }
-
-        const user = await db.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user || !user.password) {
-          return null;
-        }
-
-        const passwordValid = await compare(credentials.password, user.password);
-
-        if (!passwordValid) {
-          return null;
-        }
-
-        // Update last login timestamp
-        await db.user.update({
-          where: { id: user.id },
-          data: { lastLogin: new Date() },
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          setupCompleted: user.setupCompleted,
-        };
       },
     }),
   ],
@@ -67,6 +92,7 @@ export const handler = NextAuth({
       return session;
     },
   },
+  debug: process.env.NODE_ENV === 'development',
 });
 
 export { handler as GET, handler as POST };

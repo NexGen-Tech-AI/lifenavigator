@@ -151,6 +151,9 @@ export default function LoginForm() {
     setIsLoading(true);
     
     try {
+      // Clear any previous errors
+      setError(null);
+      
       // Use the correct demo credentials that match what's in the authorize function
       const result = await signIn('credentials', {
         redirect: false,
@@ -162,10 +165,21 @@ export default function LoginForm() {
 
       if (result?.error) {
         setError('Demo login failed. Please try again or contact support.');
+        console.error('Demo login error details:', result.error);
       } else {
-        // Successful demo login - we assume demo account has setup completed
+        // Successful demo login - demo account has setup completed
         // so we redirect directly to dashboard
+        toast({
+          title: "Demo Login Successful",
+          description: "You're now logged in with demo credentials",
+          type: "success",
+        });
+        
+        // Use push and then reload to ensure we get a fresh state
         router.push('/dashboard');
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

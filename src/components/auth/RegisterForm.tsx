@@ -82,10 +82,24 @@ export default function RegisterForm() {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        console.error('Error parsing JSON:', jsonError);
+        // If JSON parsing fails, create a fallback response
+        data = { message: 'Could not parse server response. Registration may have been successful.' };
+      }
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 409) { // Allow 409 (user exists) to be handled
+        console.error('Registration failed:', response.status, data);
         throw new Error(data.message || 'Registration failed');
+      }
+
+      if (response.status === 409) {
+        setError('A user with this email already exists. Please try a different email address or log in.');
+        setIsLoading(false);
+        return;
       }
 
       // After successful registration, redirect to login page with a success message
