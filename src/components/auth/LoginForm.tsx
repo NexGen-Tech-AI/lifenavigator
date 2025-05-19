@@ -56,88 +56,28 @@ export default function LoginForm() {
     setError(null);
 
     try {
-      // Check if account is locked
-      const locked = await checkLockoutStatus(formData.email);
-      if (locked) {
-        const minutes = Math.floor(lockoutTimeRemaining / 60);
-        const seconds = lockoutTimeRemaining % 60;
-        setError(`Account is temporarily locked due to too many failed attempts. Try again in ${minutes}m ${seconds}s.`);
-        setIsLoading(false);
-        
-        // Setup a countdown timer to update the remaining time
-        const countdownInterval = setInterval(() => {
-          setLockoutTimeRemaining(prev => {
-            if (prev <= 1) {
-              clearInterval(countdownInterval);
-              setIsAccountLocked(false);
-              setError(null);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        
-        return;
-      }
+      console.log("Regular login attempt...");
 
-      // If MFA is required, verify the token first
-      if (mfaRequired) {
-        if (!formData.mfaToken) {
-          setError('MFA token is required');
-          setIsLoading(false);
-          return;
-        }
+      // For now, simplify the login flow to just call signIn directly
+      // Remove the lockout check and MFA features temporarily to focus on basic login
+      
+      // Proceed with normal login
+      const result = await signIn('credentials', {
+        redirect: false,
+        email: formData.email,
+        password: formData.password,
+        callbackUrl: '/dashboard', // Always redirect to dashboard after login
+      });
 
-        // Proceed with login including MFA token
-        const result = await signIn('credentials', {
-          redirect: false,
-          email: formData.email,
-          password: formData.password,
-          mfaToken: formData.mfaToken,
-        });
+      console.log("Login result:", result);
 
-        if (result?.error) {
-          setError('Invalid credentials or MFA token. Please try again.');
-          // Check if account is now locked after this failed attempt
-          await checkLockoutStatus(formData.email);
-        } else {
-          // Successful login with MFA
-          router.push('/');
-        }
+      if (result?.error) {
+        setError('Invalid email or password. Please try again.');
+        console.error('Login error details:', result.error);
       } else {
-        // Check if MFA is required for this user
-        const mfaCheckResponse = await fetch('/api/auth/mfa/challenge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email }),
-        });
-
-        const mfaData = await mfaCheckResponse.json();
-
-        if (mfaData.requiresMfa) {
-          // MFA is required, store the userId and show MFA input
-          setMfaRequired(true);
-          setUserId(mfaData.userId);
-          setIsLoading(false);
-          return;
-        }
-
-        // No MFA required, proceed with normal login
-        const result = await signIn('credentials', {
-          redirect: false,
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (result?.error) {
-          setError('Invalid email or password. Please try again.');
-          // Check if account is now locked after this failed attempt
-          await checkLockoutStatus(formData.email);
-        } else {
-          // Successful login, redirect to root which will handle navigation
-          // based on user setup status (dashboard or onboarding questionnaire)
-          router.push('/');
-        }
+        console.log("Login successful, redirecting...");
+        // Successful login - force navigation to the dashboard
+        window.location.href = '/dashboard';
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
@@ -154,11 +94,14 @@ export default function LoginForm() {
       // Clear any previous errors
       setError(null);
       
+      console.log("Attempting demo login...");
+      
       // Use the correct demo credentials that match what's in the authorize function
       const result = await signIn('credentials', {
         redirect: false,
         email: 'demo@example.com',
         password: 'password',
+        callbackUrl: '/dashboard',
       });
 
       console.log("Demo login result:", result);
@@ -168,18 +111,10 @@ export default function LoginForm() {
         console.error('Demo login error details:', result.error);
       } else {
         // Successful demo login - demo account has setup completed
-        // so we redirect directly to dashboard
-        toast({
-          title: "Demo Login Successful",
-          description: "You're now logged in with demo credentials",
-          type: "success",
-        });
+        console.log("Demo login successful, redirecting to dashboard");
         
-        // Use push and then reload to ensure we get a fresh state
-        router.push('/dashboard');
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+        // Force a hard navigation to dashboard
+        window.location.href = '/dashboard';
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

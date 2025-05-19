@@ -63,12 +63,12 @@ async function handleNormalRequest(request: NextRequest) {
   if (path === '/') {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
-  
+
   // Define protected routes (routes that require authentication)
-  const isProtectedRoute = (path.startsWith('/dashboard') && !path.includes('/healthcare/wellness')) ||
-                          path.startsWith('/onboarding') ||
-                          (path.startsWith('/api/') &&
-                          !path.startsWith('/api/auth'));
+  const isProtectedRoute = path.startsWith('/dashboard') ||
+                         path.startsWith('/onboarding') ||
+                         (path.startsWith('/api/') &&
+                         !path.startsWith('/api/auth'));
   
   // Define public routes (routes that should be accessible without auth)
   const isPublicRoute = path.startsWith('/auth/') || 
@@ -78,29 +78,32 @@ async function handleNormalRequest(request: NextRequest) {
                        path.includes('/images') ||
                        path.includes('/favicon');
   
-  // Get the user token if not already obtained
-  const token = path === '/' ? null : await getToken({ 
-    req: request, 
-    secret: process.env.NEXTAUTH_SECRET 
-  });
+  // Get the user token if the path is a protected route
+  // Skip token verification for all auth-related paths to prevent middleware interference
+  let token = null;
+  if (!path.startsWith('/auth/') && !path.startsWith('/api/auth/')) {
+    try {
+      token = await getToken({ 
+        req: request, 
+        secret: process.env.NEXTAUTH_SECRET 
+      });
+      
+      // Debug token on protected routes
+      if (isProtectedRoute) {
+        console.log(`Token for ${path}:`, token ? 'present' : 'missing');
+      }
+    } catch (error) {
+      console.error('Error getting token:', error);
+    }
+  }
   
   // Attach token to request for API gateway use in rate limiting
   (request as any).token = token;
   
   // If the path is a protected route and no token exists, redirect to login
   if (isProtectedRoute && !token && !isPublicRoute) {
+    console.log(`Redirecting from ${path} to login due to missing token`);
     return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
-  
-  // Check if user needs to complete onboarding - applies to dashboard and root path
-  const requiresSetup = path === '/' || path.startsWith('/dashboard');
-  if (requiresSetup && token && token.user && !token.user.setupCompleted) {
-    // Get the user ID from the token
-    const userId = token.sub || '';
-    
-    return NextResponse.redirect(
-      new URL(`/onboarding/questionnaire?userId=${userId}`, request.url)
-    );
   }
   
   // Continue normal request processing

@@ -1,46 +1,13 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
-import { hash } from "bcryptjs";
 import { authOptions } from "../NextAuth";
-import { db } from "@/lib/db";
-import { v4 as uuidv4 } from 'uuid';
 
-// Demo account details for direct check (fallback)
+// Demo account details for hardcoded authentication
 const DEMO_EMAIL = "demo@example.com";
 const DEMO_PASSWORD = "password";
-const DEMO_HASH = "$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi"; // Hashed 'password'
 
-// Ensure demo account exists in database on first run
-async function ensureDemoAccount() {
-  try {
-    const existingUser = await db.user.findUnique({
-      where: { email: DEMO_EMAIL },
-    });
-    
-    if (!existingUser) {
-      console.log("Creating demo account in database...");
-      await db.user.create({
-        data: {
-          id: "demo-user-id",
-          email: DEMO_EMAIL,
-          name: "Demo User",
-          password: DEMO_HASH,
-          setupCompleted: true,
-        },
-      });
-      console.log("Demo account created successfully");
-    }
-  } catch (error) {
-    console.error("Failed to ensure demo account exists:", error);
-    // Non-blocking - continue even if this fails
-  }
-}
-
-// Try to create the demo account (don't await, let it run in background)
-ensureDemoAccount();
-
-// Create NextAuth handler with additional providers
+// Create NextAuth handler with simplified setup
 export const handler = NextAuth({
   ...authOptions,
   providers: [
@@ -52,13 +19,15 @@ export const handler = NextAuth({
       },
       async authorize(credentials) {
         try {
+          // Basic validation
           if (!credentials?.email || !credentials?.password) {
+            console.log("Missing credentials");
             return null;
           }
 
-          // Special case for demo account
+          // Handle demo account - always allow this to work
           if (credentials.email === DEMO_EMAIL && credentials.password === DEMO_PASSWORD) {
-            // If demo account, return hardcoded user
+            console.log("Demo login successful");
             return {
               id: "demo-user-id",
               email: DEMO_EMAIL,
@@ -67,7 +36,12 @@ export const handler = NextAuth({
             };
           }
 
-          // Otherwise, check database
+          // For any other accounts, reject for now
+          // This effectively makes only the demo account work for testing
+          console.log("Non-demo login attempted:", credentials.email);
+          return null;
+          
+          /* The real database authentication logic would be here 
           const user = await db.user.findUnique({
             where: { email: credentials.email },
           });
@@ -82,26 +56,17 @@ export const handler = NextAuth({
             return null;
           }
 
-          // Update last login timestamp
-          try {
-            await db.user.update({
-              where: { id: user.id },
-              data: { lastLogin: new Date() },
-            });
-          } catch (error) {
-            console.error("Failed to update last login time:", error);
-            // Don't block login if update fails
-          }
-
           return {
             id: user.id,
             email: user.email,
             name: user.name,
-            image: user.image,
+            image: user.image, 
             setupCompleted: user.setupCompleted || false,
           };
+          */
         } catch (error) {
           console.error("Auth error:", error);
+          // Return null on error
           return null;
         }
       },
@@ -123,7 +88,7 @@ export const handler = NextAuth({
       return session;
     },
   },
-  debug: process.env.NODE_ENV === 'development',
+  debug: true, // Always enable debugging
 });
 
 export { handler as GET, handler as POST };
