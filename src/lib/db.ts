@@ -23,12 +23,15 @@ class MockDB {
       id: 'demo-user-id',
       email: 'demo@example.com',
       name: 'Demo User',
+      // For demo account, password is 'password' (no real hashing on mock)
+      password: '$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi',
       setupCompleted: true
     },
     'test-user-id': {
       id: 'test-user-id',
       email: 'test@example.com',
       name: 'Test User',
+      password: '$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi',
       setupCompleted: true
     }
   };
@@ -68,6 +71,24 @@ class MockDB {
   revokedToken = {
     create: async () => ({}),
     findUnique: async () => null,
+    findMany: async () => []
+  };
+  
+  // Add mock implementations for other tables needed by auth flows
+  mfaSetup = {
+    upsert: async () => ({}),
+    delete: async () => ({}),
+    findUnique: async () => null
+  };
+  
+  mfaRecoveryCode = {
+    deleteMany: async () => ({}),
+    create: async () => ({}),
+    findFirst: async () => null,
+    update: async () => ({})
+  };
+  
+  mfaSecret = {
     findMany: async () => []
   };
   
