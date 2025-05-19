@@ -8,8 +8,7 @@
   "pnpm": {
     "allowedDeprecatedVersions": {
       "@types/bcryptjs": "3.0.0"
-    },
-    "approvedPackages": ["@prisma/client", "prisma", "@prisma/engines"]
+    }
   },
   "scripts": {
     "dev": "next dev",
