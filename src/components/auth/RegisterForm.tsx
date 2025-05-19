@@ -44,11 +44,16 @@ export default function RegisterForm() {
       return false;
     }
 
-    // Check password strength (at least 12 characters, uppercase, lowercase, number, special char)
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{12,}$/;
-    if (!passwordRegex.test(formData.password)) {
-      setError('Password must be at least 12 characters and include uppercase letters, lowercase letters, numbers, and special characters.');
+    // Check password strength (minimum 8 characters for simplicity)
+    // Using a simpler check to match the backend requirements
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return false;
+    }
+    
+    // Recommend stronger password but don't require it
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(formData.password)) {
+      console.warn('Password is valid but not strong - should include uppercase, lowercase, numbers, and special characters');
     }
 
     // Check terms agreement
@@ -198,7 +203,7 @@ export default function RegisterForm() {
             placeholder="Create a password"
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Must be at least 12 characters and include uppercase letters, lowercase letters, numbers, and special characters
+            Must be at least 8 characters long. For better security, include uppercase, lowercase, numbers, and special characters.
           </p>
         </div>
 

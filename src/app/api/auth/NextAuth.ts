@@ -45,7 +45,8 @@ export const authOptions: AuthOptions = {
   },
   // Always enable debugging during development
   debug: process.env.NODE_ENV === 'development',
-  useSecureCookies: false, // Disable for testing - enable in production for security
+  // Use secure cookies based on environment - secure in production, less secure in development
+  useSecureCookies: process.env.NODE_ENV === 'production', 
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -53,7 +54,7 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: false, // Set to false to work with HTTP during testing
+        secure: process.env.NODE_ENV === 'production', // Secure in production
       },
     },
   },

@@ -68,14 +68,10 @@ export async function POST(request: NextRequest) {
     } catch (dbError) {
       console.error('Database error during registration:', dbError);
       
-      // For demo purposes, return success even when DB fails
-      // This allows testing the UI flow in deployments without DB
-      return NextResponse.json({
-        id: uuidv4(),
-        email,
-        name,
-        message: 'Account created successfully (demo mode)'
-      });
+      // Return error response instead of fake success
+      return NextResponse.json({ 
+        message: 'Failed to create user account due to database error. Please try again later.' 
+      }, { status: 500 });
     }
   } catch (error) {
     console.error('Registration error:', error);

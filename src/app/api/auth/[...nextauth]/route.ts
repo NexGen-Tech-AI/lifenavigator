@@ -28,6 +28,26 @@ export const handler = NextAuth({
           // Handle demo account - always allow this to work
           if (credentials.email === DEMO_EMAIL && credentials.password === DEMO_PASSWORD) {
             console.log("Demo login successful");
+            try {
+              // First try to find the demo user in the database
+              const demoUser = await db.user.findUnique({
+                where: { email: DEMO_EMAIL },
+              });
+              
+              if (demoUser) {
+                return {
+                  id: demoUser.id,
+                  email: demoUser.email,
+                  name: demoUser.name,
+                  setupCompleted: true,
+                };
+              }
+            } catch (dbError) {
+              console.error("Error accessing database for demo user:", dbError);
+              // Fall back to hardcoded demo user if DB fails
+            }
+
+            // Return hardcoded demo user as fallback
             return {
               id: "demo-user-id",
               email: DEMO_EMAIL,
@@ -36,34 +56,37 @@ export const handler = NextAuth({
             };
           }
 
-          // For any other accounts, reject for now
-          // This effectively makes only the demo account work for testing
-          console.log("Non-demo login attempted:", credentials.email);
-          return null;
-          
-          /* The real database authentication logic would be here 
-          const user = await db.user.findUnique({
-            where: { email: credentials.email },
-          });
+          // The real database authentication logic for regular users
+          console.log("Attempting database login for:", credentials.email);
+          try {
+            const user = await db.user.findUnique({
+              where: { email: credentials.email },
+            });
 
-          if (!user || !user.password) {
+            if (!user || !user.password) {
+              console.log("User not found or has no password");
+              return null;
+            }
+
+            const passwordValid = await compare(credentials.password, user.password);
+
+            if (!passwordValid) {
+              console.log("Invalid password");
+              return null;
+            }
+
+            console.log("Database login successful for:", user.email);
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              image: user.image, 
+              setupCompleted: user.setupCompleted || false,
+            };
+          } catch (dbError) {
+            console.error("Database error during login:", dbError);
             return null;
           }
-
-          const passwordValid = await compare(credentials.password, user.password);
-
-          if (!passwordValid) {
-            return null;
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image, 
-            setupCompleted: user.setupCompleted || false,
-          };
-          */
         } catch (error) {
           console.error("Auth error:", error);
           // Return null on error

@@ -141,10 +141,57 @@ if (useMockDb) {
 } else {
   try {
     db = getPrismaClient();
+    
+    // Test the connection to ensure it works
+    db.$queryRaw`SELECT 1+1 as result`
+      .then(() => {
+        console.log('Database connection test successful');
+        
+        // Ensure demo account exists in actual database
+        ensureDemoAccount();
+      })
+      .catch((err) => {
+        console.error('Database connection test failed:', err);
+        console.warn('Falling back to mock database due to connection test failure');
+        db = new MockDB();
+      });
   } catch (error) {
     console.error('Error initializing database client:', error);
     console.warn('Falling back to mock database due to error');
     db = new MockDB();
+  }
+}
+
+// Helper function to ensure demo account exists in database
+async function ensureDemoAccount() {
+  try {
+    // Check if demo user exists
+    const demoUser = await db.user.findUnique({
+      where: { email: 'demo@example.com' },
+    });
+    
+    if (!demoUser) {
+      console.log('Creating demo account in database');
+      // Hash the demo password ('password')
+      const bcrypt = require('bcryptjs');
+      const hashedPassword = await bcrypt.hash('password', 12);
+      
+      // Create the demo user
+      await db.user.create({
+        data: {
+          id: 'demo-user-id',
+          email: 'demo@example.com',
+          name: 'Demo User',
+          password: hashedPassword,
+          setupCompleted: true,
+        },
+      });
+      console.log('Demo account created successfully');
+    } else {
+      console.log('Demo account already exists in database');
+    }
+  } catch (error) {
+    console.error('Error ensuring demo account:', error);
   }
 }
 
