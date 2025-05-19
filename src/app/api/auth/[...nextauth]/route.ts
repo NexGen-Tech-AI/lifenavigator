@@ -1,13 +1,44 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
+import { hash } from "bcryptjs";
 import { authOptions } from "../NextAuth";
 import { db } from "@/lib/db";
+import { v4 as uuidv4 } from 'uuid';
 
 // Demo account details for direct check (fallback)
 const DEMO_EMAIL = "demo@example.com";
 const DEMO_PASSWORD = "password";
 const DEMO_HASH = "$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi"; // Hashed 'password'
+
+// Ensure demo account exists in database on first run
+async function ensureDemoAccount() {
+  try {
+    const existingUser = await db.user.findUnique({
+      where: { email: DEMO_EMAIL },
+    });
+    
+    if (!existingUser) {
+      console.log("Creating demo account in database...");
+      await db.user.create({
+        data: {
+          id: "demo-user-id",
+          email: DEMO_EMAIL,
+          name: "Demo User",
+          password: DEMO_HASH,
+          setupCompleted: true,
+        },
+      });
+      console.log("Demo account created successfully");
+    }
+  } catch (error) {
+    console.error("Failed to ensure demo account exists:", error);
+    // Non-blocking - continue even if this fails
+  }
+}
+
+// Try to create the demo account (don't await, let it run in background)
+ensureDemoAccount();
 
 // Create NextAuth handler with additional providers
 export const handler = NextAuth({

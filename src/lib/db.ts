@@ -100,8 +100,7 @@ class MockDB {
 
 // Determine if we should use mock database or real Prisma
 // Use environment variables to control this behavior
-const useMockDb = process.env.NODE_ENV === 'development' && 
-                 process.env.USE_MOCK_DB === 'true';
+const useMockDb = process.env.USE_MOCK_DB === 'true';
 
 // For Prisma, we want to make sure we don't create multiple instances
 // during hot reloads in development
@@ -113,13 +112,41 @@ function getPrismaClient() {
     return prismaClient;
   }
 
-  // Create a new Prisma Client
-  prismaClient = new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
+  try {
+    // Create a new Prisma Client with appropriate logging based on environment
+    prismaClient = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    });
 
-  return prismaClient;
+    // Log successful connection
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Connected to database with Prisma');
+    }
+    
+    return prismaClient;
+  } catch (error) {
+    console.error('Failed to initialize Prisma client:', error);
+    
+    // If there's an error initializing Prisma, fall back to mock DB
+    console.warn('Falling back to mock database due to connection error');
+    return new MockDB() as any;
+  }
 }
 
-// Export the appropriate database client
-export const db = useMockDb ? new MockDB() : getPrismaClient();
+// Determine which database client to use
+let db;
+if (useMockDb) {
+  console.log('Using mock database by configuration');
+  db = new MockDB();
+} else {
+  try {
+    db = getPrismaClient();
+  } catch (error) {
+    console.error('Error initializing database client:', error);
+    console.warn('Falling back to mock database due to error');
+    db = new MockDB();
+  }
+}
+
+// Export the database client
+export { db };
