@@ -36,6 +36,7 @@
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
     "db:migrate-to-pg": "bash ./scripts/migrate-to-postgres.sh",
     "prepare": "husky install",
+    "postinstall": "prisma generate --no-engine",
     "env:generate": "bash ./scripts/generate-env.sh",
     "env:generate:dev": "bash ./scripts/generate-env.sh --env dev",
     "env:generate:staging": "bash ./scripts/generate-env.sh --env staging",
