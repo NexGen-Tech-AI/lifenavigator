@@ -78,8 +78,16 @@ The application should now be running at [http://localhost:3000](http://localhos
 ### Login Details
 
 For the demo account:
-- **Email**: demo@lifenavigator.com
-- **Password**: password123
+- **Email**: demo@example.com
+- **Password**: password
+
+If you're experiencing issues with authentication, run the auth repair script:
+
+```bash
+node scripts/fix-auth.js
+```
+
+This will set up the environment for using the mock database during development and ensure the demo account exists.
 
 ## Available Scripts
 
@@ -136,6 +144,57 @@ The project uses GitHub Actions for continuous integration and deployment. The w
 - `/prisma` - Database schema and migrations
 - `/terraform` - Infrastructure as code
 - `/public` - Static assets
+- `/scripts` - Utility scripts for development and maintenance
+
+## Troubleshooting
+
+### Authentication Issues
+
+If you're experiencing issues with login or registration:
+
+1. **Use Mock Database**: For development, you can enable the mock database by setting `USE_MOCK_DB=true` in your `.env.local` file.
+
+2. **Fix Auth System**: Run the auth repair script to fix common issues:
+
+   ```bash
+   node scripts/fix-auth.js
+   ```
+
+3. **Check Database Connection**: Run the database diagnostic tool:
+
+   ```bash
+   node scripts/db-diagnostic.js
+   ```
+
+4. **Check Database Status**: Visit the database status endpoint after starting the development server:
+
+   ```
+   http://localhost:3000/api/db-test
+   ```
+
+5. **Ensure Demo Account**: You can ensure the demo account exists by visiting:
+
+   ```
+   http://localhost:3000/api/auth/ensure-demo
+   ```
+
+### Database Connection Issues
+
+If you're having trouble connecting to PostgreSQL:
+
+1. Make sure Docker is running and the database container is up:
+
+   ```bash
+   docker-compose ps
+   ```
+
+2. Check the database logs:
+
+   ```bash
+   docker-compose logs db
+   ```
+
+3. Try using the mock database by setting `USE_MOCK_DB=true` in your `.env.local` file for development.
 
 ## License
 

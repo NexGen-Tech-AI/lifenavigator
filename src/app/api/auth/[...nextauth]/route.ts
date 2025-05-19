@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { authOptions } from "../NextAuth";
+import { db } from "@/lib/db";
 
 // Demo account details for hardcoded authentication
 const DEMO_EMAIL = "demo@example.com";
@@ -25,40 +26,57 @@ export const handler = NextAuth({
             return null;
           }
 
-          // Handle demo account - always allow this to work
-          if (credentials.email === DEMO_EMAIL && credentials.password === DEMO_PASSWORD) {
-            console.log("Demo login successful");
+          // Handle demo account with special case
+          if (credentials.email === DEMO_EMAIL) {
+            console.log("Demo login attempt detected");
+            
+            // First try to find the demo user in database
             try {
-              // First try to find the demo user in the database
               const demoUser = await db.user.findUnique({
                 where: { email: DEMO_EMAIL },
               });
               
-              if (demoUser) {
-                return {
-                  id: demoUser.id,
-                  email: demoUser.email,
-                  name: demoUser.name,
-                  setupCompleted: true,
-                };
+              if (demoUser && demoUser.password) {
+                console.log("Found demo user in database, validating password");
+                const passwordValid = await compare(credentials.password, demoUser.password);
+                
+                if (passwordValid) {
+                  console.log("Demo login successful via database");
+                  return {
+                    id: demoUser.id,
+                    email: demoUser.email,
+                    name: demoUser.name,
+                    setupCompleted: true,
+                  };
+                } else {
+                  console.log("Demo account password invalid");
+                }
+              } else {
+                console.log("Demo user not found in database");
               }
             } catch (dbError) {
-              console.error("Error accessing database for demo user:", dbError);
-              // Fall back to hardcoded demo user if DB fails
+              console.error("Error checking demo user in database:", dbError);
             }
-
-            // Return hardcoded demo user as fallback
-            return {
-              id: "demo-user-id",
-              email: DEMO_EMAIL,
-              name: "Demo User",
-              setupCompleted: true,
-            };
+            
+            // If password matches hardcoded demo, allow login regardless of DB
+            if (credentials.password === DEMO_PASSWORD) {
+              console.log("Demo login successful via hardcoded credentials");
+              return {
+                id: "demo-user-id",
+                email: DEMO_EMAIL,
+                name: "Demo User",
+                setupCompleted: true,
+              };
+            }
+            
+            return null;
           }
 
-          // The real database authentication logic for regular users
-          console.log("Attempting database login for:", credentials.email);
+          // Regular user authentication against database
+          console.log(`Login attempt for: ${credentials.email}`);
+          
           try {
+            // Find user in database
             const user = await db.user.findUnique({
               where: { email: credentials.email },
             });
@@ -68,6 +86,7 @@ export const handler = NextAuth({
               return null;
             }
 
+            // Validate password
             const passwordValid = await compare(credentials.password, user.password);
 
             if (!passwordValid) {
@@ -75,12 +94,12 @@ export const handler = NextAuth({
               return null;
             }
 
-            console.log("Database login successful for:", user.email);
+            console.log(`Login successful for: ${user.email}`);
             return {
               id: user.id,
               email: user.email,
-              name: user.name,
-              image: user.image, 
+              name: user.name || null,
+              image: user.image || null,
               setupCompleted: user.setupCompleted || false,
             };
           } catch (dbError) {
@@ -89,7 +108,6 @@ export const handler = NextAuth({
           }
         } catch (error) {
           console.error("Auth error:", error);
-          // Return null on error
           return null;
         }
       },
@@ -111,7 +129,7 @@ export const handler = NextAuth({
       return session;
     },
   },
-  debug: true, // Always enable debugging
+  debug: true, // Enable debugging
 });
 
 export { handler as GET, handler as POST };

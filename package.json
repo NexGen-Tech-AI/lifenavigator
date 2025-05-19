@@ -40,7 +40,9 @@
     "env:generate:dev": "bash ./scripts/generate-env.sh --env dev",
     "env:generate:staging": "bash ./scripts/generate-env.sh --env staging",
     "env:generate:prod": "bash ./scripts/generate-env.sh --env prod",
-    "env:validate": "node scripts/validate-env.js"
+    "env:validate": "node scripts/validate-env.js",
+    "auth:fix": "node scripts/fix-auth.js",
+    "db:diagnose": "node scripts/db-diagnostic.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",

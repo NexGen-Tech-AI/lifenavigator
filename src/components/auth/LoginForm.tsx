@@ -29,7 +29,12 @@ export default function LoginForm() {
     });
   };
 
-  // Check account lockout status
+  // Simple utility for debugging (remove in production)
+  const debugLog = (message: string, data?: any) => {
+    console.log(`[AUTH] ${message}`, data || '');
+  };
+
+  // Check account lockout status (this is a placeholder for now)
   const checkLockoutStatus = async (email: string) => {
     try {
       const response = await fetch('/api/auth/lockout-status', {
@@ -56,32 +61,42 @@ export default function LoginForm() {
     setError(null);
 
     try {
-      console.log("Regular login attempt...");
+      debugLog(`Login attempt for ${formData.email}`);
 
-      // For now, simplify the login flow to just call signIn directly
-      // Remove the lockout check and MFA features temporarily to focus on basic login
-      
-      // Proceed with normal login
+      // Call signIn with credentials
       const result = await signIn('credentials', {
         redirect: false,
         email: formData.email,
         password: formData.password,
-        callbackUrl: '/dashboard', // Always redirect to dashboard after login
+        callbackUrl: '/dashboard',
       });
 
-      console.log("Login result:", result);
+      debugLog("Login result:", result);
 
       if (result?.error) {
         setError('Invalid email or password. Please try again.');
-        console.error('Login error details:', result.error);
-      } else {
-        console.log("Login successful, redirecting...");
-        // Successful login - force navigation to the dashboard
-        window.location.href = '/dashboard';
+        debugLog('Login error:', result.error);
+      } else if (result?.url) {
+        debugLog("Login successful, redirecting to:", result.url);
+        
+        // Show success toast
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+          type: "success",
+        });
+        
+        // Use router for SPA navigation, faster and doesn't reload the page
+        router.push('/dashboard');
+        
+        // As a fallback, after 1s, force a hard redirect
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       }
     } catch (err) {
+      debugLog('Unexpected login error:', err);
       setError('An unexpected error occurred. Please try again.');
-      console.error('Login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -94,9 +109,9 @@ export default function LoginForm() {
       // Clear any previous errors
       setError(null);
       
-      console.log("Attempting demo login...");
+      debugLog("Attempting demo login");
       
-      // Use the correct demo credentials that match what's in the authorize function
+      // Use the demo credentials
       const result = await signIn('credentials', {
         redirect: false,
         email: 'demo@example.com',
@@ -104,21 +119,32 @@ export default function LoginForm() {
         callbackUrl: '/dashboard',
       });
 
-      console.log("Demo login result:", result);
+      debugLog("Demo login result:", result);
 
       if (result?.error) {
         setError('Demo login failed. Please try again or contact support.');
-        console.error('Demo login error details:', result.error);
-      } else {
-        // Successful demo login - demo account has setup completed
-        console.log("Demo login successful, redirecting to dashboard");
+        debugLog('Demo login error:', result.error);
+      } else if (result?.url) {
+        debugLog("Demo login successful, redirecting to:", result.url);
         
-        // Force a hard navigation to dashboard
-        window.location.href = '/dashboard';
+        // Show success toast
+        toast({
+          title: "Demo Login",
+          description: "Welcome to the demo account!",
+          type: "success",
+        });
+        
+        // Use router for client navigation 
+        router.push('/dashboard');
+        
+        // Also do a hard navigation as backup
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
       }
     } catch (err) {
+      debugLog('Unexpected demo login error:', err);
       setError('An unexpected error occurred. Please try again.');
-      console.error('Demo login error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -249,10 +275,10 @@ export default function LoginForm() {
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-3">
-          {/* Twitter button */}
+          {/* OAuth provider buttons - commented out until OAuth is fully configured */}
           <button
             type="button"
-            onClick={() => signIn('twitter')}
+            onClick={() => toast({ title: "Coming Soon", description: "Twitter login will be available soon.", type: "info" })}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
@@ -261,10 +287,9 @@ export default function LoginForm() {
             </svg>
           </button>
 
-          {/* Google button */}
           <button
             type="button"
-            onClick={() => signIn('google')}
+            onClick={() => toast({ title: "Coming Soon", description: "Google login will be available soon.", type: "info" })}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
@@ -288,10 +313,9 @@ export default function LoginForm() {
             </svg>
           </button>
           
-          {/* Facebook button */}
           <button
             type="button"
-            onClick={() => signIn('facebook')}
+            onClick={() => toast({ title: "Coming Soon", description: "Facebook login will be available soon.", type: "info" })}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >

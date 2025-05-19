@@ -4,6 +4,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { compare, hash } from 'bcryptjs';
 
 // Define User type based on our schema
 type User = {
@@ -16,14 +17,14 @@ type User = {
   setupCompleted: boolean;
 };
 
-// Mock database implementation for development environments
+// Mock database implementation for development and testing
 class MockDB {
   private users: Record<string, User> = {
     'demo-user-id': {
       id: 'demo-user-id',
       email: 'demo@example.com',
       name: 'Demo User',
-      // For demo account, password is 'password' (no real hashing on mock)
+      // This is a hashed version of 'password' for the demo account
       password: '$2a$12$J05Qe4.6ggwwj7ucEEiJ8e.tEgYiYiQaEvqA0.XBhdBVNJ/Z8EHwi',
       setupCompleted: true
     },
@@ -93,10 +94,14 @@ class MockDB {
   };
   
   // Mock the $queryRaw method for testing database connectivity
-  $queryRaw = async <T = any>(...args: any[]): Promise<T> => {
-    return [{ result: 2 }] as T;
+  $queryRaw: any = async <T = any>(...args: any[]): Promise<T> => {
+    console.log('Mock $queryRaw called with:', args);
+    return [{ result: 2 }] as any;
   }
 }
+
+// Global debug state
+const debug = process.env.LOG_LEVEL === 'debug';
 
 // Determine if we should use mock database or real Prisma
 // Use environment variables to control this behavior
@@ -106,63 +111,119 @@ const useMockDb = process.env.USE_MOCK_DB === 'true';
 // during hot reloads in development
 let prismaClient: PrismaClient | undefined;
 
-function getPrismaClient() {
-  // If we already have a client, return it
-  if (prismaClient) {
-    return prismaClient;
-  }
-
+/**
+ * Create and return a PrismaClient instance
+ */
+function getPrismaClient(): PrismaClient {
   try {
-    // Create a new Prisma Client with appropriate logging based on environment
+    // If we already have a client, return it
+    if (prismaClient) {
+      if (debug) console.log('Reusing existing Prisma client');
+      return prismaClient;
+    }
+
+    if (debug) console.log('Creating new Prisma client');
+    // Create new client with appropriate logging
     prismaClient = new PrismaClient({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+      log: process.env.NODE_ENV === 'development' 
+        ? ['query', 'error', 'warn'] 
+        : ['error'],
     });
 
-    // Log successful connection
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Connected to database with Prisma');
-    }
-    
+    console.log('Connected to database with Prisma');
     return prismaClient;
   } catch (error) {
     console.error('Failed to initialize Prisma client:', error);
-    
-    // If there's an error initializing Prisma, fall back to mock DB
-    console.warn('Falling back to mock database due to connection error');
-    return new MockDB() as any;
+    throw error; // Re-throw to be caught by the caller
   }
 }
 
-// Determine which database client to use
-let db;
+// Decide which database client to use
+let db: PrismaClient | MockDB;
+let mockDb = new MockDB() as any; // Always create a mock DB instance for fallback
+
+// Flag to track if we're using mock DB
+let usingMockDb = false;
+
 if (useMockDb) {
   console.log('Using mock database by configuration');
-  db = new MockDB();
+  db = mockDb;
+  usingMockDb = true;
 } else {
   try {
+    console.log('Attempting to connect to real database...');
+    
+    // Log connection info for debugging
+    if (debug) {
+      console.log('POSTGRES_PRISMA_URL is', process.env.POSTGRES_PRISMA_URL ? 'defined' : 'undefined');
+      console.log('DATABASE_URL is', process.env.DATABASE_URL ? 'defined' : 'undefined');
+    }
+    
+    // Create the Prisma client
     db = getPrismaClient();
     
-    // Test the connection to ensure it works
+    // Test connection immediately using a promise - don't block initialization
     db.$queryRaw`SELECT 1+1 as result`
       .then(() => {
-        console.log('Database connection test successful');
+        console.log('✅ Database connection test successful!');
         
-        // Ensure demo account exists in actual database
-        ensureDemoAccount();
+        // Only ensure demo account if we haven't switched to mock DB
+        if (!usingMockDb) {
+          // Try to ensure demo account exists in the real database
+          ensureDemoAccount();
+        }
       })
       .catch((err) => {
-        console.error('Database connection test failed:', err);
-        console.warn('Falling back to mock database due to connection test failure');
-        db = new MockDB();
+        console.error('❌ Database connection test failed:', err);
+        console.warn('Falling back to mock database due to connection failure');
+        
+        // Switch to mock DB if the real DB fails
+        db = mockDb;
+        usingMockDb = true;
       });
   } catch (error) {
-    console.error('Error initializing database client:', error);
-    console.warn('Falling back to mock database due to error');
-    db = new MockDB();
+    console.error('❌ Error initializing database client:', error);
+    console.warn('Falling back to mock database due to initialization error');
+    
+    // Use mock DB as fallback
+    db = mockDb;
+    usingMockDb = true;
   }
 }
 
-// Helper function to ensure demo account exists in database
+// Create a special proxy to handle failover during runtime
+const dbProxy = new Proxy({} as any, {
+  get: function(target, prop, receiver) {
+    try {
+      // Special handling for $queryRaw to catch DB errors
+      if (prop === '$queryRaw') {
+        return async (...args: any[]) => {
+          try {
+            return await db.$queryRaw.apply(db, args);
+          } catch (error) {
+            if (!usingMockDb) {
+              console.error('Database operation failed, falling back to mock DB:', error);
+              db = mockDb;
+              usingMockDb = true;
+              return mockDb.$queryRaw.apply(mockDb, args);
+            }
+            throw error;
+          }
+        };
+      }
+      
+      // Simple proxy for everything else
+      return db[prop];
+    } catch (error) {
+      console.error(`Error accessing db.${String(prop)}:`, error);
+      return mockDb[prop];
+    }
+  }
+});
+
+/**
+ * Ensures that the demo account exists in the database
+ */
 async function ensureDemoAccount() {
   try {
     // Check if demo user exists
@@ -172,11 +233,9 @@ async function ensureDemoAccount() {
     
     if (!demoUser) {
       console.log('Creating demo account in database');
-      // Hash the demo password ('password')
-      const bcrypt = require('bcryptjs');
-      const hashedPassword = await bcrypt.hash('password', 12);
+      // Create the demo user with hashed password ('password')
+      const hashedPassword = await hash('password', 12);
       
-      // Create the demo user
       await db.user.create({
         data: {
           id: 'demo-user-id',
@@ -186,14 +245,33 @@ async function ensureDemoAccount() {
           setupCompleted: true,
         },
       });
-      console.log('Demo account created successfully');
+      console.log('✅ Demo account created successfully');
     } else {
-      console.log('Demo account already exists in database');
+      console.log('✅ Demo account already exists in database');
     }
   } catch (error) {
-    console.error('Error ensuring demo account:', error);
+    console.error('❌ Error ensuring demo account:', error);
   }
 }
 
-// Export the database client
-export { db };
+// Check database connection and type
+(async () => {
+  try {
+    const isMockDb = !('$connect' in db);
+    console.log(`Current database type: ${isMockDb ? 'Mock Database' : 'PostgreSQL'}`);
+    
+    // If using mock DB, no need to test connection
+    if (isMockDb) {
+      console.log('Using mock database - demo account is pre-configured');
+      return;
+    }
+  } catch (error) {
+    console.error('Error checking database type:', error);
+  }
+})();
+
+// Check database connection and type
+console.log(`Current database type: ${usingMockDb ? 'Mock Database' : 'PostgreSQL'}`);
+
+// Export the database client - use the proxy for more resilient operations
+export { dbProxy as db };
