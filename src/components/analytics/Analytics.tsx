@@ -2,38 +2,48 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 
 /**
  * Analytics component for tracking page views and custom events
  * Uses a minimal implementation that can be extended with your preferred analytics provider
  */
 export function Analytics() {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  // Create inner component to use search params
+  const AnalyticsContent = () => {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-  // Track page views
-  useEffect(() => {
-    if (!pathname) return;
+    // Track page views
+    useEffect(() => {
+      if (!pathname) return;
 
-    // Construct URL from pathname and search params
-    const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
-    
-    // Track page view
-    trackPageView(url);
-  }, [pathname, searchParams]);
+      // Construct URL from pathname and search params
+      const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+      
+      // Track page view
+      trackPageView(url);
+    }, [pathname, searchParams]);
 
+    return (
+      <>
+        {/* Replace with your actual analytics script if needed */}
+        {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_ANALYTICS_ID && (
+          <Script
+            id="analytics-script"
+            strategy="afterInteractive"
+            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_ANALYTICS_ID}`}
+          />
+        )}
+      </>
+    );
+  };
+
+  // Wrap with Suspense boundary
   return (
-    <>
-      {/* Replace with your actual analytics script if needed */}
-      {process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_ANALYTICS_ID && (
-        <Script
-          id="analytics-script"
-          strategy="afterInteractive"
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_ANALYTICS_ID}`}
-        />
-      )}
-    </>
+    <Suspense fallback={null}>
+      <AnalyticsContent />
+    </Suspense>
   );
 }
 

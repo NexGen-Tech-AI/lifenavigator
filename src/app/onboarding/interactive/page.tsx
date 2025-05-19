@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toaster';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -35,9 +35,6 @@ const STEPS = {
 
 export default function InteractiveOnboardingPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
-  const userName = searchParams.get('name') || undefined;
   const { addToast } = useToast();
   
   const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
@@ -51,18 +48,6 @@ export default function InteractiveOnboardingPage() {
     risk: { riskTheta: 0.5 },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Redirect to login if no userId is provided or not authenticated
-  useEffect(() => {
-    if (!userId) {
-      addToast({
-        title: "Authentication Required",
-        description: "Please login to access the onboarding questionnaire.",
-        type: "error",
-      });
-      router.push('/auth/login');
-    }
-  }, [userId, router, addToast]);
 
   const handleStepDataChange = (step: string, data: any) => {
     setFormData(prev => ({
@@ -282,68 +267,92 @@ export default function InteractiveOnboardingPage() {
     'Complete'
   ];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-        {/* Progress indicator */}
-        {currentStep > 0 && currentStep < STEPS.COMPLETE && (
-          <div className="w-full">
-            <div className="relative mb-6">
-              {/* Visual progress bar */}
-              <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200 dark:bg-blue-900/30">
-                <motion.div 
-                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-blue-500 to-indigo-600"
-                  initial={{ width: `${(currentStep - 1) / (Object.keys(STEPS).length - 1) * 100}%` }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              
-              {/* Step markers */}
-              <div className="flex justify-between text-xs mt-2">
-                {stepLabels.map((label, index) => (
-                  <div 
-                    key={index} 
-                    className={`relative ${index === stepLabels.length - 1 ? 'right-2' : index === 0 ? 'left-0' : ''}`}
-                    style={{ 
-                      visibility: [0, 2, 4, 6, 8, 9].includes(index) ? 'visible' : 'hidden',
-                      flex: index === 0 || index === stepLabels.length - 1 ? '0 0 auto' : '1 1 0'
-                    }}
-                  >
-                    <div className={`
-                      absolute top-[-20px] left-1/2 transform -translate-x-1/2 
-                      w-3 h-3 rounded-full 
-                      ${currentStep >= index ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}
-                    `} />
-                    {[0, 2, 4, 6, 8, 9].includes(index) && (
-                      <span className={`
-                        absolute top-[-42px] left-1/2 transform -translate-x-1/2 whitespace-nowrap
-                        font-medium text-[10px]
-                        ${currentStep >= index ? 'text-blue-700 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}
-                      `}>
-                        {label}
-                      </span>
-                    )}
-                  </div>
-                ))}
+  // Now we need to wrap the components using searchParams in a Suspense boundary
+  const ContentWithSearchParams = () => {
+    const searchParams = useSearchParams();
+    const userId = searchParams.get('userId');
+    const userName = searchParams.get('name') || undefined;
+
+    useEffect(() => {
+      if (!userId) {
+        addToast({
+          title: "Authentication Required",
+          description: "Please login to access the onboarding questionnaire.",
+          type: "error",
+        });
+        router.push('/auth/login');
+      }
+    }, [userId]);
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-900/20 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
+          {/* Progress indicator */}
+          {currentStep > 0 && currentStep < STEPS.COMPLETE && (
+            <div className="w-full">
+              <div className="relative mb-6">
+                {/* Visual progress bar */}
+                <div className="overflow-hidden h-2 text-xs flex rounded bg-blue-200 dark:bg-blue-900/30">
+                  <motion.div 
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-blue-500 to-indigo-600"
+                    initial={{ width: `${(currentStep - 1) / (Object.keys(STEPS).length - 1) * 100}%` }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
+                </div>
+                
+                {/* Step markers */}
+                <div className="flex justify-between text-xs mt-2">
+                  {stepLabels.map((label, index) => (
+                    <div 
+                      key={index} 
+                      className={`relative ${index === stepLabels.length - 1 ? 'right-2' : index === 0 ? 'left-0' : ''}`}
+                      style={{ 
+                        visibility: [0, 2, 4, 6, 8, 9].includes(index) ? 'visible' : 'hidden',
+                        flex: index === 0 || index === stepLabels.length - 1 ? '0 0 auto' : '1 1 0'
+                      }}
+                    >
+                      <div className={`
+                        absolute top-[-20px] left-1/2 transform -translate-x-1/2 
+                        w-3 h-3 rounded-full 
+                        ${currentStep >= index ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}
+                      `} />
+                      {[0, 2, 4, 6, 8, 9].includes(index) && (
+                        <span className={`
+                          absolute top-[-42px] left-1/2 transform -translate-x-1/2 whitespace-nowrap
+                          font-medium text-[10px]
+                          ${currentStep >= index ? 'text-blue-700 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}
+                        `}>
+                          {label}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Current step */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderStep()}
-          </motion.div>
-        </AnimatePresence>
+          {/* Current step */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading interactive onboarding...</div>}>
+      <ContentWithSearchParams />
+    </Suspense>
   );
 }

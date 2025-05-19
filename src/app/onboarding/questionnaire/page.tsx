@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/toaster';
 
@@ -26,9 +26,6 @@ const STEPS = {
 
 export default function QuestionnairePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const userId = searchParams.get('userId');
-  const userName = searchParams.get('name');
   const { addToast } = useToast();
 
   const [currentStep, setCurrentStep] = useState(STEPS.INTRO);
@@ -40,23 +37,6 @@ export default function QuestionnairePage() {
     risk: { riskTheta: 0 },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Function to switch to enhanced onboarding
-  const switchToEnhancedOnboarding = () => {
-    router.push(`/onboarding/interactive?userId=${userId}${userName ? `&name=${userName}` : ''}`);
-  };
-
-  // Redirect to login if no userId is provided or not authenticated
-  useEffect(() => {
-    if (!userId) {
-      addToast({
-        title: "Authentication Required",
-        description: "Please login to access the onboarding questionnaire.",
-        type: "error",
-      });
-      router.push('/auth/login');
-    }
-  }, [userId, router, addToast]);
 
   const handleStepDataChange = (step, data) => {
     setFormData(prev => ({
@@ -217,38 +197,68 @@ export default function QuestionnairePage() {
   // Calculate progress percentage
   const progress = Math.round((currentStep / (Object.keys(STEPS).length - 1)) * 100);
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow">
-        {/* Progress bar */}
-        {currentStep > 0 && currentStep < STEPS.COMPLETE && (
-          <div className="w-full">
-            <div className="relative pt-1">
-              <div className="flex items-center justify-between mb-2">
-                <div>
-                  <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 dark:bg-blue-900 dark:text-blue-200">
-                    Progress
-                  </span>
+  // Extract the component that uses searchParams into a separate component
+  const QuestionnaireContent = () => {
+    const searchParams = useSearchParams();
+    const userId = searchParams.get('userId');
+    const userName = searchParams.get('name');
+    
+    // Redirect to login if no userId is provided or not authenticated
+    useEffect(() => {
+      if (!userId) {
+        addToast({
+          title: "Authentication Required",
+          description: "Please login to access the onboarding questionnaire.",
+          type: "error",
+        });
+        router.push('/auth/login');
+      }
+    }, [userId]);
+    
+    // Function to switch to enhanced onboarding
+    const switchToEnhancedOnboarding = () => {
+      router.push(`/onboarding/interactive?userId=${userId}${userName ? `&name=${userName}` : ''}`);
+    };
+    
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow">
+          {/* Progress bar */}
+          {currentStep > 0 && currentStep < STEPS.COMPLETE && (
+            <div className="w-full">
+              <div className="relative pt-1">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200 dark:bg-blue-900 dark:text-blue-200">
+                      Progress
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-semibold inline-block text-blue-600 dark:text-blue-400">
+                      {progress}%
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs font-semibold inline-block text-blue-600 dark:text-blue-400">
-                    {progress}%
-                  </span>
+                <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200 dark:bg-blue-900">
+                  <div 
+                    style={{ width: `${progress}%` }}
+                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-600 transition-all duration-500"
+                  />
                 </div>
-              </div>
-              <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200 dark:bg-blue-900">
-                <div 
-                  style={{ width: `${progress}%` }}
-                  className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 dark:bg-blue-600 transition-all duration-500"
-                />
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Current step */}
-        {renderStep()}
+          {/* Current step */}
+          {renderStep()}
+        </div>
       </div>
-    </div>
+    );
+  };
+
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading questionnaire...</div>}>
+      <QuestionnaireContent />
+    </Suspense>
   );
 }

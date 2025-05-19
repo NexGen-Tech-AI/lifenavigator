@@ -15,6 +15,11 @@ const nextConfig = {
   compiler: {
     styledComponents: true
   },
+  // Prevent static generation for pages that use client-side hooks like useSearchParams
+  experimental: {
+    appDir: true,
+    serverActions: true,
+  },
   webpack: (config) => {
     // Needed for better compatibility with Node.js built-ins
     if (config.resolve.fallback) {
