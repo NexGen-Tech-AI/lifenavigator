@@ -27,22 +27,9 @@ console.log(`${colors.magenta}
 ========================================================
 ${colors.reset}`);
 
-// Step 1: Backing up the schema.prisma file
-console.log(`${colors.blue}Step 1: Backing up schema.prisma file...${colors.reset}`);
-try {
-  const schemaPath = path.join(__dirname, '..', 'prisma', 'schema.prisma');
-  const backupPath = path.join(__dirname, '..', 'prisma', 'schema.prisma.backup');
-  
-  if (fs.existsSync(schemaPath)) {
-    fs.copyFileSync(schemaPath, backupPath);
-    console.log(`${colors.green}✓ Schema file backed up successfully${colors.reset}`);
-  } else {
-    throw new Error('schema.prisma file not found');
-  }
-} catch (error) {
-  console.error(`${colors.red}Error backing up schema: ${error.message}${colors.reset}`);
-  process.exit(1);
-}
+// Skip Step 1: Backing up the schema.prisma file
+console.log(`${colors.blue}Step 1: Using existing schema.prisma file...${colors.reset}`);
+const schemaPath = path.join(__dirname, '..', 'prisma', 'schema.prisma');
 
 // Step 2: Checking environment variables
 console.log(`${colors.blue}Step 2: Checking environment variables...${colors.reset}`);
@@ -75,27 +62,9 @@ try {
   process.exit(1);
 }
 
-// Step 3: Updating schema.prisma with direct connection
-console.log(`${colors.blue}Step 3: Temporarily updating schema.prisma for migration...${colors.reset}`);
-try {
-  const schemaPath = path.join(__dirname, '..', 'prisma', 'schema.prisma');
-  let schemaContent = fs.readFileSync(schemaPath, 'utf8');
-  
-  // Update the schema to use direct URL connection for migration
-  schemaContent = schemaContent.replace(
-    /datasource db {[^}]*}/s,
-    `datasource db {
-  provider = "postgresql"
-  url      = env("POSTGRES_URL_NON_POOLING")
-}`
-  );
-  
-  fs.writeFileSync(schemaPath, schemaContent);
-  console.log(`${colors.green}✓ Schema updated successfully${colors.reset}`);
-} catch (error) {
-  console.error(`${colors.red}Error updating schema: ${error.message}${colors.reset}`);
-  process.exit(1);
-}
+// Skip Step 3: We'll use the schema as is
+console.log(`${colors.blue}Step 3: Using existing schema.prisma configuration...${colors.reset}`);
+console.log(`${colors.green}✓ Using the current schema configuration${colors.reset}`);
 
 // Step 4: Running Prisma migration
 console.log(`${colors.blue}Step 4: Running database migrations...${colors.reset}`);
@@ -135,29 +104,9 @@ try {
   console.log(`${colors.yellow}Continuing with setup...${colors.reset}`);
 }
 
-// Step 6: Restoring original schema.prisma
-console.log(`${colors.blue}Step 6: Restoring original schema.prisma...${colors.reset}`);
-try {
-  const schemaPath = path.join(__dirname, '..', 'prisma', 'schema.prisma');
-  const backupPath = path.join(__dirname, '..', 'prisma', 'schema.prisma.backup');
-  
-  fs.copyFileSync(backupPath, schemaPath);
-  console.log(`${colors.green}✓ Original schema restored successfully${colors.reset}`);
-} catch (error) {
-  console.error(`${colors.red}Error restoring schema: ${error.message}${colors.reset}`);
-  process.exit(1);
-}
-
-// Step 7: Clean up
-console.log(`${colors.blue}Step 7: Cleaning up...${colors.reset}`);
-try {
-  const backupPath = path.join(__dirname, '..', 'prisma', 'schema.prisma.backup');
-  fs.unlinkSync(backupPath);
-  console.log(`${colors.green}✓ Cleanup completed successfully${colors.reset}`);
-} catch (error) {
-  console.error(`${colors.red}Warning: Error during cleanup: ${error.message}${colors.reset}`);
-  console.log(`${colors.yellow}This is non-critical and can be ignored${colors.reset}`);
-}
+// Skip Steps 6 & 7: No cleanup needed
+console.log(`${colors.blue}Step 6: No cleanup needed...${colors.reset}`);
+console.log(`${colors.green}✓ No cleanup required${colors.reset}`);
 
 // Final success message
 console.log(`${colors.magenta}
