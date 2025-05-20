@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "prisma": {
-    "schema": "prisma/schema.prisma"
+    "schema": "prisma/schema.prisma",
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "pnpm": {
     "allowedDeprecatedVersions": {
@@ -32,7 +33,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:push": "prisma db push",
-    "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",
+    "db:seed": "prisma db seed",
     "db:migrate-to-pg": "bash ./scripts/migrate-to-postgres.sh",
     "prepare": "husky install",
     "postinstall": "prisma generate --no-engine",
@@ -42,7 +43,10 @@
     "env:generate:prod": "bash ./scripts/generate-env.sh --env prod",
     "env:validate": "node scripts/validate-env.js",
     "auth:fix": "node scripts/fix-auth.js",
-    "db:diagnose": "node scripts/db-diagnostic.js"
+    "db:diagnose": "node scripts/db-diagnostic.js",
+    "vercel:setup": "node scripts/vercel-setup.js",
+    "vercel:postgres:setup": "ts-node scripts/setup-vercel-postgres.ts",
+    "create:demo-account": "ts-node scripts/create-demo-account.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.525.0",

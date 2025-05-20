@@ -21,6 +21,7 @@ The platform offers tools for tracking financial health, career progression, edu
 - Node.js 20+
 - Docker and Docker Compose
 - Git
+- pnpm (recommended package manager)
 
 ## Getting Started
 
@@ -34,7 +35,7 @@ cd lifenavigator
 ### 2. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Set up environment variables
@@ -52,7 +53,7 @@ Edit the `.env` file with your configuration values if needed.
 Start the PostgreSQL database using Docker Compose:
 
 ```bash
-docker-compose up -d
+pnpm docker:pg:up
 ```
 
 This will start a PostgreSQL instance accessible at `localhost:5432`.
@@ -62,15 +63,15 @@ This will start a PostgreSQL instance accessible at `localhost:5432`.
 Generate the Prisma client, run migrations, and seed the database:
 
 ```bash
-npm run prisma:generate
-npm run prisma:migrate-dev
-npm run db:seed
+pnpm prisma:generate
+pnpm prisma:migrate-dev
+pnpm db:seed
 ```
 
 ### 6. Start the development server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 The application should now be running at [http://localhost:3000](http://localhost:3000).
@@ -81,58 +82,85 @@ For the demo account:
 - **Email**: demo@example.com
 - **Password**: password
 
-If you're experiencing issues with authentication, run the auth repair script:
-
-```bash
-node scripts/fix-auth.js
-```
-
-This will set up the environment for using the mock database during development and ensure the demo account exists.
+This demo account is automatically created during database seeding.
 
 ## Available Scripts
 
-- `npm run dev` - Start the development server
-- `npm run build` - Build the application for production
-- `npm run start` - Start the production server
-- `npm run lint` - Lint the codebase
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:migrate-dev` - Create and apply migrations
-- `npm run prisma:deploy` - Apply migrations in production
-- `npm run prisma:studio` - Open Prisma Studio for database management
-- `npm run db:push` - Push schema changes to the database
-- `npm run db:seed` - Seed the database with initial data
+- `pnpm dev` - Start the development server
+- `pnpm build` - Build the application for production
+- `pnpm start` - Start the production server
+- `pnpm lint` - Lint the codebase
+- `pnpm typecheck` - Run type checking
+- `pnpm prisma:generate` - Generate Prisma client
+- `pnpm prisma:migrate-dev` - Create and apply migrations
+- `pnpm prisma:deploy` - Apply migrations in production
+- `pnpm prisma:studio` - Open Prisma Studio for database management
+- `pnpm db:push` - Push schema changes to the database
+- `pnpm db:seed` - Seed the database with demo data
+- `pnpm vercel:postgres:setup` - Configure for Vercel PostgreSQL
+- `pnpm create:demo-account` - Ensure demo account exists
+
+## Database Setup
+
+### Local Development with PostgreSQL
+
+1. Start PostgreSQL using Docker
+   ```bash
+   pnpm docker:pg:up
+   ```
+
+2. Push the schema to the database
+   ```bash
+   pnpm db:push
+   ```
+
+3. Seed the database (this will create the demo account and sample data)
+   ```bash
+   pnpm db:seed
+   ```
+
+### Vercel Deployment with PostgreSQL
+
+1. Run the Vercel PostgreSQL setup script
+   ```bash
+   pnpm vercel:postgres:setup
+   ```
+
+2. Add a PostgreSQL database in Vercel
+   - Go to your Vercel project dashboard > Storage tab
+   - Create a new PostgreSQL database
+
+3. Deploy to Vercel
+   ```bash
+   git push
+   ```
+
+4. After deployment, run migrations and seed the database
+   ```bash
+   vercel --prod run pnpm prisma migrate deploy
+   vercel --prod run pnpm db:seed
+   ```
+
+This will set up your database schema and create the demo account automatically.
 
 ## Database Schema
 
 The database schema includes models for users, financial records, career tracking, education progress, health data, and roadmap planning. See the [Prisma schema](./prisma/schema.prisma) for details.
 
-## Infrastructure Setup
+## Authentication System
 
-This project uses Terraform to provision AWS infrastructure. The configuration files are located in the `terraform` directory.
+The application uses NextAuth.js for authentication with:
 
-### Deploying Infrastructure
+- Email/password authentication
+- JWT token-based sessions
+- Demo account integration
+- Secure password hashing with bcrypt
+- Account lockout after failed attempts
+- Login/logout monitoring with security audit logs
 
-1. Install Terraform
-2. Configure AWS credentials
-3. Initialize Terraform:
-
-```bash
-cd terraform
-terraform init
-```
-
-4. Deploy infrastructure:
-
-```bash
-terraform apply -var="environment=dev"
-```
-
-## CI/CD Pipeline
-
-The project uses GitHub Actions for continuous integration and deployment. The workflow files are located in the `.github/workflows` directory.
-
-- `ci.yml` - Runs linting, type checking, tests, and builds the application
-- `deploy.yml` - Deploys the application to AWS using Terraform
+The demo account is created during database seeding and is always available with the credentials:
+- Email: demo@example.com
+- Password: password
 
 ## Project Structure
 
@@ -142,7 +170,6 @@ The project uses GitHub Actions for continuous integration and deployment. The w
 - `/src/hooks` - Custom React hooks
 - `/src/types` - TypeScript type definitions
 - `/prisma` - Database schema and migrations
-- `/terraform` - Infrastructure as code
 - `/public` - Static assets
 - `/scripts` - Utility scripts for development and maintenance
 
@@ -152,49 +179,46 @@ The project uses GitHub Actions for continuous integration and deployment. The w
 
 If you're experiencing issues with login or registration:
 
-1. **Use Mock Database**: For development, you can enable the mock database by setting `USE_MOCK_DB=true` in your `.env.local` file.
-
-2. **Fix Auth System**: Run the auth repair script to fix common issues:
-
+1. **Check Database Connection**: Ensure your PostgreSQL database is running and accessible:
    ```bash
-   node scripts/fix-auth.js
+   curl http://localhost:3000/api/db-test
    ```
 
-3. **Check Database Connection**: Run the database diagnostic tool:
-
-   ```bash
-   node scripts/db-diagnostic.js
-   ```
-
-4. **Check Database Status**: Visit the database status endpoint after starting the development server:
-
-   ```
-   http://localhost:3000/api/db-test
-   ```
-
-5. **Ensure Demo Account**: You can ensure the demo account exists by visiting:
-
+2. **Ensure Demo Account**: Visit the demo account endpoint to ensure it exists:
    ```
    http://localhost:3000/api/auth/ensure-demo
    ```
 
+3. **Database Diagnostic**: Run the diagnostic tool:
+   ```bash
+   pnpm db:diagnose
+   ```
+
 ### Database Connection Issues
 
-If you're having trouble connecting to PostgreSQL:
+For PostgreSQL connection issues on Vercel:
 
-1. Make sure Docker is running and the database container is up:
+1. Verify your Vercel environment variables:
+   - `POSTGRES_PRISMA_URL` should start with `postgresql://`
+   - `POSTGRES_URL_NON_POOLING` should also start with `postgresql://`
 
+2. Check that you've created a PostgreSQL database in the Vercel dashboard:
+   - Go to the Storage tab and verify the PostgreSQL instance is running
+
+3. Run migrations and seed the database:
    ```bash
-   docker-compose ps
+   vercel --prod run pnpm prisma migrate deploy
+   vercel --prod run pnpm db:seed
    ```
 
-2. Check the database logs:
+## Security Considerations
 
-   ```bash
-   docker-compose logs db
-   ```
-
-3. Try using the mock database by setting `USE_MOCK_DB=true` in your `.env.local` file for development.
+- All passwords are hashed using bcrypt
+- JWT tokens include rotation and revocation
+- API routes are protected with CSRF tokens
+- Security audit logging for authentication events
+- Strict Content-Security-Policy headers
+- Automatically handles account lockout after failed login attempts
 
 ## License
 

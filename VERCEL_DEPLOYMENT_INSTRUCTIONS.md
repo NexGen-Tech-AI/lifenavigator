@@ -27,10 +27,12 @@ In the Vercel dashboard, go to your project settings and add the following envir
 | Variable | Description | Example Value |
 |----------|-------------|---------------|
 | `DATABASE_URL` | Prisma connection string (with Accelerate if using) | `prisma+postgres://accelerate.prisma-data.net/?api_key=your-api-key` |
+| `POSTGRES_PRISMA_URL` | PostgreSQL connection URL with connection pooling | `postgresql://username:password@host:port/database` |
+| `POSTGRES_URL_NON_POOLING` | PostgreSQL direct connection URL | `postgresql://username:password@host:port/database` |
 | `NEXTAUTH_SECRET` | Secret key for NextAuth.js | `generate-a-secure-random-string` |
 | `SKIP_ENV_VALIDATION` | Skip validation in production | `true` |
 | `ENABLE_FIELD_ENCRYPTION` | Field encryption flag | `false` |
-| `USE_MOCK_DB` | Use mock database | `false` |
+| `USE_MOCK_DB` | Use mock database | `true` (set to true if you don't have a real database) |
 | `NEXTAUTH_URL` | URL for NextAuth.js | `https://${VERCEL_URL}` |
 | `PRISMA_API_KEY` | Prisma Accelerate API key | `your-prisma-api-key` |
 
@@ -77,15 +79,30 @@ DATABASE_URL=your-production-db-url npx prisma migrate deploy
 
 ### Issue: Database connection issues
 
-**Solution:** Double-check your `DATABASE_URL` environment variable in Vercel. If using Prisma Accelerate, ensure your API key is correct and the service is properly set up.
+**Solution:** If you're encountering database connection errors, try the following:
 
-### Issue: Authentication issues with NextAuth.js
+1. Set `USE_MOCK_DB=true` in your Vercel environment variables to use the mock database
+2. Check that your `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` start with either `postgresql://` or `postgres://`
+3. If using Prisma Accelerate, ensure your API key is correct and the service is properly set up
 
-**Solution:** Make sure `NEXTAUTH_URL` and `NEXTAUTH_SECRET` are properly configured in your Vercel environment variables.
+### Issue: Authentication not working
+
+**Solution:** 
+1. Make sure `NEXTAUTH_URL` and `NEXTAUTH_SECRET` are properly configured
+2. Set `USE_MOCK_DB=true` to use the mock database with the demo account
+3. Check the logs for any errors related to database connection or authentication
+4. The demo account (demo@example.com / password) should always work when `USE_MOCK_DB=true`
 
 ### Issue: Vercel builds from old commit
 
 **Solution:** Update the `ignoreCommand` in your `vercel.json` to force Vercel to ignore its build cache and deploy from the latest commit.
+
+### Issue: PrismaClientInitializationError
+
+**Solution:** This error often indicates issues with your database connection URLs. Make sure:
+1. `POSTGRES_PRISMA_URL` and `POSTGRES_URL_NON_POOLING` are correctly formatted
+2. The URLs start with `postgresql://` or `postgres://`
+3. Set `USE_MOCK_DB=true` to bypass the need for a real database connection
 
 ## Monitoring and Maintenance
 
