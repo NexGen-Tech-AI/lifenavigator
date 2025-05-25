@@ -20,6 +20,9 @@ const geistMono = Geist_Mono({
 
 // Metadata
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NODE_ENV === 'production' 
+    ? 'https://nexlevel-intelligence.com' 
+    : 'http://localhost:3000'),
   title: "Life Navigator | Secure Life Management",
   description: "Secure, AI-powered life management platform for finance, career, education, and healthcare guidance",
   keywords: ["life management", "AI advisor", "financial planning", "career development", "education planning", "healthcare management"],

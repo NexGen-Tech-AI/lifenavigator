@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 };
 
 // Error page component
-export default async function AuthErrorPage({
-  searchParams,
-}: {
-  searchParams: { error?: string };
+export default async function AuthErrorPage(props: {
+  searchParams: Promise<{ error?: string }>;
 }) {
+  // Await searchParams as it's now a Promise in Next.js 15
+  const searchParams = await props.searchParams;
   // Get the error message from the URL query
   const errorMessage = getErrorMessage(searchParams.error);
 

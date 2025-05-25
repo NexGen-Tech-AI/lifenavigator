@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { toast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
@@ -73,26 +72,22 @@ export default function LoginForm() {
 
       debugLog("Login result:", result);
 
+      console.log('[AUTH] SignIn result:', result);
+      
       if (result?.error) {
+        console.error('[AUTH] SignIn error:', result.error);
         setError('Invalid email or password. Please try again.');
-        debugLog('Login error:', result.error);
-      } else if (result?.url) {
-        debugLog("Login successful, redirecting to:", result.url);
+      } else if (result?.ok) {
+        debugLog("Login successful, checking session before redirect");
         
-        // Show success toast
-        toast({
-          title: "Login successful",
-          description: "Welcome back!",
-          type: "success",
-        });
+        // Give NextAuth a moment to establish the session
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Use router for SPA navigation, faster and doesn't reload the page
-        router.push('/dashboard');
-        
-        // As a fallback, after 1s, force a hard redirect
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+        // Use router.replace to ensure clean navigation
+        router.replace('/dashboard');
+      } else {
+        // Fallback error
+        setError('Authentication failed. Please try again.');
       }
     } catch (err) {
       debugLog('Unexpected login error:', err);
@@ -121,26 +116,21 @@ export default function LoginForm() {
 
       debugLog("Demo login result:", result);
 
+      console.log('[AUTH] Demo login result:', result);
+      
       if (result?.error) {
         setError('Demo login failed. Please try again or contact support.');
         debugLog('Demo login error:', result.error);
-      } else if (result?.url) {
-        debugLog("Demo login successful, redirecting to:", result.url);
+      } else if (result?.ok) {
+        debugLog("Demo login successful, checking session before redirect");
         
-        // Show success toast
-        toast({
-          title: "Demo Login",
-          description: "Welcome to the demo account!",
-          type: "success",
-        });
+        // Give NextAuth a moment to establish the session
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Use router for client navigation 
-        router.push('/dashboard');
-        
-        // Also do a hard navigation as backup
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+        // Use router.replace to ensure clean navigation
+        router.replace('/dashboard');
+      } else {
+        setError('Demo login failed. Please try again.');
       }
     } catch (err) {
       debugLog('Unexpected demo login error:', err);
@@ -157,7 +147,6 @@ export default function LoginForm() {
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Sign in to access your Life Navigator dashboard
         </p>
-      </div>
       
       {error && (
         <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 text-sm rounded-md">
@@ -278,7 +267,7 @@ export default function LoginForm() {
           {/* OAuth provider buttons - commented out until OAuth is fully configured */}
           <button
             type="button"
-            onClick={() => toast({ title: "Coming Soon", description: "Twitter login will be available soon.", type: "info" })}
+            onClick={() => setError("Twitter login will be available soon.")}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
@@ -286,22 +275,21 @@ export default function LoginForm() {
               <path d="M6.29 18.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0020 3.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.073 4.073 0 01.8 7.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 010 16.407a11.616 11.616 0 006.29 1.84" />
             </svg>
           </button>
-
           <button
             type="button"
-            onClick={() => toast({ title: "Coming Soon", description: "Google login will be available soon.", type: "info" })}
+            onClick={() => setError("Google login will be available soon.")}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
-              <path 
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" 
-                fill="#4285F4"
-              />
-              <path 
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" 
-                fill="#34A853"
-              />
+            <path 
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" 
+              fill="#4285F4"
+            />
+            <path 
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" 
+              fill="#34A853"
+            />
               <path 
                 d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" 
                 fill="#FBBC05"
@@ -315,7 +303,7 @@ export default function LoginForm() {
           
           <button
             type="button"
-            onClick={() => toast({ title: "Coming Soon", description: "Facebook login will be available soon.", type: "info" })}
+            onClick={() => setError("Facebook login will be available soon.")}
             className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm 
             bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
@@ -324,7 +312,6 @@ export default function LoginForm() {
             </svg>
           </button>
         </div>
-      </div>
       
       <div className="mt-6">
         <button
@@ -346,6 +333,8 @@ export default function LoginForm() {
             Register now
           </Link>
         </p>
+      </div>
+        </div>
       </div>
     </div>
   );

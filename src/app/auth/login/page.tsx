@@ -1,9 +1,10 @@
+
 import React from 'react';
 import LoginForm from '@/components/auth/LoginForm';
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { authConfig } from '@/lib/auth-config';
 import { redirect } from 'next/navigation';
 
 // Metadata for the page
@@ -12,25 +13,31 @@ export const metadata: Metadata = {
   description: 'Sign in to your Life Navigator account',
 };
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams: { registered?: string };
+export default async function LoginPage(props: {
+  searchParams: Promise<{ registered?: string }>;
 }) {
   // Check if user is already authenticated
-  const session = await getServerSession(authOptions);
-  
-  // If user is authenticated, redirect them appropriately
-  if (session) {
-    if (!session.user.setupCompleted) {
-      redirect(`/onboarding/questionnaire?userId=${session.user.id}`);
-    } else {
-      redirect('/dashboard');
+  try {
+    const session = await getServerSession(authConfig);
+    
+    // If user is authenticated, redirect them appropriately
+    if (session) {
+      if (!session.user.setupCompleted) {
+        redirect(`/onboarding/questionnaire?userId=${session.user.id}`);
+      } else {
+        redirect('/dashboard');
+      }
+    }
+  } catch (error: any) {
+    // If JWT decryption fails, continue to show login page
+    if (!error?.message?.includes('decryption')) {
+      console.error('Session check error:', error);
     }
   }
   
-  // Safely access searchParams - using await to handle dynamic API correctly
-  const justRegistered = await Promise.resolve(searchParams?.registered === 'true');
+  // Await searchParams as it's now a Promise in Next.js 15
+  const searchParams = await props.searchParams;
+  const justRegistered = searchParams?.registered === 'true';
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
