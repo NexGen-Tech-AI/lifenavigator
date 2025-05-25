@@ -1,10 +1,9 @@
-
-
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 
+// Enhanced logging
 console.log("[AUTH-CONFIG] Initializing with:");
 console.log("  - NEXTAUTH_SECRET exists:", !!process.env.NEXTAUTH_SECRET);
 console.log("  - NEXTAUTH_SECRET length:", process.env.NEXTAUTH_SECRET?.length || 0);
@@ -28,35 +27,39 @@ export const authConfig: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log("[AUTH-CONFIG] Authorize called with email:", credentials?.email);
+        console.log("\n=== AUTHORIZE START ===");
+        console.log("[AUTHORIZE] Credentials received:", {
+          email: credentials?.email,
+          hasPassword: !!credentials?.password
+        });
         
         if (!credentials?.email || !credentials?.password) {
-          console.log("[AUTH-CONFIG] Missing credentials");
+          console.log("[AUTHORIZE] ❌ Missing credentials");
           return null;
         }
 
         try {
-          console.log("[AUTH-CONFIG] Looking up user:", credentials.email);
+          console.log("[AUTHORIZE] Looking up user:", credentials.email);
           const user = await db.user.findUnique({
             where: { email: credentials.email }
           });
-          console.log("[AUTH-CONFIG] User found:", !!user, user?.email);
+          console.log("[AUTHORIZE] User found:", !!user, user?.email);
 
           if (!user || !user.password) {
-            console.log("[AUTH-CONFIG] User not found or no password");
+            console.log("[AUTHORIZE] ❌ User not found or no password");
             return null;
           }
 
-          console.log("[AUTH-CONFIG] Comparing passwords...");
+          console.log("[AUTHORIZE] Comparing passwords...");
           const isPasswordValid = await compare(credentials.password, user.password);
-          console.log("[AUTH-CONFIG] Password valid:", isPasswordValid);
+          console.log("[AUTHORIZE] Password valid:", isPasswordValid);
 
           if (!isPasswordValid) {
-            console.log("[AUTH-CONFIG] Invalid password");
+            console.log("[AUTHORIZE] ❌ Invalid password");
             return null;
           }
 
-          console.log("[AUTH-CONFIG] Authentication successful for:", user.email);
+          console.log("[AUTHORIZE] ✅ Authentication successful for:", user.email);
           
           const authUser = {
             id: user.id,
@@ -65,73 +68,146 @@ export const authConfig: NextAuthOptions = {
             setupCompleted: user.setupCompleted
           };
           
-          console.log("[AUTH-CONFIG] Returning user object:", authUser);
+          console.log("[AUTHORIZE] ✅ Returning user object:", authUser);
+          console.log("=== AUTHORIZE END ===\n");
           return authUser;
         } catch (error) {
-          console.error("[AUTH-CONFIG] Auth error:", error);
+          console.error("[AUTHORIZE] ❌ Auth error:", error);
+          console.log("=== AUTHORIZE END (ERROR) ===\n");
           return null;
         }
       }
     })
   ],
+  
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 24 hours
   },
+  
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 24 hours
   },
+  
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, profile, trigger }) {
       console.log("\n=== JWT CALLBACK START ===");
-      console.log("[JWT] Input:", {
+      console.log("[JWT] Inputs:", {
         hasUser: !!user,
         userEmail: user?.email,
         existingTokenEmail: token?.email,
-        account: account?.provider
+        accountProvider: account?.provider,
+        trigger
       });
       
       try {
         if (user) {
+          console.log("[JWT] 🔄 Creating new token for user:", user.email);
           token.id = user.id;
           token.email = user.email;
           token.name = user.name;
           token.setupCompleted = user.setupCompleted;
-          console.log("[JWT] Setting token data for new user:", user.email);
+          
+          console.log("[JWT] ✅ Token data set:", {
+            id: token.id,
+            email: token.email,
+            name: token.name,
+            setupCompleted: token.setupCompleted
+          });
+        } else {
+          console.log("[JWT] 🔄 Refreshing existing token for:", token.email || "unknown");
         }
         
-        console.log("[JWT] ✅ Token result:", {
-          id: token.id,
-          email: token.email,
-          name: token.name,
-          exp: token.exp,
-          iat: token.iat
+        // Ensure required fields are always present
+        const finalToken = {
+          ...token,
+          id: token.id || "unknown",
+          email: token.email || "unknown@example.com",
+          name: token.name || "Unknown User"
+        };
+        
+        console.log("[JWT] ✅ Final token:", {
+          id: finalToken.id,
+          email: finalToken.email,
+          name: finalToken.name,
+          iat: (finalToken as any).iat,
+          exp: (finalToken as any).exp
         });
         
         console.log("=== JWT CALLBACK END ===\n");
-        return token;
+        return finalToken;
         
       } catch (error) {
-        console.error("[JWT] ❌ Error in JWT callback:", error);
+        console.error("[JWT] ❌ CRITICAL ERROR in JWT callback:", error);
+        console.error("[JWT] Error stack:", (error as Error).stack);
         console.log("=== JWT CALLBACK END (ERROR) ===\n");
-        throw error;
+        // Return a minimal token to prevent complete failure
+        return {
+          id: user?.id || token?.id || "error",
+          email: user?.email || token?.email || "error@example.com",
+          name: user?.name || token?.name || "Error User"
+        };
       }
     },
+    
     async session({ session, token }) {
-      console.log("[AUTH-CONFIG] Session callback - token email:", token.email);
+      console.log("\n=== SESSION CALLBACK START ===");
+      console.log("[SESSION] Inputs:", {
+        hasSession: !!session,
+        hasToken: !!token,
+        tokenEmail: token?.email,
+        sessionUserEmail: session?.user?.email
+      });
       
-      if (session?.user) {
+      try {
+        if (!token) {
+          console.error("[SESSION] ❌ No token provided to session callback!");
+          throw new Error("No token provided to session callback");
+        }
+        
+        console.log("[SESSION] 🔄 Building session from token:", {
+          tokenId: token.id,
+          tokenEmail: token.email,
+          tokenName: token.name
+        });
+        
+        // Ensure session.user exists
+        if (!session.user) {
+          session.user = {} as any;
+        }
+        
         session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
         session.user.setupCompleted = token.setupCompleted as boolean;
+        
+        console.log("[SESSION] ✅ Final session:", {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.name,
+          setupCompleted: session.user.setupCompleted
+        });
+        
+        console.log("=== SESSION CALLBACK END ===\n");
+        return session;
+        
+      } catch (error) {
+        console.error("[SESSION] ❌ CRITICAL ERROR in session callback:", error);
+        console.error("[SESSION] Error stack:", (error as Error).stack);
+        console.log("=== SESSION CALLBACK END (ERROR) ===\n");
+        throw error;
       }
-      return session;
     }
   },
+  
   pages: {
     signIn: "/auth/login",
     error: "/auth/error"
   },
+  
   secret: process.env.NEXTAUTH_SECRET || "dev-secret-change-in-production",
+  
+  // Explicit cookie configuration for debugging
   cookies: {
     sessionToken: {
       name: process.env.NODE_ENV === 'production' 
@@ -163,34 +239,38 @@ export const authConfig: NextAuthOptions = {
       }
     }
   },
+  
   debug: true, // Enable debug for troubleshooting
+  
   logger: {
     error(code, metadata) {
-      console.error('[NEXTAUTH ERROR]', code, metadata)
+      console.error("[NEXTAUTH-ERROR]", code, metadata);
     },
     warn(code) {
-      console.warn('[NEXTAUTH WARN]', code)
+      console.warn("[NEXTAUTH-WARN]", code);
     },
     debug(code, metadata) {
-      console.log('[NEXTAUTH DEBUG]', code, metadata)
+      console.log("[NEXTAUTH-DEBUG]", code, metadata);
     }
   },
+  
   events: {
     async signIn(message) {
-      console.log('[AUTH-CONFIG] SignIn event:', { 
+      console.log("[AUTH-EVENT] ✅ signIn event:", { 
         userId: message.user.id, 
         email: message.user.email,
-        isNewUser: message.isNewUser 
+        isNewUser: message.isNewUser,
+        account: message.account?.provider
       });
     },
     async session(message) {
-      console.log('[AUTH-CONFIG] Session event:', { 
-        sessionToken: message.session,
-        tokenData: message.token 
+      console.log("[AUTH-EVENT] 📊 session event:", { 
+        sessionToken: !!message.session,
+        tokenEmail: message.token?.email
       });
     },
     async createUser(message) {
-      console.log('[AUTH-CONFIG] CreateUser event:', message.user);
+      console.log("[AUTH-EVENT] 👤 createUser event:", message.user);
     }
   }
 };
