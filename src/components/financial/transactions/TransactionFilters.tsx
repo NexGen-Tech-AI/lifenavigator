@@ -4,12 +4,13 @@ import React from 'react';
 import { FinancialAccount } from '@/types/financial';
 
 interface TransactionFiltersProps {
-  accounts: FinancialAccount[];
+  accounts: any[];
   selectedAccountIds: string[];
   startDate: Date;
   endDate: Date;
   onAccountChange: (accountIds: string[]) => void;
   onDateRangeChange: (startDate: Date, endDate: Date) => void;
+  onSearch?: (query: string) => void;
 }
 
 export default function TransactionFilters({

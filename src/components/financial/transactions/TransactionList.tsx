@@ -4,8 +4,11 @@ import React from 'react';
 import { EnhancedTransaction, FinancialAccount } from '@/types/financial';
 
 interface TransactionListProps {
-  transactions: EnhancedTransaction[];
-  accounts: FinancialAccount[];
+  transactions: any[];
+  accounts: any[];
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export default function TransactionList({ transactions, accounts }: TransactionListProps) {

@@ -1,22 +1,23 @@
 'use client';
 
 import React from 'react';
-import { AccountType } from '@/types/financial';
+import { AccountType } from '@/types/database';
 
 interface AccountTypeFilterProps {
   selectedType: AccountType | 'all';
   onChange: (type: AccountType | 'all') => void;
+  accountCounts?: Record<AccountType, number>;
 }
 
 const accountTypeOptions: { value: AccountType | 'all'; label: string; icon: string }[] = [
   { value: 'all', label: 'All Accounts', icon: '💰' },
-  { value: 'bank', label: 'Bank', icon: '🏦' },
-  { value: 'credit', label: 'Credit', icon: '💳' },
-  { value: 'investment', label: 'Investment', icon: '📈' },
-  { value: 'retirement', label: 'Retirement', icon: '🏝️' },
-  { value: 'loan', label: 'Loans', icon: '📝' },
-  { value: 'crypto', label: 'Crypto', icon: '₿' },
-  { value: 'other', label: 'Other', icon: '🔄' },
+  { value: 'CHECKING', label: 'Checking', icon: '🏦' },
+  { value: 'SAVINGS', label: 'Savings', icon: '💵' },
+  { value: 'CREDIT_CARD', label: 'Credit Card', icon: '💳' },
+  { value: 'INVESTMENT', label: 'Investment', icon: '📈' },
+  { value: 'LOAN', label: 'Loan', icon: '📝' },
+  { value: 'MORTGAGE', label: 'Mortgage', icon: '🏠' },
+  { value: 'OTHER', label: 'Other', icon: '🔄' },
 ];
 
 export default function AccountTypeFilter({ selectedType, onChange }: AccountTypeFilterProps) {

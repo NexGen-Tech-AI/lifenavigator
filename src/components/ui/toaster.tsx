@@ -37,8 +37,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
+  const value = { toasts, addToast, removeToast };
+  
+  // Set the instance for the toast singleton
+  useEffect(() => {
+    setToastInstance(value);
+  }, [value]);
+
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={value}>
       {children}
     </ToastContext.Provider>
   );
@@ -168,22 +175,33 @@ export function Toaster() {
   );
 }
 
+// Create a singleton instance for toast methods
+let toastInstance: ToastContextValue | null = null;
+
+export function setToastInstance(instance: ToastContextValue) {
+  toastInstance = instance;
+}
+
 // Export convenience methods
 export const toast = {
   success: (title: string, description?: string, duration?: number) => {
-    const { addToast } = useToast();
-    addToast({ title, description, type: 'success', duration });
+    if (toastInstance) {
+      toastInstance.addToast({ title, description, type: 'success', duration });
+    }
   },
   error: (title: string, description?: string, duration?: number) => {
-    const { addToast } = useToast();
-    addToast({ title, description, type: 'error', duration });
+    if (toastInstance) {
+      toastInstance.addToast({ title, description, type: 'error', duration });
+    }
   },
   warning: (title: string, description?: string, duration?: number) => {
-    const { addToast } = useToast();
-    addToast({ title, description, type: 'warning', duration });
+    if (toastInstance) {
+      toastInstance.addToast({ title, description, type: 'warning', duration });
+    }
   },
   info: (title: string, description?: string, duration?: number) => {
-    const { addToast } = useToast();
-    addToast({ title, description, type: 'info', duration });
+    if (toastInstance) {
+      toastInstance.addToast({ title, description, type: 'info', duration });
+    }
   },
 };
