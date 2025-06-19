@@ -147,6 +147,17 @@ function ChevronLeftIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+function UserGroupIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  );
+}
+
 function ChevronRightIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -210,6 +221,7 @@ const navigation = [
     current: false,
     children: [
       { name: 'Overview', href: '/dashboard/finance/overview' },
+      { name: 'Assets', href: '/dashboard/finance/assets' },
       { name: 'Budget', href: '/dashboard/finance/budget' },
       { name: 'Investments', href: '/dashboard/finance/investments' },
       { name: 'Accounts', href: '/dashboard/finance/accounts' },
@@ -267,9 +279,9 @@ const navigation = [
     current: false,
   },
   {
-    name: 'Roadmap',
-    href: '/dashboard/roadmap',
-    icon: MapIcon,
+    name: 'Family',
+    href: '/dashboard/family',
+    icon: UserGroupIcon,
     current: false,
   },
   {
@@ -445,7 +457,8 @@ export default function Sidebar() {
             <img 
               src="/LifeNavigator.png"
               alt="LifeNavigator Logo" 
-              className="w-8 h-8 flex-shrink-0" 
+              className="w-8 h-8 flex-shrink-0"
+              style={{ width: '32px', height: '32px', objectFit: 'contain' }}
             />
             {(!isCollapsed || isMobile) && (
               <span className="text-lg font-semibold text-gray-900 dark:text-white">LifeNavigator</span>
@@ -491,7 +504,7 @@ export default function Sidebar() {
                     className={classNames(
                       isActive
                         ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
-                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50',
+                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-700/50',
                       'flex items-center flex-grow rounded-md group',
                       isCollapsed && !isMobile 
                         ? 'justify-center p-2' 
@@ -504,7 +517,7 @@ export default function Sidebar() {
                       className={classNames(
                         isActive
                           ? 'text-blue-600 dark:text-blue-300'
-                          : 'text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300',
+                          : 'text-gray-500 group-hover:text-gray-600 dark:text-gray-300 dark:group-hover:text-gray-100',
                         isCollapsed && !isMobile ? 'w-6 h-6' : 'w-5 h-5 mr-3 flex-shrink-0'
                       )}
                       aria-hidden="true"
@@ -539,7 +552,7 @@ export default function Sidebar() {
                           className={classNames(
                             isChildActive
                               ? 'text-blue-700 dark:text-blue-300 font-medium'
-                              : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300',
+                              : 'text-gray-600 hover:text-gray-800 dark:text-gray-100 dark:hover:text-white',
                             'block py-1.5 px-3 text-sm rounded-md'
                           )}
                           onClick={() => isMobile && setIsOpen(false)}
@@ -570,7 +583,7 @@ export default function Sidebar() {
                           >
                             <div className="flex items-center">
                               <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                              <span>{account.email.split('@')[0]}</span>
+                              <span className="text-gray-700 dark:text-gray-100">{account.email.split('@')[0]}</span>
                             </div>
                             {account.unread > 0 && (
                               <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -613,7 +626,7 @@ export default function Sidebar() {
                             >
                               <div className="flex items-center">
                                 <div className="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
-                                <span className="text-sm">{account.email.split('@')[0]}</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-100">{account.email.split('@')[0]}</span>
                               </div>
                               {account.unread > 0 && (
                                 <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

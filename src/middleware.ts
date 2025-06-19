@@ -1,134 +1,166 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+import { addSecurityHeaders, addCorsHeaders } from '@/lib/middleware/security-headers'
+import { createRateLimiter, RATE_LIMITS } from '@/lib/middleware/rate-limit'
 
-const publicPaths = ['/auth/login', '/auth/register', '/auth/error', '/']
-const protectedPaths = ['/dashboard', '/profile', '/goals', '/settings']
-
-function shouldSkipMiddleware(pathname: string): boolean {
-  const skipPatterns = [
-    '/_next/',
-    '/api/auth/',
-    '/favicon.ico',
-    '/robots.txt'
-  ]
- 
-  const fileExtensions = ['.ico', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.css', '.js', '.woff', '.woff2', '.ttf', '.eot', '.pdf']
- 
-  return skipPatterns.some(pattern => pathname.startsWith(pattern)) ||
-         fileExtensions.some(ext => pathname.endsWith(ext))
-}
+// Create rate limiters for different endpoints
+const authRateLimiter = createRateLimiter(RATE_LIMITS.auth);
+const apiRateLimiter = createRateLimiter(RATE_LIMITS.api);
+const uploadRateLimiter = createRateLimiter(RATE_LIMITS.upload);
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
- 
-  if (shouldSkipMiddleware(pathname)) {
-    return NextResponse.next()
-  }
-
-  console.log(`\n=== MIDDLEWARE DEBUG START ===`)
-  console.log(`[MW] Processing: ${pathname}`)
-  console.log(`[MW] Request headers:`, Object.fromEntries(request.headers.entries()))
- 
-  // Log all cookies
-  const cookies = request.cookies.getAll()
-  console.log(`[MW] All cookies:`, cookies.map(c => ({ name: c.name, hasValue: !!c.value, length: c.value.length })))
- 
-  // Check for NextAuth session token specifically
-  const sessionCookie = request.cookies.get('next-auth.session-token')
-  console.log(`[MW] NextAuth session cookie:`, {
-    exists: !!sessionCookie,
-    hasValue: !!sessionCookie?.value,
-    valueLength: sessionCookie?.value?.length || 0,
-    valuePreview: sessionCookie?.value?.substring(0, 50) + '...'
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
-  console.log(`[MW] Environment check:`)
-  console.log(`  - NEXTAUTH_SECRET exists: ${!!process.env.NEXTAUTH_SECRET}`)
-  console.log(`  - NEXTAUTH_SECRET length: ${process.env.NEXTAUTH_SECRET?.length || 0}`)
-  console.log(`  - NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`)
-  console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`)
+  // Check if Supabase is properly configured
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  // Skip Supabase auth if not configured or using placeholder values
+  const isSupabaseConfigured = supabaseUrl && 
+    supabaseKey && 
+    !supabaseUrl.toLowerCase().includes('your-project') && 
+    !supabaseUrl.toLowerCase().includes('your_project') &&
+    supabaseKey !== 'YOUR_ANON_KEY'
 
-  try {
-    // Try multiple ways to get the token
-    console.log(`[MW] Attempting to get token...`)
-    
-    const token1 = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET
-    })
-    
-    const token2 = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-      cookieName: 'next-auth.session-token'
-    })
-    
-    const token3 = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-      raw: true
-    })
-    
-    console.log(`[MW] Token attempts:`)
-    console.log(`  - Default getToken: ${!!token1} (email: ${token1?.email})`)
-    console.log(`  - With cookieName: ${!!token2} (email: ${token2?.email})`)
-    console.log(`  - Raw token: ${!!token3}`)
-    
-    if (token1) {
-      console.log(`[MW] Token details:`, {
-        email: token1.email,
-        name: token1.name,
-        id: token1.id,
-        exp: token1.exp ? new Date(Number(token1.exp) * 1000).toISOString() : 'none',
-        iat: token1.iat ? new Date(Number(token1.iat) * 1000).toISOString() : 'none'
-      })
-    }
-    
-    const token = token1 || token2
-    const isAuthenticated = !!token && !!token.email
-    
-    console.log(`[MW] Final result:`)
-    console.log(`  - Authenticated: ${isAuthenticated}`)
-    console.log(`  - Email: ${token?.email || 'none'}`)
-    console.log(`=== MIDDLEWARE DEBUG END ===\n`)
-
-    // Allow public paths
-    if (publicPaths.includes(pathname)) {
-      console.log(`[MW] ✅ Public path allowed: ${pathname}`)
-      return NextResponse.next()
-    }
-
-    // Check protected paths
-    const requiresAuth = protectedPaths.some(path => pathname.startsWith(path))
-    
-    if (requiresAuth && !isAuthenticated) {
-      console.log(`[MW] ❌ Redirecting unauthenticated user from ${pathname}`)
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    if (isAuthenticated) {
-      console.log(`[MW] ✅ Authenticated access granted to ${pathname}`)
-    }
-
-    return NextResponse.next()
-
-  } catch (error) {
-    console.error('[MW] ❌ Error in middleware:', error)
-    
-    const requiresAuth = protectedPaths.some(path => pathname.startsWith(path))
-    if (requiresAuth) {
-      const loginUrl = new URL('/auth/login', request.url)
-      loginUrl.searchParams.set('callbackUrl', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-    
-    return NextResponse.next()
+  if (!isSupabaseConfigured) {
+    console.log('⚠️  Supabase not configured, skipping auth middleware')
+    console.log('URL:', supabaseUrl ? 'Set' : 'Not set')
+    console.log('Key:', supabaseKey ? 'Set' : 'Not set')
+    return response
   }
+
+  const supabase = createServerClient(
+    supabaseUrl,
+    supabaseKey,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
+
+  // Apply rate limiting based on path
+  const path = request.nextUrl.pathname;
+  
+  if (path.startsWith('/auth/login') || path.startsWith('/auth/register')) {
+    const { allowed, response: limitResponse } = await authRateLimiter(request, response);
+    if (!allowed && limitResponse) {
+      return limitResponse;
+    }
+  } else if (path.startsWith('/api/v1/documents/upload')) {
+    const { allowed, response: limitResponse } = await uploadRateLimiter(request, response);
+    if (!allowed && limitResponse) {
+      return limitResponse;
+    }
+  } else if (path.startsWith('/api/')) {
+    const { allowed, response: limitResponse } = await apiRateLimiter(request, response);
+    if (!allowed && limitResponse) {
+      return limitResponse;
+    }
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  console.log('[Middleware]', request.nextUrl.pathname, '- User:', user?.email || 'none');
+
+  // Protected routes
+  const isProtectedPath = request.nextUrl.pathname.startsWith('/dashboard') ||
+                         request.nextUrl.pathname.startsWith('/api/v1')
+  
+  const isAuthPath = request.nextUrl.pathname.startsWith('/auth')
+  const isOnboardingPath = request.nextUrl.pathname.startsWith('/onboarding')
+
+  // Redirect to login if accessing protected route without auth
+  if (isProtectedPath && !user) {
+    console.log('[Middleware] Redirecting to login - no user for protected path');
+    const redirectUrl = new URL('/auth/login', request.url)
+    redirectUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  // Check if user needs onboarding
+  if (user && !isAuthPath && !isOnboardingPath) {
+    // Fetch user profile to check onboarding status
+    const { data: profile } = await supabase
+      .from('users')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile && !profile.onboarding_completed && !request.nextUrl.pathname.startsWith('/onboarding')) {
+      return NextResponse.redirect(new URL('/onboarding', request.url))
+    }
+  }
+
+  // Redirect to dashboard if accessing auth pages while logged in
+  if (isAuthPath && user && !request.nextUrl.pathname.includes('logout')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // Skip security headers in development for debugging
+  if (process.env.NODE_ENV === 'production') {
+    // Add security headers to all responses
+    response = addSecurityHeaders(request, response);
+    
+    // Add CORS headers for API routes
+    if (path.startsWith('/api/')) {
+      const allowedOrigins = [process.env.NEXT_PUBLIC_APP_URL!];
+      response = addCorsHeaders(request, response, allowedOrigins);
+    }
+  }
+
+  return response
 }
 
 export const config = {
-  matcher: ['/((?!api/auth|_next/static|_next/image|favicon\\.ico).*)']
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

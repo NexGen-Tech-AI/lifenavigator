@@ -1,11 +1,11 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import LoginForm from '../LoginForm';
-import { signIn } from 'next-auth/react';
+import { signIn } from '@/hooks/useAuth';
 import { toast } from '@/components/ui/toaster';
 
-// Mock the next-auth/react module
-jest.mock('next-auth/react', () => ({
+// Mock the useAuth hook
+jest.mock('@/hooks/useAuth', () => ({
   signIn: jest.fn(),
 }));
 

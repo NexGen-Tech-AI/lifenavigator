@@ -1,19 +1,27 @@
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function Home() {
+  const supabase = await createClient();
+  
   // Get the user's session
-  const session = await getServerSession(authOptions);
+  const { data: { user } } = await supabase.auth.getUser();
 
   // If user is not authenticated, redirect to login
-  if (!session) {
+  if (!user) {
     redirect('/auth/login');
   }
 
-  // If user is authenticated but hasn't completed setup, redirect to onboarding
-  if (session.user && !session.user.setupCompleted) {
-    redirect(`/onboarding/questionnaire?userId=${session.user.id}`);
+  // Get user profile to check setup status
+  const { data: profile } = await supabase
+    .from('users')
+    .select('setup_completed')
+    .eq('id', user.id)
+    .single();
+
+  // If user hasn't completed setup, redirect to onboarding
+  if (profile && !profile.setup_completed) {
+    redirect(`/onboarding/questionnaire?userId=${user.id}`);
   }
 
   // If user is authenticated and has completed setup, redirect to dashboard

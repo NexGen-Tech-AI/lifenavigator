@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logo Test</title>
+    <style>
+        body {
+            margin: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .w-10 {
+            width: 2.5rem;
+        }
+        .h-10 {
+            height: 2.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Logo Display Test</h1>
+    
+    <div class="test-container">
+        <h2>Original Image (no constraints)</h2>
+        <img src="/LifeNavigator.png" alt="LifeNavigator Logo Original">
+    </div>
+    
+    <div class="test-container">
+        <h2>With w-10 h-10 classes (40x40px)</h2>
+        <img src="/LifeNavigator.png" alt="LifeNavigator Logo" class="w-10 h-10">
+    </div>
+    
+    <div class="test-container">
+        <h2>With explicit width/height attributes</h2>
+        <img src="/LifeNavigator.png" alt="LifeNavigator Logo" width="40" height="40">
+    </div>
+    
+    <div class="test-container">
+        <h2>With max-width constraint</h2>
+        <img src="/LifeNavigator.png" alt="LifeNavigator Logo" style="max-width: 40px; max-height: 40px;">
+    </div>
+</body>
+</html>

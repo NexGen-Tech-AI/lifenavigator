@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { LockClosedIcon, ShieldCheckIcon, DocumentIcon, FolderIcon, TagIcon, MagnifyingGlassIcon, FunnelIcon, ArrowUpTrayIcon, QrCodeIcon, TrashIcon, PencilIcon, ShareIcon } from '@heroicons/react/24/outline';
 

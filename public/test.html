@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaScript Test</title>
+</head>
+<body>
+    <h1>JavaScript Test Page</h1>
+    <button onclick="alert('JavaScript is working!')">Test Alert</button>
+    <button id="testBtn">Test Console Log</button>
+    
+    <script>
+        console.log('Page loaded');
+        document.getElementById('testBtn').addEventListener('click', function() {
+            console.log('Button clicked!');
+            alert('Button clicked via addEventListener!');
+        });
+    </script>
+</body>
+</html>

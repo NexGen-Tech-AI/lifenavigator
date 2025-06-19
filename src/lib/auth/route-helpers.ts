@@ -3,8 +3,7 @@
  * Includes middleware for CSRF validation and authentication
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/NextAuth';
+import { createClient } from '@/lib/supabase/server';
 import { validateCsrfToken } from '@/lib/auth/csrf';
 
 /**
@@ -34,16 +33,26 @@ export function withCsrfProtection(handler: Function) {
  */
 export function withAuth(handler: Function) {
   return async (request: NextRequest) => {
-    // Get session
-    const session = await getServerSession(authOptions);
+    // Get supabase client and user
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
     
     // Check if user is authenticated
-    if (!session || !session.user) {
+    if (error || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
+    
+    // Create session-like object for compatibility
+    const session = {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email?.split('@')[0],
+      }
+    };
     
     // Call the handler function with session
     return handler(request, session);

@@ -107,7 +107,27 @@ const nextConfig: NextConfig = {
       'crypto',
       '@prisma/client'
     ]
-  }
+  },
+  // Webpack configuration to handle Supabase realtime dependency warning
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Handle the critical dependency warning from @supabase/realtime-js
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    // Ignore the critical dependency warning
+    config.module = {
+      ...config.module,
+      exprContextCritical: false,
+    };
+    
+    return config;
+  },
 };
 
 export default nextConfig;

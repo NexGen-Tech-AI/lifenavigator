@@ -1,7 +1,7 @@
 // FILE: src/components/finance/overview/AccountsSummary.tsx
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   BuildingLibraryIcon, 
   CreditCardIcon, 
@@ -9,52 +9,58 @@ import {
   CurrencyDollarIcon 
 } from "@heroicons/react/24/outline";
 
-// Mock data for accounts - in production this would come from an API
-const accountsData = [
-  {
-    id: "acc1",
-    name: "Chase Checking",
-    type: "checking",
-    balance: 6432.51,
-    icon: <BuildingLibraryIcon className="w-5 h-5" />,
-  },
-  {
-    id: "acc2",
-    name: "Chase Savings",
-    type: "savings",
-    balance: 15245.32,
-    icon: <BuildingLibraryIcon className="w-5 h-5" />,
-  },
-  {
-    id: "acc3",
-    name: "Citi Credit Card",
-    type: "credit",
-    balance: -2145.67,
-    icon: <CreditCardIcon className="w-5 h-5" />,
-  },
-  {
-    id: "acc4",
-    name: "Mortgage",
-    type: "loan",
-    balance: -235600.00,
-    icon: <HomeIcon className="w-5 h-5" />,
-  },
-  {
-    id: "acc5",
-    name: "Vanguard Brokerage",
-    type: "investment",
-    balance: 104325.78,
-    icon: <CurrencyDollarIcon className="w-5 h-5" />,
-  },
-];
-
 export function AccountsSummary() {
   const [filter, setFilter] = useState<string>("all");
+  const [accountsData, setAccountsData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
+  
+  const fetchAccounts = async () => {
+    try {
+      const response = await fetch('/api/v1/accounts');
+      if (response.ok) {
+        const data = await response.json();
+        // Transform the data to match the component's expected format
+        const accounts = (data.data || []).map((account: any) => ({
+          id: account.id,
+          name: account.account_name,
+          type: account.account_type.toLowerCase(),
+          balance: account.current_balance,
+          icon: getIconForType(account.account_type)
+        }));
+        setAccountsData(accounts);
+      }
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case 'CREDIT_CARD':
+        return <CreditCardIcon className="w-5 h-5" />;
+      case 'MORTGAGE':
+      case 'LOAN':
+        return <HomeIcon className="w-5 h-5" />;
+      case 'INVESTMENT':
+        return <CurrencyDollarIcon className="w-5 h-5" />;
+      default:
+        return <BuildingLibraryIcon className="w-5 h-5" />;
+    }
+  };
   
   // Filter accounts based on selected type
   const filteredAccounts = filter === "all" 
     ? accountsData 
-    : accountsData.filter(account => account.type === filter);
+    : accountsData.filter(account => {
+        if (filter === 'credit') return account.type === 'credit_card';
+        return account.type === filter;
+      });
 
   // Calculate totals
   const totalAssets = accountsData
@@ -87,25 +93,35 @@ export function AccountsSummary() {
       </div>
       
       <div className="space-y-4 mb-6">
-        {filteredAccounts.map((account) => (
-          <div 
-            key={account.id}
-            className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700"
-          >
-            <div className="flex items-center">
-              <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-full mr-3">
-                {account.icon}
-              </div>
-              <div>
-                <p className="font-medium">{account.name}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{account.type}</p>
-              </div>
-            </div>
-            <div className={`text-right font-medium ${account.balance < 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
-              {account.balance < 0 ? "-" : ""}${Math.abs(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </div>
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Loading accounts...</p>
           </div>
-        ))}
+        ) : filteredAccounts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No accounts found</p>
+          </div>
+        ) : (
+          filteredAccounts.map((account) => (
+            <div 
+              key={account.id}
+              className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-700"
+            >
+              <div className="flex items-center">
+                <div className="bg-slate-100 dark:bg-slate-700 p-2 rounded-full mr-3">
+                  {account.icon}
+                </div>
+                <div>
+                  <p className="font-medium">{account.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 capitalize">{account.type}</p>
+                </div>
+              </div>
+              <div className={`text-right font-medium ${account.balance < 0 ? 'text-red-500' : 'text-green-600 dark:text-green-400'}`}>
+                {account.balance < 0 ? "-" : ""}${Math.abs(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+            </div>
+          ))
+        )}
       </div>
       
       <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">

@@ -22,40 +22,69 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock NextAuth session
-jest.mock('next-auth/react', () => {
-  const originalModule = jest.requireActual('next-auth/react');
-  return {
-    __esModule: true,
-    ...originalModule,
-    useSession: jest.fn(() => ({
-      data: {
-        user: {
-          id: 'test-user-id',
-          name: 'Test User',
-          email: 'test@example.com',
-          image: null,
+// Mock Supabase client
+jest.mock('@/lib/supabase/client', () => ({
+  createClient: jest.fn(() => ({
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({
+        data: {
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+          }
         },
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      },
-      status: 'authenticated',
-    })),
-  };
-});
+        error: null
+      })),
+      signInWithPassword: jest.fn(),
+      signOut: jest.fn(),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          single: jest.fn(() => Promise.resolve({
+            data: { id: 'test-user-id', email: 'test@example.com' },
+            error: null
+          }))
+        }))
+      }))
+    }))
+  }))
+}));
 
-// Mock server session
-jest.mock('next-auth/next', () => {
-  return {
-    getServerSession: jest.fn(() => ({
-      user: {
-        id: 'test-user-id',
-        name: 'Test User',
-        email: 'test@example.com',
-        image: null,
-      },
-    })),
-  };
-});
+// Mock Supabase server client
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(async () => ({
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({
+        data: {
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+            app_metadata: {},
+            user_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+          }
+        },
+        error: null
+      })),
+    },
+    from: jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn(() => ({
+          single: jest.fn(() => Promise.resolve({
+            data: { id: 'test-user-id', email: 'test@example.com' },
+            error: null
+          }))
+        }))
+      }))
+    }))
+  }))
+}));
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';

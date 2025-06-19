@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/cards/Card';
 import { Button } from '@/components/ui/buttons/Button';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
 import { toast } from '@/components/ui/toaster';
+import Link from 'next/link';
+import { Edit } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -149,7 +151,16 @@ export default function ProfilePage() {
         <div className="lg:col-span-2">
           <Card>
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Personal Information</h2>
+                <Link
+                  href="/dashboard/settings/profile/edit"
+                  className="flex items-center px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Full Profile
+                </Link>
+              </div>
               
               <form onSubmit={handleSubmit}>
                 <div className="space-y-6">

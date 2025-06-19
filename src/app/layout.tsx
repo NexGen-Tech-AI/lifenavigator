@@ -59,10 +59,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: getThemeScript() }} />
-        <script src="/force-dark-mode.js" />
+        <script src="/force-dark-mode.js"></script>
+        <script dangerouslySetInnerHTML={{ __html: `console.log('Inline script test working!');` }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

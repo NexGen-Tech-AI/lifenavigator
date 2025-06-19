@@ -1,6 +1,4 @@
-import { DefaultSession } from 'next-auth';
-
-// User model from Prisma schema
+// User model for Supabase auth
 export interface User {
   id: string;
   name?: string | null;
@@ -15,7 +13,7 @@ export interface User {
   sessions?: Session[];
 }
 
-// Account model from Prisma schema
+// Account model for OAuth providers
 export interface Account {
   id: string;
   userId: string;
@@ -32,7 +30,7 @@ export interface Account {
   user: User;
 }
 
-// Session model from Prisma schema
+// Session model for auth sessions
 export interface Session {
   id: string;
   sessionToken: string;
@@ -41,13 +39,15 @@ export interface Session {
   user: User;
 }
 
-// Augment the built-in types from next-auth
-export interface ExtendedSession extends DefaultSession {
+// Extended session interface for Supabase
+export interface ExtendedSession {
   user: {
     id: string;
     email: string;
     setupCompleted: boolean;
-  } & DefaultSession['user'];
+    name?: string | null;
+    image?: string | null;
+  };
 }
 
 // Credentials for login

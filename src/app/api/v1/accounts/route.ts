@@ -1,24 +1,31 @@
 /**
- * Financial accounts management API
+ * Financial accounts management API - Supabase version
  * GET /api/v1/accounts - List all accounts
  * POST /api/v1/accounts - Create manual account
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db-prod';
+import { createClient } from '@/lib/supabase/server';
 import {
   withErrorHandler,
   requireAuth,
   validateRequest,
   successResponse,
-  paginatedResponse,
   getPaginationParams,
   getQueryParams,
   ConflictError
-} from '@/lib/api/route-helpers';
-import { AccountType, DataSource } from '@prisma/client';
-import { encrypt } from '@/lib/encryption/simple';
+} from '@/lib/api/supabase-route-helpers';
+
+// Define AccountType enum
+export enum AccountType {
+  CHECKING = 'CHECKING',
+  SAVINGS = 'SAVINGS',
+  INVESTMENT = 'INVESTMENT',
+  CREDIT_CARD = 'CREDIT_CARD',
+  LOAN = 'LOAN',
+  MORTGAGE = 'MORTGAGE'
+}
 
 // Validation schemas
 const createAccountSchema = z.object({
@@ -31,258 +38,117 @@ const createAccountSchema = z.object({
   minimumPayment: z.number().optional(),
   apr: z.number().min(0).max(100).optional(),
   accountNumber: z.string().max(4).optional(), // Last 4 digits only
-  currency: z.string().length(3).default('USD'),
-  notes: z.string().max(500).optional()
+  currency: z.string().length(3).default('USD')
 });
 
-// GET /api/v1/accounts - List all accounts
+/**
+ * GET /api/v1/accounts
+ * List user's financial accounts
+ */
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const user = await requireAuth(request);
+  const supabase = await createClient();
+  
+  // Get query parameters
+  const { search } = getQueryParams(request);
   const { page, pageSize, skip } = getPaginationParams(request);
-  const params = getQueryParams(request);
   
-  // Build filters
-  const where: any = { userId: user.id };
+  // Build query
+  let query = supabase
+    .from('financial_accounts')
+    .select('*', { count: 'exact' })
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false });
   
-  if (params.type && params.type !== 'all') {
-    where.accountType = params.type;
+  // Add search filter if provided
+  if (search) {
+    query = query.or(`account_name.ilike.%${search}%,institution_name.ilike.%${search}%`);
   }
   
-  if (params.institution) {
-    where.institutionName = {
-      contains: params.institution,
-      mode: 'insensitive'
-    };
-  }
+  // Add pagination
+  query = query.range(skip, skip + pageSize - 1);
   
-  if (params.active !== undefined) {
-    where.isActive = params.active === 'true';
-  }
+  const { data: accounts, error, count } = await query;
   
-  if (params.source) {
-    where.dataSource = params.source;
-  }
+  if (error) throw error;
   
-  // Get accounts with counts
-  const [accounts, total] = await Promise.all([
-    prisma.financialAccount.findMany({
-      where,
-      include: {
-        _count: {
-          select: {
-            transactions: true
-          }
-        },
-        manualAccount: params.includeDetails === 'true' ? true : false,
-        plaidItem: params.includeDetails === 'true' ? {
-          select: {
-            institutionName: true,
-            lastSuccessfulSync: true
-          }
-        } : false
-      },
-      orderBy: [
-        { accountType: 'asc' },
-        { accountName: 'asc' }
-      ],
-      skip,
-      take: pageSize
-    }),
-    prisma.financialAccount.count({ where })
-  ]);
-  
-  // Calculate summary if requested
-  let summary = null;
-  if (params.includeSummary === 'true') {
-    const allAccounts = await prisma.financialAccount.findMany({
-      where: { userId: user.id, isActive: true },
-      select: {
-        accountType: true,
-        currentBalance: true
-      }
-    });
+  // Calculate account summaries
+  const summary = accounts?.reduce((acc: any, account: any) => {
+    const balance = account.current_balance || 0;
     
-    const totalAssets = allAccounts
-      .filter(a => ['CHECKING', 'SAVINGS', 'INVESTMENT'].includes(a.accountType))
-      .reduce((sum, a) => sum + a.currentBalance, 0);
+    if (account.account_type === 'CREDIT_CARD' || account.account_type === 'LOAN' || account.account_type === 'MORTGAGE') {
+      acc.totalLiabilities += balance;
+    } else {
+      acc.totalAssets += balance;
+    }
     
-    const totalLiabilities = allAccounts
-      .filter(a => ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(a.accountType))
-      .reduce((sum, a) => sum + Math.abs(a.currentBalance), 0);
-    
-    summary = {
-      totalAssets,
-      totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      accountsByType: Object.values(AccountType).map(type => ({
-        type,
-        count: allAccounts.filter(a => a.accountType === type).length,
-        totalBalance: allAccounts
-          .filter(a => a.accountType === type)
-          .reduce((sum, a) => sum + a.currentBalance, 0)
-      }))
-    };
-  }
+    acc.netWorth = acc.totalAssets - acc.totalLiabilities;
+    return acc;
+  }, { totalAssets: 0, totalLiabilities: 0, netWorth: 0 }) || { totalAssets: 0, totalLiabilities: 0, netWorth: 0 };
   
-  // Format response
-  const formattedAccounts = accounts.map(account => ({
-    ...account,
-    // Mask sensitive data
-    accountNumber: account.accountNumber ? `***${account.accountNumber}` : null,
-    routingNumber: null, // Never expose routing number
-    transactionCount: account._count.transactions
-  }));
-  
-  const response = paginatedResponse(formattedAccounts, page, pageSize, total);
-  
-  // Add summary to response if requested
-  if (summary) {
-    (response as any).body = JSON.stringify({
-      ...JSON.parse(response.body),
-      summary
-    });
-  }
-  
-  return response;
-});
-
-// POST /api/v1/accounts - Create manual account
-export const POST = withErrorHandler(async (request: NextRequest) => {
-  const user = await requireAuth(request);
-  const data = await validateRequest(request, createAccountSchema);
-  
-  // Check if account already exists
-  const existing = await prisma.financialAccount.findFirst({
-    where: {
-      userId: user.id,
-      accountName: data.accountName,
-      institutionName: data.institutionName
+  // Return response with both data formats for compatibility
+  return NextResponse.json({
+    data: accounts || [],
+    summary,
+    metadata: { summary },
+    pagination: {
+      page,
+      pageSize,
+      total: count || 0,
+      totalPages: Math.ceil((count || 0) / pageSize),
+      hasMore: page < Math.ceil((count || 0) / pageSize)
     }
   });
+});
+
+/**
+ * POST /api/v1/accounts
+ * Create a manual financial account
+ */
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const user = await requireAuth(request);
+  const supabase = await createClient();
+  
+  // Validate request body
+  const data = await validateRequest(request, createAccountSchema) as z.infer<typeof createAccountSchema>;
+  
+  // Check for duplicate accounts
+  const { data: existing } = await supabase
+    .from('financial_accounts')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('account_name', data.accountName)
+    .eq('institution_name', data.institutionName)
+    .eq('is_active', true)
+    .single();
   
   if (existing) {
     throw new ConflictError('An account with this name already exists at this institution');
   }
   
-  // Create account
-  const account = await prisma.financialAccount.create({
-    data: {
-      userId: user.id,
-      accountName: data.accountName,
-      accountType: data.accountType,
-      institutionName: data.institutionName,
-      currentBalance: data.currentBalance,
-      availableBalance: data.availableBalance || data.currentBalance,
-      creditLimit: data.creditLimit,
-      minimumPayment: data.minimumPayment,
+  // Create the account
+  const { data: account, error } = await supabase
+    .from('financial_accounts')
+    .insert({
+      user_id: user.id,
+      account_name: data.accountName,
+      account_type: data.accountType,
+      institution_name: data.institutionName,
+      current_balance: data.currentBalance,
+      available_balance: data.availableBalance || data.currentBalance,
+      credit_limit: data.creditLimit,
+      minimum_payment: data.minimumPayment,
       apr: data.apr,
-      accountNumber: data.accountNumber ? encrypt(data.accountNumber) : null,
+      account_number: data.accountNumber,
       currency: data.currency,
-      dataSource: DataSource.MANUAL,
-      isActive: true
-    },
-    include: {
-      _count: {
-        select: {
-          transactions: true
-        }
-      }
-    }
-  });
+      data_source: 'MANUAL',
+      is_active: true
+    })
+    .select()
+    .single();
   
-  // Create manual account details if provided
-  if (data.notes) {
-    await prisma.manualAccount.create({
-      data: {
-        accountId: account.id,
-        notes: data.notes
-      }
-    });
-  }
+  if (error) throw error;
   
-  // Create initial snapshot
-  await updateFinancialSnapshot(user.id);
-  
-  // Format response
-  const formattedAccount = {
-    ...account,
-    accountNumber: account.accountNumber ? `***${data.accountNumber}` : null,
-    routingNumber: null,
-    transactionCount: account._count.transactions
-  };
-  
-  return successResponse(formattedAccount, 'Account created successfully', 201);
+  return successResponse(account, 'Account created successfully', 201);
 });
-
-// Helper function to update financial snapshot
-async function updateFinancialSnapshot(userId: string) {
-  const accounts = await prisma.financialAccount.findMany({
-    where: { userId, isActive: true }
-  });
-  
-  const transactions = await prisma.transaction.findMany({
-    where: {
-      userId,
-      transactionDate: {
-        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      }
-    }
-  });
-  
-  const totalAssets = accounts
-    .filter(a => ['CHECKING', 'SAVINGS', 'INVESTMENT'].includes(a.accountType))
-    .reduce((sum, a) => sum + a.currentBalance, 0);
-  
-  const totalLiabilities = accounts
-    .filter(a => ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(a.accountType))
-    .reduce((sum, a) => sum + Math.abs(a.currentBalance), 0);
-  
-  const monthlyIncome = transactions
-    .filter(t => t.amount > 0)
-    .reduce((sum, t) => sum + t.amount, 0);
-  
-  const monthlyExpenses = transactions
-    .filter(t => t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  await prisma.financialSnapshot.upsert({
-    where: {
-      userId_snapshotDate: {
-        userId,
-        snapshotDate: today
-      }
-    },
-    create: {
-      userId,
-      snapshotDate: today,
-      totalAssets,
-      totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      monthlyIncome,
-      monthlyExpenses,
-      savingsRate: monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0,
-      accountBalances: accounts.map(a => ({
-        accountId: a.id,
-        accountName: a.accountName,
-        balance: a.currentBalance
-      })),
-      categorySpending: {} // Will be calculated separately
-    },
-    update: {
-      totalAssets,
-      totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      monthlyIncome,
-      monthlyExpenses,
-      savingsRate: monthlyIncome > 0 ? (monthlyIncome - monthlyExpenses) / monthlyIncome : 0,
-      accountBalances: accounts.map(a => ({
-        accountId: a.id,
-        accountName: a.accountName,
-        balance: a.currentBalance
-      }))
-    }
-  });
-}

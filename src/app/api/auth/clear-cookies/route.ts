@@ -1,33 +1,35 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET() {
   const cookieStore = await cookies();
+  const supabase = await createClient();
   
-  // List of all possible NextAuth cookie names
-  const cookieNames = [
-    'next-auth.session-token',
-    '__Secure-next-auth.session-token',
-    '__Host-next-auth.session-token',
-    'next-auth.csrf-token',
-    'next-auth.callback-url',
-    '__Host-csrf-secret'
-  ];
+  // Sign out from Supabase (this will clear server-side session)
+  await supabase.auth.signOut();
   
-  console.log("[CLEAR-COOKIES] Clearing all auth cookies...");
+  console.log("[CLEAR-COOKIES] Clearing all Supabase auth cookies...");
   
-  // Clear each cookie
-  cookieNames.forEach(name => {
-    try {
-      cookieStore.delete(name);
-      console.log(`[CLEAR-COOKIES] Deleted: ${name}`);
-    } catch (e) {
-      console.log(`[CLEAR-COOKIES] Failed to delete: ${name}`);
+  // Get all cookies and clear ones that match Supabase patterns
+  const allCookies = cookieStore.getAll();
+  const clearedCookies: string[] = [];
+  
+  allCookies.forEach(cookie => {
+    // Clear Supabase cookies (they typically start with 'sb-')
+    if (cookie.name.startsWith('sb-') || cookie.name.includes('supabase')) {
+      try {
+        cookieStore.delete(cookie.name);
+        clearedCookies.push(cookie.name);
+        console.log(`[CLEAR-COOKIES] Deleted: ${cookie.name}`);
+      } catch (e) {
+        console.log(`[CLEAR-COOKIES] Failed to delete: ${cookie.name}`);
+      }
     }
   });
   
   return NextResponse.json({ 
-    message: "All auth cookies cleared",
-    cleared: cookieNames 
+    message: "All Supabase auth cookies cleared",
+    cleared: clearedCookies 
   });
 }

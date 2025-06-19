@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import ComingSoon from '../../../../placeholders/ComingSoon';
+import React from 'react';
+import { TaxPlanningDashboard } from '@/components/finance/TaxPlanningDashboard';
 
 export default function TaxPlanningPage() {
-  return <ComingSoon />;
+  return (
+    <div className="container mx-auto py-6 px-4">
+      <TaxPlanningDashboard />
+    </div>
+  );
 }

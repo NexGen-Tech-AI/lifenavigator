@@ -1,504 +1,177 @@
 /**
- * Database type definitions for LifeNavigator
- * These types match the Prisma schema and are used throughout the application
+ * Database types for the comprehensive schema
+ * This extends the auto-generated Supabase types with our custom types
  */
 
-import { 
-  UserRole, 
-  SubscriptionTier, 
-  SubscriptionStatus,
-  AccountType,
-  DataSource,
-  DocumentType,
-  ProcessingStatus,
-  BudgetPeriod,
-  GoalType,
-  GoalPriority,
-  InsightType,
-  RecurringFrequency,
-  NotificationType,
-  ExportFormat,
-  ExportStatus,
-  AuditEventType,
-  MfaMethod
-} from '@prisma/client';
+import type { Database } from './supabase'
 
-// Re-export enums for convenience
-export {
-  UserRole,
-  SubscriptionTier,
-  SubscriptionStatus,
-  AccountType,
-  DataSource,
-  DocumentType,
-  ProcessingStatus,
-  BudgetPeriod,
-  GoalType,
-  GoalPriority,
-  InsightType,
-  RecurringFrequency,
-  NotificationType,
-  ExportFormat,
-  ExportStatus,
-  AuditEventType,
-  MfaMethod
-};
+// Export the database types for easier access
+export type Tables = Database['public']['Tables']
+export type Enums = Database['public']['Enums']
 
-// ==================== USER & AUTH TYPES ====================
+// User types
+export type User = Tables['users']['Row']
+export type UserInsert = Tables['users']['Insert']
+export type UserUpdate = Tables['users']['Update']
 
-export interface User {
-  id: string;
-  email: string;
-  emailVerified: Date | null;
-  name: string | null;
-  image: string | null;
-  role: UserRole;
-  subscriptionTier: SubscriptionTier;
-  subscriptionStatus: SubscriptionStatus;
-  subscriptionExpiry: Date | null;
-  isPilotMember: boolean;
-  pilotDiscount: number | null;
-  referralCode: string | null;
-  referredBy: string | null;
-  isDemoAccount: boolean;
-  onboardingCompleted: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+// Financial types
+export type FinancialAccount = Tables['financial_accounts']['Row']
+export type FinancialAccountInsert = Tables['financial_accounts']['Insert']
+export type FinancialAccountUpdate = Tables['financial_accounts']['Update']
+
+export type Transaction = Tables['transactions']['Row']
+export type TransactionInsert = Tables['transactions']['Insert']
+export type TransactionUpdate = Tables['transactions']['Update']
+
+// Document types
+export type Document = Tables['documents']['Row']
+export type DocumentInsert = Tables['documents']['Insert']
+export type DocumentUpdate = Tables['documents']['Update']
+
+// Health types
+export type HealthRecord = Tables['health_records']['Row']
+export type HealthRecordInsert = Tables['health_records']['Insert']
+export type HealthRecordUpdate = Tables['health_records']['Update']
+
+// Career types
+export type CareerProfile = Tables['career_profiles']['Row']
+export type CareerProfileInsert = Tables['career_profiles']['Insert']
+export type CareerProfileUpdate = Tables['career_profiles']['Update']
+
+// Integration types
+export type Integration = Tables['integrations']['Row']
+export type IntegrationInsert = Tables['integrations']['Insert']
+export type IntegrationUpdate = Tables['integrations']['Update']
+
+// Audit types
+export type AuditLog = Tables['audit_logs']['Row']
+export type AuditLogInsert = Tables['audit_logs']['Insert']
+
+// Enum types
+export type SubscriptionTier = 'FREE' | 'PRO' | 'AI_AGENT' | 'FAMILY'
+export type AccountType = 'CHECKING' | 'SAVINGS' | 'CREDIT_CARD' | 'LOAN' | 'MORTGAGE' | 'INVESTMENT' | 'RETIREMENT' | 'CRYPTO' | 'OTHER'
+export type TransactionCategory = 'INCOME' | 'HOUSING' | 'TRANSPORTATION' | 'FOOD' | 'UTILITIES' | 'INSURANCE' | 'HEALTHCARE' | 'PERSONAL' | 'ENTERTAINMENT' | 'EDUCATION' | 'SHOPPING' | 'INVESTMENT' | 'OTHER'
+export type DocumentType = 'TAX_RETURN' | 'W2' | '1099' | 'BANK_STATEMENT' | 'INVESTMENT_STATEMENT' | 'INSURANCE_POLICY' | 'MEDICAL_RECORD' | 'RECEIPT' | 'CONTRACT' | 'OTHER'
+export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'REQUIRES_REVIEW'
+export type HealthRecordType = 'APPOINTMENT' | 'LAB_RESULT' | 'PRESCRIPTION' | 'VACCINATION' | 'PROCEDURE' | 'DIAGNOSIS' | 'INSURANCE_CLAIM' | 'OTHER'
+export type CareerStatus = 'EMPLOYED' | 'SELF_EMPLOYED' | 'UNEMPLOYED' | 'STUDENT' | 'RETIRED'
+
+// Helper types
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system'
+  notifications: {
+    email: boolean
+    push: boolean
+    sms: boolean
+  }
+  privacy: {
+    shareDataForInsights: boolean
+    allowAnonymousAnalytics: boolean
+  }
 }
 
-export interface UserWithRelations extends User {
-  financialAccounts: FinancialAccount[];
-  stripeCustomer: StripeCustomer | null;
-  waitlistEntry: WaitlistEntry | null;
+export interface EncryptedField<T = string> {
+  encrypted: string
+  keyId: string
+  algorithm: string
+  _decrypted?: T // Only available after decryption
 }
 
-// ==================== FINANCIAL ACCOUNT TYPES ====================
-
-export interface FinancialAccount {
-  id: string;
-  userId: string;
-  accountName: string;
-  accountType: AccountType;
-  institutionName: string;
-  institutionId: string | null;
-  accountNumber: string | null;
-  routingNumber: string | null;
-  currentBalance: number;
-  availableBalance: number | null;
-  creditLimit: number | null;
-  minimumPayment: number | null;
-  apr: number | null;
-  dataSource: DataSource;
-  plaidItemId: string | null;
-  plaidAccountId: string | null;
-  isActive: boolean;
-  isHidden: boolean;
-  lastSynced: Date | null;
-  syncError: string | null;
-  currency: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface FinancialAccountWithTransactions extends FinancialAccount {
-  transactions: Transaction[];
-  _count: {
-    transactions: number;
-  };
-}
-
-// ==================== TRANSACTION TYPES ====================
-
-export interface Transaction {
-  id: string;
-  userId: string;
-  accountId: string;
-  transactionDate: Date;
-  postDate: Date | null;
-  amount: number;
-  description: string;
-  originalDescription: string | null;
-  categoryId: string | null;
-  subcategory: string | null;
-  merchantId: string | null;
-  dataSource: DataSource;
-  plaidTransactionId: string | null;
-  documentId: string | null;
-  isPending: boolean;
-  isRecurring: boolean;
-  recurringTransactionId: string | null;
-  notes: string | null;
-  tags: string[];
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface TransactionWithRelations extends Transaction {
-  account: FinancialAccount;
-  category: Category | null;
-  merchant: Merchant | null;
-  document: Document | null;
-}
-
-// ==================== CATEGORY & MERCHANT TYPES ====================
-
-export interface Category {
-  id: string;
-  userId: string | null;
-  name: string;
-  parentId: string | null;
-  icon: string | null;
-  color: string | null;
-  isSystem: boolean;
-}
-
-export interface CategoryWithHierarchy extends Category {
-  parent: Category | null;
-  children: Category[];
-}
-
-export interface Merchant {
-  id: string;
-  userId: string | null;
-  name: string;
-  displayName: string | null;
-  categoryId: string | null;
-  logo: string | null;
-  website: string | null;
-  isVerified: boolean;
-}
-
-// ==================== DOCUMENT TYPES ====================
-
-export interface Document {
-  id: string;
-  userId: string;
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  fileUrl: string;
-  storageKey: string;
-  documentType: DocumentType;
-  uploadedAt: Date;
-  processingStatus: ProcessingStatus;
-  processedAt: Date | null;
-  processingError: string | null;
-  extractedData: any | null;
-  confidence: number | null;
-  pageCount: number | null;
-  parsedAccounts: any | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ==================== BUDGET & GOAL TYPES ====================
-
-export interface Budget {
-  id: string;
-  userId: string;
-  name: string;
-  amount: number;
-  period: BudgetPeriod;
-  categoryId: string | null;
-  accountId: string | null;
-  startDate: Date;
-  endDate: Date | null;
-  isActive: boolean;
-  currentSpent: number;
-  lastCalculated: Date | null;
-  alertEnabled: boolean;
-  alertThreshold: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface BudgetWithRelations extends Budget {
-  category: Category | null;
-  account: FinancialAccount | null;
-}
-
-export interface Goal {
-  id: string;
-  userId: string;
-  name: string;
-  description: string | null;
-  targetAmount: number;
-  currentAmount: number;
-  targetDate: Date;
-  goalType: GoalType;
-  priority: GoalPriority;
-  accountId: string | null;
-  isCompleted: boolean;
-  completedAt: Date | null;
-  lastCalculated: Date | null;
-  milestones: any | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface GoalWithAccount extends Goal {
-  account: FinancialAccount | null;
-}
-
-// ==================== INSIGHT TYPES ====================
-
-export interface Insight {
-  id: string;
-  userId: string;
-  type: InsightType;
-  category: string;
-  title: string;
-  description: string;
-  aiGenerated: boolean;
-  confidence: number | null;
-  relatedData: any | null;
-  isRead: boolean;
-  isDismissed: boolean;
-  isActionable: boolean;
-  actionUrl: string | null;
-  validFrom: Date;
-  validUntil: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ==================== PLAID TYPES ====================
-
-export interface PlaidItem {
-  id: string;
-  userId: string;
-  accessToken: string; // Encrypted in DB
-  itemId: string;
-  institutionId: string;
-  institutionName: string;
-  isActive: boolean;
-  lastSuccessfulSync: Date | null;
-  lastSyncError: string | null;
-  webhookUrl: string | null;
-  consentExpiresAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PlaidWebhookEvent {
-  id: string;
-  plaidItemId: string;
-  webhookType: string;
-  webhookCode: string;
-  itemId: string;
-  error: any | null;
-  newTransactions: number | null;
-  removedTransactions: string[];
-  processed: boolean;
-  createdAt: Date;
-}
-
-// ==================== SUBSCRIPTION TYPES ====================
-
-export interface StripeCustomer {
-  id: string;
-  userId: string;
-  stripeCustomerId: string;
-  subscriptionId: string | null;
-  priceId: string | null;
-  currentPeriodEnd: Date | null;
-  cancelAtPeriodEnd: boolean;
-  defaultPaymentMethod: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface WaitlistEntry {
-  id: string;
-  email: string;
-  userId: string | null;
-  position: number;
-  referralCode: string;
-  referredBy: string | null;
-  referralCount: number;
-  signedUpAt: Date | null;
-  convertedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// ==================== NOTIFICATION TYPES ====================
-
-export interface Notification {
-  id: string;
-  userId: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  data: any | null;
-  isRead: boolean;
-  readAt: Date | null;
-  channels: string[];
-  emailSent: boolean;
-  pushSent: boolean;
-  createdAt: Date;
-}
-
-// ==================== SNAPSHOT TYPES ====================
-
-export interface FinancialSnapshot {
-  id: string;
-  userId: string;
-  snapshotDate: Date;
-  totalAssets: number;
-  totalLiabilities: number;
-  netWorth: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  savingsRate: number;
-  accountBalances: any;
-  categorySpending: any;
-  createdAt: Date;
-}
-
-// ==================== API RESPONSE TYPES ====================
-
+// API Response types
 export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+  data: T | null
+  error: Error | null
 }
 
 export interface PaginatedResponse<T> {
-  success: boolean;
-  data: T[];
+  data: T[]
   pagination: {
-    page: number;
-    pageSize: number;
-    total: number;
-    totalPages: number;
-  };
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+    hasMore: boolean
+  }
 }
 
-// ==================== FORM INPUT TYPES ====================
-
-export interface CreateAccountInput {
-  accountName: string;
-  accountType: AccountType;
-  institutionName: string;
-  currentBalance: number;
-  availableBalance?: number;
-  creditLimit?: number;
-  apr?: number;
-  accountNumber?: string; // Last 4 digits only
+// Plaid specific types
+export interface PlaidTokenExchange {
+  publicToken: string
+  accountId?: string
+  metadata?: {
+    institution: {
+      name: string
+      institutionId: string
+    }
+    accounts: Array<{
+      id: string
+      name: string
+      mask: string
+      type: string
+      subtype: string
+    }>
+  }
 }
 
-export interface CreateTransactionInput {
-  accountId: string;
-  transactionDate: Date;
-  amount: number;
-  description: string;
-  categoryId?: string;
-  merchantId?: string;
-  notes?: string;
-  tags?: string[];
+// Document processing types
+export interface DocumentMetadata {
+  fileName: string
+  fileType: string
+  fileSize: number
+  pageCount?: number
+  extractedText?: string
+  confidence?: number
+  parsedData?: {
+    dates?: string[]
+    amounts?: number[]
+    accounts?: string[]
+    categories?: string[]
+  }
 }
 
-export interface CreateBudgetInput {
-  name: string;
-  amount: number;
-  period: BudgetPeriod;
-  categoryId?: string;
-  accountId?: string;
-  startDate: Date;
-  endDate?: Date;
-  alertEnabled?: boolean;
-  alertThreshold?: number;
+// Health data types (for encrypted storage)
+export interface HealthDetails {
+  symptoms?: string[]
+  medications?: Array<{
+    name: string
+    dosage: string
+    frequency: string
+  }>
+  vitals?: {
+    bloodPressure?: string
+    heartRate?: number
+    weight?: number
+    temperature?: number
+  }
+  notes?: string
 }
 
-export interface CreateGoalInput {
-  name: string;
-  description?: string;
-  targetAmount: number;
-  targetDate: Date;
-  goalType: GoalType;
-  priority?: GoalPriority;
-  accountId?: string;
+// Career data types
+export interface Education {
+  degree: string
+  field: string
+  institution: string
+  startDate: string
+  endDate?: string
+  gpa?: number
 }
 
-// ==================== DASHBOARD TYPES ====================
-
-export interface DashboardData {
-  user: User;
-  accounts: FinancialAccountWithTransactions[];
-  recentTransactions: TransactionWithRelations[];
-  budgets: BudgetWithRelations[];
-  goals: GoalWithAccount[];
-  insights: Insight[];
-  snapshot: FinancialSnapshot | null;
-  notifications: Notification[];
+export interface Certification {
+  name: string
+  issuer: string
+  issueDate: string
+  expiryDate?: string
+  credentialId?: string
+  url?: string
 }
 
-export interface AccountsSummary {
-  totalAssets: number;
-  totalLiabilities: number;
-  netWorth: number;
-  accountsByType: {
-    type: AccountType;
-    count: number;
-    totalBalance: number;
-  }[];
-}
+// Integration status types
+export type IntegrationProvider = 'plaid' | 'google' | 'stripe' | 'coinbase' | 'robinhood' | 'mint'
 
-export interface SpendingAnalysis {
-  totalSpent: number;
-  spendingByCategory: {
-    categoryId: string;
-    categoryName: string;
-    amount: number;
-    percentage: number;
-  }[];
-  spendingTrend: {
-    date: string;
-    amount: number;
-  }[];
-}
-
-// ==================== INTEGRATION TYPES ====================
-
-export interface PlaidLinkTokenRequest {
-  userId: string;
-  products?: string[];
-  countryCodes?: string[];
-  language?: string;
-}
-
-export interface PlaidLinkTokenResponse {
-  linkToken: string;
-  expiration: string;
-}
-
-export interface PlaidExchangeTokenRequest {
-  publicToken: string;
-  userId: string;
-}
-
-export interface DocumentUploadRequest {
-  userId: string;
-  documentType: DocumentType;
-  file: File;
-}
-
-export interface DocumentParsingResult {
-  accounts?: {
-    accountName: string;
-    accountNumber: string;
-    balance: number;
-  }[];
-  transactions?: {
-    date: string;
-    description: string;
-    amount: number;
-    balance?: number;
-  }[];
-  confidence: number;
+export interface IntegrationStatus {
+  provider: IntegrationProvider
+  isActive: boolean
+  lastSync?: string
+  error?: string
+  accountCount?: number
 }

@@ -20,5 +20,5 @@ export async function decrypt(encryptedText: string): Promise<string> {
   return decryptData(encryptedText);
 }
 
-// Re-export the original functions for backward compatibility
-export { encrypt as encryptSync, decrypt as decryptSync } from './index';
+// Export sync versions (these are actually async but named for compatibility)
+export { encrypt as encryptSync, decrypt as decryptSync };

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { DataExportButton } from '@/components/settings/DataExportButton';
 import { DeleteAccountModal } from '@/components/settings/DeleteAccountModal';
@@ -26,6 +26,13 @@ export default function SettingsPage() {
       description: 'Customize your dashboard experience',
       url: '/dashboard/settings/preferences',
       icon: '⚙️',
+    },
+    {
+      id: 'integrations',
+      name: 'Calendar Integrations',
+      description: 'Connect your calendars from Google, Outlook, and more',
+      url: '/dashboard/settings/integrations',
+      icon: '📅',
     },
     {
       id: 'notifications',

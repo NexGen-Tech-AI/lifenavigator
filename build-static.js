@@ -9,8 +9,9 @@ const { execSync } = require('child_process');
 // Set environment variables
 process.env.SKIP_ENV_VALIDATION = 'true';
 process.env.DATABASE_URL = 'file:./prisma/dev.db';
-process.env.NEXTAUTH_SECRET = 'build-time-secret-replace-in-production';
-process.env.NEXTAUTH_URL = 'http://localhost:3000';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://placeholder.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'placeholder-anon-key';
+process.env.SUPABASE_SERVICE_ROLE_KEY = 'placeholder-service-role-key';
 process.env.NODE_ENV = 'production';
 process.env.ENABLE_FIELD_ENCRYPTION = 'false';
 

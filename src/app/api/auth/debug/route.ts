@@ -1,21 +1,26 @@
-import { getServerSession } from "next-auth";
-import { authConfig } from "@/lib/auth-config";
+import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authConfig);
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('next-auth.session-token');
+    
+    // Look for Supabase auth cookies
+    const supabaseCookies = cookieStore.getAll().filter(cookie => 
+      cookie.name.startsWith('sb-') || cookie.name.includes('supabase')
+    );
     
     return NextResponse.json({
-      session: session || null,
-      hasCookie: !!sessionCookie,
-      cookieName: sessionCookie?.name,
-      cookieValue: sessionCookie?.value ? 'EXISTS (hidden)' : 'NONE',
+      user: user || null,
+      authError: error?.message || null,
+      hasCookies: supabaseCookies.length > 0,
+      cookieNames: supabaseCookies.map(c => c.name),
       env: {
-        hasSecret: !!process.env.NEXTAUTH_SECRET,
+        hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasSupabaseAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         nodeEnv: process.env.NODE_ENV,
       }
     });

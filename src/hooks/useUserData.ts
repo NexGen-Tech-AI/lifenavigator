@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect, useRef } from 'react';
+import { useSession } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api/client';
 
 // Types for user data
@@ -35,6 +35,7 @@ export function useUserData() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const retryCount = useRef(0);
 
   useEffect(() => {
     async function fetchUserData() {
@@ -45,11 +46,43 @@ export function useUserData() {
 
       try {
         setLoading(true);
+        setError(null);
         // Fetch user data from the API
         const data = await apiClient.get<UserData>('/user/profile');
         setUserData(data);
-      } catch (err) {
+        retryCount.current = 0; // Reset retry count on success
+      } catch (err: any) {
         console.error('Error fetching user data:', err);
+        
+        // Handle specific error cases
+        if (err.status === 404) {
+          // Don't retry on 404 - endpoint doesn't exist
+          console.warn('User profile endpoint not found, using default data');
+          // Use mock data instead
+          const mockUserData: UserData = {
+            id: session.user.id || '',
+            name: (session.user as any).user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            email: session.user.email || '',
+            setupCompleted: true,
+            goals: {
+              financialGoals: {},
+              careerGoals: {},
+              educationGoals: {},
+              healthGoals: {}
+            },
+            riskProfile: {
+              riskTheta: 0.5,
+              financialRiskTolerance: 0.6,
+              careerRiskTolerance: 0.5,
+              healthRiskTolerance: 0.4,
+              educationRiskTolerance: 0.7
+            }
+          };
+          setUserData(mockUserData);
+          setError(null);
+          return;
+        }
+        
         setError(err instanceof Error ? err : new Error('Failed to fetch user data'));
       } finally {
         setLoading(false);

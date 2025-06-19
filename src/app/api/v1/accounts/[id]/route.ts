@@ -1,23 +1,35 @@
 /**
- * Individual account operations API
+ * Financial accounts management API - Individual account operations
  * GET /api/v1/accounts/[id] - Get account details
  * PUT /api/v1/accounts/[id] - Update account
  * DELETE /api/v1/accounts/[id] - Delete account
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db-prod';
+import { createClient } from '@/lib/supabase/server';
 import {
   withErrorHandler,
   requireAuth,
   validateRequest,
   successResponse,
   NotFoundError,
-  AuthorizationError,
-  ConflictError
-} from '@/lib/api/route-helpers';
-import { AccountType } from '@prisma/client';
+  ForbiddenError
+} from '@/lib/api/supabase-route-helpers';
+
+// Update account schema
+const updateAccountSchema = z.object({
+  accountName: z.string().min(1).max(100).optional(),
+  accountType: z.enum(['CHECKING', 'SAVINGS', 'INVESTMENT', 'CREDIT_CARD', 'LOAN', 'MORTGAGE']).optional(),
+  institutionName: z.string().min(1).max(100).optional(),
+  currentBalance: z.number().optional(),
+  availableBalance: z.number().optional(),
+  creditLimit: z.number().optional(),
+  minimumPayment: z.number().optional(),
+  apr: z.number().min(0).max(100).optional(),
+  accountNumber: z.string().max(4).optional(),
+  currency: z.string().length(3).optional()
+});
 
 interface RouteParams {
   params: {
@@ -25,308 +37,112 @@ interface RouteParams {
   };
 }
 
-// Validation schemas
-const updateAccountSchema = z.object({
-  accountName: z.string().min(1).max(100).optional(),
-  isActive: z.boolean().optional(),
-  isHidden: z.boolean().optional(),
-  currentBalance: z.number().optional(),
-  availableBalance: z.number().optional(),
-  creditLimit: z.number().optional(),
-  minimumPayment: z.number().optional(),
-  apr: z.number().min(0).max(100).optional(),
-  notes: z.string().max(500).optional()
-});
-
-// GET /api/v1/accounts/[id] - Get account details
-export const GET = withErrorHandler(async (
-  request: NextRequest,
-  { params }: RouteParams
-) => {
+/**
+ * GET /api/v1/accounts/[id]
+ * Get individual account details
+ */
+export const GET = withErrorHandler(async (request: NextRequest, { params }: RouteParams) => {
   const user = await requireAuth(request);
-  const { id } = params;
+  const supabase = await createClient();
   
-  const account = await prisma.financialAccount.findFirst({
-    where: {
-      id,
-      userId: user.id
-    },
-    include: {
-      manualAccount: true,
-      plaidItem: {
-        select: {
-          institutionName: true,
-          lastSuccessfulSync: true,
-          lastSyncError: true
-        }
-      },
-      _count: {
-        select: {
-          transactions: true,
-          budgets: true,
-          goals: true
-        }
-      }
-    }
-  });
+  const { data: account, error } = await supabase
+    .from('financial_accounts')
+    .select('*')
+    .eq('id', params.id)
+    .eq('user_id', user.id)
+    .single();
   
-  if (!account) {
+  if (error || !account) {
     throw new NotFoundError('Account not found');
   }
   
-  // Get recent transactions
-  const recentTransactions = await prisma.transaction.findMany({
-    where: {
-      accountId: id,
-      userId: user.id
-    },
-    include: {
-      category: true,
-      merchant: true
-    },
-    orderBy: { transactionDate: 'desc' },
-    take: 10
-  });
-  
-  // Calculate statistics
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const stats = await prisma.transaction.aggregate({
-    where: {
-      accountId: id,
-      userId: user.id,
-      transactionDate: { gte: thirtyDaysAgo }
-    },
-    _sum: {
-      amount: true
-    },
-    _count: true
-  });
-  
-  const monthlyInflow = await prisma.transaction.aggregate({
-    where: {
-      accountId: id,
-      userId: user.id,
-      transactionDate: { gte: thirtyDaysAgo },
-      amount: { gt: 0 }
-    },
-    _sum: {
-      amount: true
-    }
-  });
-  
-  const monthlyOutflow = await prisma.transaction.aggregate({
-    where: {
-      accountId: id,
-      userId: user.id,
-      transactionDate: { gte: thirtyDaysAgo },
-      amount: { lt: 0 }
-    },
-    _sum: {
-      amount: true
-    }
-  });
-  
-  // Format response
-  const response = {
-    ...account,
-    accountNumber: account.accountNumber ? '****' : null,
-    routingNumber: null,
-    recentTransactions,
-    statistics: {
-      transactionCount: account._count.transactions,
-      budgetCount: account._count.budgets,
-      goalCount: account._count.goals,
-      last30Days: {
-        transactionCount: stats._count,
-        netFlow: stats._sum.amount || 0,
-        inflow: monthlyInflow._sum.amount || 0,
-        outflow: Math.abs(monthlyOutflow._sum.amount || 0)
-      }
-    }
-  };
-  
-  return successResponse(response);
+  return successResponse(account);
 });
 
-// PUT /api/v1/accounts/[id] - Update account
-export const PUT = withErrorHandler(async (
-  request: NextRequest,
-  { params }: RouteParams
-) => {
+/**
+ * PUT /api/v1/accounts/[id]
+ * Update account details
+ */
+export const PUT = withErrorHandler(async (request: NextRequest, { params }: RouteParams) => {
   const user = await requireAuth(request);
-  const { id } = params;
-  const data = await validateRequest(request, updateAccountSchema);
+  const supabase = await createClient();
   
-  // Check ownership
-  const account = await prisma.financialAccount.findFirst({
-    where: {
-      id,
-      userId: user.id
-    }
-  });
+  // First check if account exists and belongs to user
+  const { data: existing } = await supabase
+    .from('financial_accounts')
+    .select('id, data_source')
+    .eq('id', params.id)
+    .eq('user_id', user.id)
+    .single();
   
-  if (!account) {
+  if (!existing) {
     throw new NotFoundError('Account not found');
   }
   
-  // Don't allow manual balance updates for connected accounts
-  if (account.dataSource !== 'MANUAL' && 
-      (data.currentBalance !== undefined || data.availableBalance !== undefined)) {
-    throw new ConflictError('Cannot manually update balance for connected accounts');
-  }
+  // Validate request body
+  const data = await validateRequest(request, updateAccountSchema) as z.infer<typeof updateAccountSchema>;
   
-  // Update account
-  const updatedAccount = await prisma.financialAccount.update({
-    where: { id },
-    data: {
-      accountName: data.accountName,
-      isActive: data.isActive,
-      isHidden: data.isHidden,
-      currentBalance: data.currentBalance,
-      availableBalance: data.availableBalance,
-      creditLimit: data.creditLimit,
-      minimumPayment: data.minimumPayment,
-      apr: data.apr
-    }
-  });
+  // Build update object
+  const updateData: any = {};
+  if (data.accountName !== undefined) updateData.account_name = data.accountName;
+  if (data.accountType !== undefined) updateData.account_type = data.accountType;
+  if (data.institutionName !== undefined) updateData.institution_name = data.institutionName;
+  if (data.currentBalance !== undefined) updateData.current_balance = data.currentBalance;
+  if (data.availableBalance !== undefined) updateData.available_balance = data.availableBalance;
+  if (data.creditLimit !== undefined) updateData.credit_limit = data.creditLimit;
+  if (data.minimumPayment !== undefined) updateData.minimum_payment = data.minimumPayment;
+  if (data.apr !== undefined) updateData.apr = data.apr;
+  if (data.accountNumber !== undefined) updateData.account_number = data.accountNumber;
+  if (data.currency !== undefined) updateData.currency = data.currency;
   
-  // Update manual account notes if provided
-  if (data.notes !== undefined && account.dataSource === 'MANUAL') {
-    await prisma.manualAccount.upsert({
-      where: { accountId: id },
-      create: {
-        accountId: id,
-        notes: data.notes
-      },
-      update: {
-        notes: data.notes
-      }
-    });
-  }
+  // Update the account
+  const { data: account, error } = await supabase
+    .from('financial_accounts')
+    .update({
+      ...updateData,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', params.id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
   
-  // Update financial snapshot if balance changed
-  if (data.currentBalance !== undefined || data.availableBalance !== undefined) {
-    await updateFinancialSnapshot(user.id);
-  }
+  if (error) throw error;
   
-  return successResponse(updatedAccount, 'Account updated successfully');
+  return successResponse(account, 'Account updated successfully');
 });
 
-// DELETE /api/v1/accounts/[id] - Delete account
-export const DELETE = withErrorHandler(async (
-  request: NextRequest,
-  { params }: RouteParams
-) => {
+/**
+ * DELETE /api/v1/accounts/[id]
+ * Soft delete account (sets is_active to false)
+ */
+export const DELETE = withErrorHandler(async (request: NextRequest, { params }: RouteParams) => {
   const user = await requireAuth(request);
-  const { id } = params;
+  const supabase = await createClient();
   
-  // Check ownership
-  const account = await prisma.financialAccount.findFirst({
-    where: {
-      id,
-      userId: user.id
-    },
-    include: {
-      _count: {
-        select: {
-          transactions: true,
-          budgets: true,
-          goals: true
-        }
-      }
-    }
-  });
+  // Check if account exists and belongs to user
+  const { data: existing } = await supabase
+    .from('financial_accounts')
+    .select('id')
+    .eq('id', params.id)
+    .eq('user_id', user.id)
+    .single();
   
-  if (!account) {
+  if (!existing) {
     throw new NotFoundError('Account not found');
   }
   
-  // Warn if account has related data
-  const hasRelatedData = 
-    account._count.transactions > 0 ||
-    account._count.budgets > 0 ||
-    account._count.goals > 0;
+  // Soft delete by setting is_active to false
+  const { error } = await supabase
+    .from('financial_accounts')
+    .update({
+      is_active: false,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', params.id)
+    .eq('user_id', user.id);
   
-  if (hasRelatedData) {
-    // Soft delete - just mark as inactive
-    await prisma.financialAccount.update({
-      where: { id },
-      data: {
-        isActive: false,
-        isHidden: true
-      }
-    });
-    
-    return successResponse(
-      { id, status: 'deactivated' },
-      'Account deactivated. Related data preserved.'
-    );
-  } else {
-    // Hard delete if no related data
-    await prisma.financialAccount.delete({
-      where: { id }
-    });
-    
-    return successResponse(
-      { id, status: 'deleted' },
-      'Account deleted successfully'
-    );
-  }
+  if (error) throw error;
+  
+  return successResponse(null, 'Account deleted successfully');
 });
-
-// Helper function to update financial snapshot
-async function updateFinancialSnapshot(userId: string) {
-  // Same implementation as in the main accounts route
-  // Could be extracted to a shared service
-  const accounts = await prisma.financialAccount.findMany({
-    where: { userId, isActive: true }
-  });
-  
-  const totalAssets = accounts
-    .filter(a => ['CHECKING', 'SAVINGS', 'INVESTMENT'].includes(a.accountType))
-    .reduce((sum, a) => sum + a.currentBalance, 0);
-  
-  const totalLiabilities = accounts
-    .filter(a => ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(a.accountType))
-    .reduce((sum, a) => sum + Math.abs(a.currentBalance), 0);
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  await prisma.financialSnapshot.upsert({
-    where: {
-      userId_snapshotDate: {
-        userId,
-        snapshotDate: today
-      }
-    },
-    create: {
-      userId,
-      snapshotDate: today,
-      totalAssets,
-      totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      monthlyIncome: 0, // Will be calculated from transactions
-      monthlyExpenses: 0, // Will be calculated from transactions
-      savingsRate: 0,
-      accountBalances: accounts.map(a => ({
-        accountId: a.id,
-        accountName: a.accountName,
-        balance: a.currentBalance
-      })),
-      categorySpending: {}
-    },
-    update: {
-      totalAssets,
-      totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
-      accountBalances: accounts.map(a => ({
-        accountId: a.id,
-        accountName: a.accountName,
-        balance: a.currentBalance
-      }))
-    }
-  });
-}

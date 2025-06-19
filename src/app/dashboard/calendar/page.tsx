@@ -10,14 +10,16 @@ import CalendarSidebar from '@/components/calendar/CalendarSidebar';
 import EventModal from '@/components/calendar/EventModal';
 import { CalendarEvent, CalendarSource } from '@/types/calendar';
 import { addDays, format, parse, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks } from 'date-fns';
+import { Settings, RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 
-// Placeholder data for calendar sources
-const mockCalendarSources: CalendarSource[] = [
-  { id: '1', name: 'Personal', color: '#3b82f6', isEnabled: true },
-  { id: '2', name: 'Work', color: '#10b981', isEnabled: true },
-  { id: '3', name: 'Family', color: '#f59e0b', isEnabled: true },
-  { id: '4', name: 'Health', color: '#ef4444', isEnabled: true },
-  { id: '5', name: 'Finance', color: '#8b5cf6', isEnabled: true }
+// Default calendar sources for users without integrations
+const defaultCalendarSources: CalendarSource[] = [
+  { id: 'local-personal', name: 'Personal', color: '#3b82f6', isEnabled: true },
+  { id: 'local-work', name: 'Work', color: '#10b981', isEnabled: true },
+  { id: 'local-family', name: 'Family', color: '#f59e0b', isEnabled: true },
+  { id: 'local-health', name: 'Health', color: '#ef4444', isEnabled: true },
+  { id: 'local-finance', name: 'Finance', color: '#8b5cf6', isEnabled: true }
 ];
 
 // Mock events generator
@@ -43,7 +45,7 @@ const generateMockEvents = (): CalendarEvent[] => {
   ];
   
   // Calendar source lookup for colors
-  const calendarSourceMap = mockCalendarSources.reduce((acc, source) => {
+  const calendarSourceMap = defaultCalendarSources.reduce((acc: Record<string, CalendarSource>, source: CalendarSource) => {
     acc[source.name] = source;
     return acc;
   }, {} as Record<string, CalendarSource>);
@@ -94,15 +96,98 @@ type ViewType = 'month' | 'week' | 'day';
 export default function CalendarPage() {
   const [viewType, setViewType] = useState<ViewType>('month');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [calendarSources, setCalendarSources] = useState<CalendarSource[]>(mockCalendarSources);
+  const [calendarSources, setCalendarSources] = useState<CalendarSource[]>(defaultCalendarSources);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [hasIntegrations, setHasIntegrations] = useState(false);
   
-  // Generate mock events on component mount
+  // Load calendar data on component mount
   useEffect(() => {
-    setEvents(generateMockEvents());
+    loadCalendarData();
   }, []);
+  
+  const loadCalendarData = async () => {
+    setIsLoading(true);
+    try {
+      // Check for calendar integrations
+      const connectionsResponse = await fetch('/api/v1/calendar/connections');
+      if (connectionsResponse.ok) {
+        const { connections } = await connectionsResponse.json();
+        
+        if (connections && connections.length > 0) {
+          setHasIntegrations(true);
+          
+          // Load calendars from integrations
+          const calendarsResponse = await fetch('/api/v1/calendar/calendars');
+          if (calendarsResponse.ok) {
+            const { calendars } = await calendarsResponse.json();
+            
+            // Convert to CalendarSource format
+            const integratedSources: CalendarSource[] = calendars.map((cal: any) => ({
+              id: cal.id,
+              name: cal.name,
+              color: cal.color || '#3b82f6',
+              isEnabled: cal.isVisible
+            }));
+            
+            // Combine with default local calendars
+            setCalendarSources([...integratedSources, ...defaultCalendarSources]);
+          }
+          
+          // Load events from integrations
+          const eventsResponse = await fetch('/api/v1/calendar/events');
+          if (eventsResponse.ok) {
+            const { events: integratedEvents } = await eventsResponse.json();
+            
+            // Convert to CalendarEvent format
+            const formattedEvents: CalendarEvent[] = integratedEvents.map((event: any) => ({
+              id: event.id,
+              title: event.title,
+              start: event.startDatetime,
+              end: event.endDatetime,
+              allDay: event.allDay,
+              calendarId: event.calendarId,
+              color: event.calendarColor || '#3b82f6',
+              description: event.description,
+              location: event.location
+            }));
+            
+            setEvents(formattedEvents);
+          }
+        } else {
+          // No integrations, use mock data
+          setEvents(generateMockEvents());
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load calendar data:', error);
+      // Fallback to mock data
+      setEvents(generateMockEvents());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleSyncCalendars = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/v1/calendar/sync-all', {
+        method: 'POST'
+      });
+      
+      if (response.ok) {
+        // Reload calendar data after sync
+        await loadCalendarData();
+      }
+    } catch (error) {
+      console.error('Failed to sync calendars:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   
   // Filter events based on enabled calendar sources
   const filteredEvents = events.filter(event => {
@@ -211,6 +296,49 @@ export default function CalendarPage() {
             calendarSources={calendarSources}
             onToggleCalendar={handleToggleCalendar}
           />
+          
+          {/* Integration Actions */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            {hasIntegrations ? (
+              <div className="space-y-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={handleSyncCalendars}
+                  disabled={isSyncing}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : 'Sync Calendars'}
+                </Button>
+                <Link href="/dashboard/settings/integrations">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Integrations
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
+                  Connect your calendars to sync all your events in one place
+                </p>
+                <Link href="/dashboard/settings/integrations">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="w-full"
+                  >
+                    Connect Calendars
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       

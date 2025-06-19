@@ -27,10 +27,6 @@ export function getThemeScript(): string {
           document.documentElement.style.backgroundColor = '#0f172a';
           document.documentElement.style.color = '#f1f5f9';
 
-          // Also set on body - sometimes needed for certain CSS frameworks
-          document.body.style.backgroundColor = '#0f172a';
-          document.body.style.color = '#f1f5f9';
-
           console.log('[Theme Script] Applied dark theme');
         } else {
           // Add light class to html element
@@ -39,10 +35,6 @@ export function getThemeScript(): string {
           // Set light mode styles directly
           document.documentElement.style.backgroundColor = '#ffffff';
           document.documentElement.style.color = '#171717';
-
-          // Also set on body - sometimes needed for certain CSS frameworks
-          document.body.style.backgroundColor = '#ffffff';
-          document.body.style.color = '#171717';
 
           console.log('[Theme Script] Applied light theme');
         }

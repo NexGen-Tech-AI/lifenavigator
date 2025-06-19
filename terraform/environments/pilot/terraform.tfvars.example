@@ -1,0 +1,40 @@
+# terraform/environments/pilot/terraform.tfvars.example
+# Copy this file to terraform.tfvars and fill in your values
+
+# AWS Configuration
+aws_region   = "us-east-1"
+project_name = "life-navigator"
+
+# Vercel Configuration
+allowed_origins = [
+  "http://localhost:3000",
+  "https://your-custom-domain.com"
+]
+
+# Supabase Configuration (Required)
+supabase_url         = "https://your-project-ref.supabase.co"
+supabase_anon_key    = "your-supabase-anon-key"
+supabase_service_key = "your-supabase-service-role-key"
+
+# Plaid Configuration (Required)
+plaid_client_id = "your-plaid-client-id"
+plaid_secret    = "your-plaid-secret"
+plaid_env       = "sandbox" # or "development" or "production"
+
+# Google OAuth Configuration (Optional)
+google_client_id     = "your-google-client-id.apps.googleusercontent.com"
+google_client_secret = "your-google-client-secret"
+
+# Coinbase Configuration (Optional)
+coinbase_api_key    = ""
+coinbase_api_secret = ""
+
+# Stripe Configuration (Optional)
+stripe_secret_key     = ""
+stripe_webhook_secret = ""
+
+# Monitoring Configuration
+enable_alerts       = true
+alert_email         = "your-email@example.com"
+enable_budget_alert = true
+budget_limit        = "100" # Monthly limit in USD

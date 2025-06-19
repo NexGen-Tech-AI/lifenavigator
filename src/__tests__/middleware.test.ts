@@ -1,376 +1,148 @@
-import { NextRequest } from 'next/server';
-import { withAuth } from 'next-auth/middleware';
-// Removed import of jest from '@jest/globals' as jest is available globally in Jest test environment
+import { NextRequest, NextResponse } from 'next/server';
+import { middleware } from '../middleware';
 
-// Mock next-auth/middleware
-jest.mock('next-auth/middleware', () => ({
-  withAuth: jest.fn(),
+// Mock Supabase client
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(async () => ({
+    auth: {
+      getUser: jest.fn(() => Promise.resolve({
+        data: { user: null },
+        error: null
+      })),
+    },
+  })),
 }));
 
-// Mock NextResponse
-const mockRedirect = jest.fn();
-const mockNext = jest.fn();
+// Mock security headers middleware
+jest.mock('@/lib/middleware/security-headers', () => ({
+  addSecurityHeaders: jest.fn((req, res) => res),
+  addCorsHeaders: jest.fn((req, res) => res),
+}));
 
-jest.mock('next/server', () => {
-  const originalModule = jest.requireActual('next/server');
-  return {
-    ...originalModule,
-    NextResponse: {
-      next: mockNext,
-      redirect: mockRedirect,
-    },
-  };
-});
+// Mock rate limit middleware
+jest.mock('@/lib/middleware/rate-limit', () => ({
+  createRateLimiter: jest.fn(() => async () => ({ allowed: true, response: null })),
+  RATE_LIMITS: {
+    auth: {},
+    api: {},
+    upload: {},
+  },
+}));
 
 describe('Middleware', () => {
-  let mockMiddlewareFunction: jest.Mock;
-  let mockAuthorizedCallback: jest.Mock;
-  
+  let request: NextRequest;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // Reset mocks
-    mockNext.mockReturnValue({ type: 'next' });
-    mockRedirect.mockImplementation((url) => ({ 
-      type: 'redirect', 
-      url: url.toString() 
-    }));
-    
-    // Mock the withAuth implementation
-    mockMiddlewareFunction = jest.fn();
-    mockAuthorizedCallback = jest.fn();
-    
-    (withAuth as jest.Mock).mockImplementation((middlewareFn, config) => {
-      // Store the middleware function and config for testing
-      mockMiddlewareFunction.mockImplementation(middlewareFn);
-      mockAuthorizedCallback.mockImplementation(config.callbacks.authorized);
-      
-      // Return a function that simulates the withAuth behavior
-      return jest.fn().mockImplementation((req) => {
-        const isAuthorized = mockAuthorizedCallback({ 
-          token: req.token, 
-          req 
-        });
-        
-        if (isAuthorized) {
-          // Simulate setting the token on the request
-          req.nextauth = { token: req.token };
-          return mockMiddlewareFunction(req);
-        } else {
-          // Redirect to sign-in page
-          return mockRedirect(new URL('/auth/login', req.url));
-        }
-      });
-    });
-    
-    // Import the middleware after mocking
-    require('../../middleware');
   });
 
-  const createMockRequest = (pathname: string, token: any = null): any => {
-    const url = `http://localhost:3000${pathname}`;
-    return {
-      nextUrl: {
-        pathname,
-        href: url,
-        clone: jest.fn().mockReturnThis(),
-      },
-      url,
-      token, // Add token for testing
-      cookies: {
-        get: jest.fn(),
-        getAll: jest.fn().mockReturnValue([]),
-      },
-      headers: new Map(),
-    };
+  const createRequest = (url: string) => {
+    return new NextRequest(new URL(url, 'http://localhost:3000'), {
+      headers: new Headers({
+        'host': 'localhost:3000',
+      }),
+    });
   };
 
-  describe('Authorization Logic', () => {
-    it('should allow access to public auth routes without token', () => {
-      const mockRequest = createMockRequest('/auth/login');
+  describe('Public routes', () => {
+    it('should allow access to public routes without authentication', async () => {
+      request = createRequest('/');
+      const response = await middleware(request);
       
-      const isAuthorized = mockAuthorizedCallback({
-        token: null,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(true);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('location')).toBeNull();
     });
 
-    it('should allow access to auth register route without token', () => {
-      const mockRequest = createMockRequest('/auth/register');
+    it('should allow access to auth pages without authentication', async () => {
+      request = createRequest('/auth/login');
+      const response = await middleware(request);
       
-      const isAuthorized = mockAuthorizedCallback({
-        token: null,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(true);
-    });
-
-    it('should require authentication for dashboard routes', () => {
-      const mockRequest = createMockRequest('/dashboard');
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: null,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(false);
-    });
-
-    it('should allow authenticated users to access dashboard', () => {
-      const mockRequest = createMockRequest('/dashboard');
-      const mockToken = {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'premium'
-      };
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: mockToken,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(true);
-    });
-
-    it('should require authentication for API routes', () => {
-      const mockRequest = createMockRequest('/api/user/profile');
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: null,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(false);
-    });
-
-    it('should allow authenticated users to access API routes', () => {
-      const mockRequest = createMockRequest('/api/user/profile');
-      const mockToken = {
-        sub: 'user-123',
-        email: 'test@example.com'
-      };
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: mockToken,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(true);
-    });
-
-    it('should allow access to root path for authenticated users', () => {
-      const mockRequest = createMockRequest('/');
-      const mockToken = {
-        sub: 'user-123',
-        email: 'test@example.com'
-      };
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: mockToken,
-        req: mockRequest
-      });
-      
-      expect(isAuthorized).toBe(true);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('location')).toBeNull();
     });
   });
 
-  describe('Middleware Function Logic', () => {
-    it('should redirect root path to dashboard for authenticated users', () => {
-      const mockRequest = createMockRequest('/', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'premium'
-      });
+  describe('Protected routes', () => {
+    it('should redirect to login when accessing dashboard without auth', async () => {
+      request = createRequest('/dashboard');
+      const response = await middleware(request);
       
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          tier: 'premium'
-        }
-      };
-
-      mockMiddlewareFunction(mockRequest);
-      
-      expect(mockRedirect).toHaveBeenCalledWith(
-        new URL('/dashboard', mockRequest.url)
-      );
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/auth/login');
     });
 
-    it('should redirect to onboarding if user needs onboarding', () => {
-      const mockRequest = createMockRequest('/dashboard', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        needsOnboarding: true
-      });
+    it('should redirect to login when accessing API routes without auth', async () => {
+      request = createRequest('/api/v1/accounts');
+      const response = await middleware(request);
       
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          needsOnboarding: true
-        }
-      };
-
-      mockMiddlewareFunction(mockRequest);
-      
-      expect(mockRedirect).toHaveBeenCalledWith(
-        new URL('/onboarding/welcome', mockRequest.url)
-      );
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/auth/login');
     });
 
-    it('should redirect premium features for non-premium users', () => {
-      const mockRequest = createMockRequest('/dashboard/premium', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'free'
+    it('should allow access to dashboard with authentication', async () => {
+      // Mock authenticated user
+      const { createClient } = require('@/lib/supabase/server');
+      createClient.mockResolvedValueOnce({
+        auth: {
+          getUser: jest.fn(() => Promise.resolve({
+            data: { 
+              user: { 
+                id: 'test-user-id',
+                email: 'test@example.com' 
+              } 
+            },
+            error: null
+          })),
+        },
       });
-      
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          tier: 'free'
-        }
-      };
 
-      mockMiddlewareFunction(mockRequest);
+      request = createRequest('/dashboard');
+      const response = await middleware(request);
       
-      expect(mockRedirect).toHaveBeenCalledWith(
-        new URL('/dashboard?upgrade=premium', mockRequest.url)
-      );
-    });
-
-    it('should allow premium users to access premium features', () => {
-      const mockRequest = createMockRequest('/dashboard/premium', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'premium'
-      });
-      
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          tier: 'premium'
-        }
-      };
-
-      const result = mockMiddlewareFunction(mockRequest);
-      
-      // Should call NextResponse.next() and not redirect
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockRedirect).not.toHaveBeenCalled();
-    });
-
-    it('should redirect business features for non-business users', () => {
-      const mockRequest = createMockRequest('/dashboard/business', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'premium'
-      });
-      
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          tier: 'premium'
-        }
-      };
-
-      mockMiddlewareFunction(mockRequest);
-      
-      expect(mockRedirect).toHaveBeenCalledWith(
-        new URL('/dashboard?upgrade=business', mockRequest.url)
-      );
-    });
-
-    it('should add tier headers for API requests', () => {
-      const mockRequest = createMockRequest('/api/calculations', {
-        sub: 'user-123',
-        email: 'test@example.com',
-        tier: 'premium'
-      });
-      
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com',
-          tier: 'premium'
-        }
-      };
-
-      // Mock NextResponse.next to return an object with headers
-      const mockResponse = {
-        headers: {
-          set: jest.fn()
-        }
-      };
-      mockNext.mockReturnValue(mockResponse);
-
-      mockMiddlewareFunction(mockRequest);
-      
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockResponse.headers.set).toHaveBeenCalledWith('X-User-Tier', 'premium');
-      expect(mockResponse.headers.set).toHaveBeenCalledWith('X-User-ID', 'user-123');
-      expect(mockResponse.headers.set).toHaveBeenCalledWith('X-Rate-Limit', '2000');
+      expect(response.status).toBe(200);
+      expect(response.headers.get('location')).toBeNull();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle missing token gracefully', () => {
-      const mockRequest = createMockRequest('/dashboard');
-      
-      const isAuthorized = mockAuthorizedCallback({
-        token: null,
-        req: mockRequest
+  describe('Auth redirect behavior', () => {
+    it('should redirect authenticated users away from login page', async () => {
+      // Mock authenticated user
+      const { createClient } = require('@/lib/supabase/server');
+      createClient.mockResolvedValueOnce({
+        auth: {
+          getUser: jest.fn(() => Promise.resolve({
+            data: { 
+              user: { 
+                id: 'test-user-id',
+                email: 'test@example.com' 
+              } 
+            },
+            error: null
+          })),
+        },
       });
-      
-      expect(isAuthorized).toBe(false);
-    });
 
-    it('should handle malformed request gracefully', () => {
-      const mockRequest = {
-        nextUrl: { pathname: '/dashboard' },
-        url: 'http://localhost:3000/dashboard'
-      };
+      request = createRequest('/auth/login');
+      const response = await middleware(request);
       
-      expect(() => {
-        mockAuthorizedCallback({
-          token: null,
-          req: mockRequest
-        });
-      }).not.toThrow();
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toContain('/dashboard');
     });
+  });
 
-    it('should default to free tier when tier is missing', () => {
-      const mockRequest = createMockRequest('/api/calculations', {
-        sub: 'user-123',
-        email: 'test@example.com'
-        // tier is missing
+  describe('Rate limiting', () => {
+    it('should apply rate limiting to auth endpoints', async () => {
+      const { createRateLimiter } = require('@/lib/middleware/rate-limit');
+      const mockRateLimiter = jest.fn().mockResolvedValue({ 
+        allowed: false, 
+        response: NextResponse.json({ error: 'Too many requests' }, { status: 429 })
       });
-      
-      mockRequest.nextauth = {
-        token: {
-          sub: 'user-123',
-          email: 'test@example.com'
-        }
-      };
+      createRateLimiter.mockReturnValue(mockRateLimiter);
 
-      const mockResponse = {
-        headers: {
-          set: jest.fn()
-        }
-      };
-      mockNext.mockReturnValue(mockResponse);
-
-      mockMiddlewareFunction(mockRequest);
+      request = createRequest('/auth/login');
+      const response = await middleware(request);
       
-      expect(mockResponse.headers.set).toHaveBeenCalledWith('X-User-Tier', 'free');
-      expect(mockResponse.headers.set).toHaveBeenCalledWith('X-Rate-Limit', '100');
+      expect(mockRateLimiter).toHaveBeenCalled();
     });
   });
 });

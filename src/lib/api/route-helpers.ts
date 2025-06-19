@@ -3,10 +3,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/auth-config-production';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
 import { createSecurityAuditLog } from '@/lib/services/security-service';
 
 // Response types
@@ -76,19 +74,35 @@ export function paginatedResponse<T>(
 
 // Authentication helpers
 export async function authenticateRequest(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const supabase = await createClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
   
-  if (!session?.user) {
+  if (error || !user) {
     return null;
   }
   
+  // Get additional user data from database
+  const { data: profile } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+  
+  const userData = {
+    id: user.id,
+    email: user.email!,
+    isDemoAccount: user.email === 'demo@lifenavigator.ai',
+    subscriptionTier: profile?.subscription_tier || 'FREE',
+    ...profile
+  };
+  
   // Check if it's a demo account trying to modify data
   const method = request.method;
-  if (session.user.isDemoAccount && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+  if (userData.isDemoAccount && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     throw new Error('Demo account cannot modify data');
   }
   
-  return session.user;
+  return userData;
 }
 
 export async function requireAuth(request: NextRequest) {
@@ -226,15 +240,6 @@ export function withErrorHandler(
       
       if (error instanceof ApiError) {
         return errorResponse(error.message, error.code, error.statusCode, error.details);
-      }
-      
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          return errorResponse('Resource already exists', 'DUPLICATE', 409);
-        }
-        if (error.code === 'P2025') {
-          return errorResponse('Resource not found', 'NOT_FOUND', 404);
-        }
       }
       
       // Generic error

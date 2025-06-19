@@ -16,7 +16,20 @@ import {
 } from '@/lib/api/route-helpers';
 import { encrypt } from '@/lib/encryption/simple';
 import { createSecurityAuditLog } from '@/lib/services/security-service';
-import { AccountType, DataSource } from '@prisma/client';
+// Define AccountType enum locally since it's not exported by @prisma/client
+enum AccountType {
+  CHECKING = 'CHECKING',
+  SAVINGS = 'SAVINGS',
+  CREDIT_CARD = 'CREDIT_CARD',
+  LOAN = 'LOAN',
+  MORTGAGE = 'MORTGAGE',
+  INVESTMENT = 'INVESTMENT',
+  OTHER = 'OTHER'
+}
+// Define DataSource enum locally since it's not exported by @prisma/client
+enum DataSource {
+  PLAID = 'PLAID'
+}
 
 // Initialize Plaid client
 const configuration = new Configuration({
@@ -63,7 +76,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     const encryptedToken = await encrypt(accessToken);
     
     // Create or update PlaidItem
-    const plaidItem = await prisma.plaidItem.upsert({
+    const plaidItem = await prisma.plaidItem?.upsert({
       where: { itemId },
       create: {
         userId: user.id,
@@ -118,7 +131,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
           accountType,
           institutionName: data.institutionName,
           institutionId: data.institutionId,
-          accountNumber: plaidAccount.mask ? encrypt(plaidAccount.mask) : null,
+          accountNumber: plaidAccount.mask ? await encrypt(plaidAccount.mask) : null,
           currentBalance: plaidAccount.balances.current || 0,
           availableBalance: plaidAccount.balances.available || plaidAccount.balances.current || 0,
           creditLimit: plaidAccount.balances.limit || null,
@@ -227,6 +240,8 @@ async function syncTransactions(
             }
           });
           categoryId = category?.id;
+
+
         }
         
         // Find or create merchant
@@ -284,12 +299,12 @@ async function updateFinancialSnapshot(userId: string) {
   });
   
   const totalAssets = accounts
-    .filter(a => ['CHECKING', 'SAVINGS', 'INVESTMENT'].includes(a.accountType))
-    .reduce((sum, a) => sum + a.currentBalance, 0);
+    .filter((a: any) => ['CHECKING', 'SAVINGS', 'INVESTMENT'].includes(a.accountType))
+    .reduce((sum: number, a: any) => sum + a.currentBalance, 0);
   
   const totalLiabilities = accounts
-    .filter(a => ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(a.accountType))
-    .reduce((sum, a) => sum + Math.abs(a.currentBalance), 0);
+    .filter((a: any) => ['CREDIT_CARD', 'LOAN', 'MORTGAGE'].includes(a.accountType))
+    .reduce((sum: number, a: any) => sum + Math.abs(a.currentBalance), 0);
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -310,7 +325,7 @@ async function updateFinancialSnapshot(userId: string) {
       monthlyIncome: 0,
       monthlyExpenses: 0,
       savingsRate: 0,
-      accountBalances: accounts.map(a => ({
+      accountBalances: accounts.map((a: any) => ({
         accountId: a.id,
         accountName: a.accountName,
         balance: a.currentBalance
@@ -321,7 +336,7 @@ async function updateFinancialSnapshot(userId: string) {
       totalAssets,
       totalLiabilities,
       netWorth: totalAssets - totalLiabilities,
-      accountBalances: accounts.map(a => ({
+      accountBalances: accounts.map((a: any) => ({
         accountId: a.id,
         accountName: a.accountName,
         balance: a.currentBalance

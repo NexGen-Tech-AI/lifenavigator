@@ -62,10 +62,10 @@ export function EducationSidebar() {
             className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
               isActive(item.href)
                 ? "bg-amber-50 text-amber-900 dark:bg-amber-600 dark:text-white font-semibold"
-                : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
+                : "text-slate-700 hover:text-slate-900 hover:bg-slate-50 dark:text-white/90 dark:hover:text-white dark:hover:bg-slate-800"
             }`}
           >
-            <span className={isActive(item.href) ? "text-amber-600 dark:text-amber-400" : ""}>
+            <span className={isActive(item.href) ? "text-amber-600 dark:text-amber-400" : "dark:text-white/70"}>
               {item.icon}
             </span>
             <span>{item.title}</span>

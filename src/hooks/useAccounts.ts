@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/hooks/useAuth';
 import { toast } from '@/lib/utils/toast';
 import {
   getAccounts,

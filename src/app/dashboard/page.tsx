@@ -2,298 +2,256 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/useUser';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
 import DailySchedule from '@/components/calendar/DailySchedule';
 import { getTodayEvents } from '@/lib/mock/calendarEvents';
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { user, profile, loading: authLoading } = useUser();
   const [loading, setLoading] = useState(true);
-  const [userData, setUserData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [financialData, setFinancialData] = useState<any>(null);
 
   useEffect(() => {
-    // Simple loading effect to ensure session is available
-    if (status === 'loading') {
-      return;
-    }
-    
-    if (status === 'unauthenticated') {
-      setError('You must be logged in to view this page');
+    if (!user) {
       setLoading(false);
       return;
     }
-    
-    // Set user data from session
-    if (session?.user) {
-      setUserData({
-        name: session.user.name || 'User',
-        email: session.user.email,
-        id: session.user.id
-      });
-    }
-    
-    setLoading(false);
-  }, [session, status]);
 
-  // Domain summaries with default data
+    fetchDashboardData();
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch accounts summary
+      const response = await fetch('/api/v1/accounts');
+      if (response.ok) {
+        const data = await response.json();
+        setFinancialData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600 dark:text-gray-400">
+          You must be logged in to view this page
+        </p>
+        <Link href="/auth/login" className="text-blue-600 hover:text-blue-500 mt-4 inline-block">
+          Go to Login
+        </Link>
+      </div>
+    );
+  }
+
+  // Calculate financial stats from real data
+  const netWorth = financialData?.summary?.netWorth || 0;
+  const totalAssets = financialData?.summary?.totalAssets || 0;
+  const totalLiabilities = financialData?.summary?.totalLiabilities || 0;
+
+  // Domain summaries with real data where available
   const domainSummaries = [
     {
       title: 'Financial Overview',
       stats: [
-        { label: 'Net Worth', value: '$127,492', trend: 'up', percent: '12%' },
-        { label: 'Monthly Expenses', value: '$3,250', trend: 'down', percent: '5%' },
-        { label: 'Investment Return', value: '9.2%', trend: 'up', percent: '1.5%' },
+        { 
+          label: 'Net Worth', 
+          value: `$${netWorth.toLocaleString()}`, 
+          trend: netWorth > 0 ? 'up' : 'down', 
+          percent: '12%' 
+        },
+        { 
+          label: 'Total Assets', 
+          value: `$${totalAssets.toLocaleString()}`, 
+          trend: 'up', 
+          percent: '5%' 
+        },
+        { 
+          label: 'Total Liabilities', 
+          value: `$${totalLiabilities.toLocaleString()}`, 
+          trend: 'down', 
+          percent: '3%' 
+        },
       ],
-      insights: 'Your retirement savings are ahead of target by 8%. Consider rebalancing your portfolio this quarter.',
+      insights: profile?.is_demo_account 
+        ? 'This is demo data. Connect your real accounts to see actual insights.'
+        : 'Your financial health is improving. Consider reviewing your investment strategy.',
       link: '/dashboard/finance',
-      color: 'from-emerald-500 to-teal-400',
+      color: 'from-blue-500 to-purple-600',
+    },
+    {
+      title: 'Healthcare Status',
+      stats: [
+        { label: 'Next Appointment', value: 'Apr 15', trend: 'neutral' },
+        { label: 'Wellness Score', value: '82/100', trend: 'up', percent: '3pts' },
+        { label: 'Medications Due', value: '2', trend: 'neutral' },
+      ],
+      insights: 'Annual physical due in 2 months. Schedule your flu shot for optimal protection.',
+      link: '/dashboard/healthcare',
+      color: 'from-green-500 to-teal-600',
     },
     {
       title: 'Career Progress',
       stats: [
-        { label: 'Skills Growth', value: '7/10', trend: 'up', percent: '15%' },
-        { label: 'Network Reach', value: '342', trend: 'up', percent: '23%' },
-        { label: 'Industry Position', value: 'Mid-Senior', trend: 'neutral', percent: '0%' },
+        { label: 'Skill Growth', value: '15%', trend: 'up' },
+        { label: 'Network Size', value: '342', trend: 'up', percent: '12' },
+        { label: 'Applications', value: '5 Active', trend: 'neutral' },
       ],
-      insights: 'Enhancing your leadership skills could position you for a promotion in the next 6 months.',
+      insights: 'Your profile views increased by 30% this month. Update your portfolio with recent projects.',
       link: '/dashboard/career',
-      color: 'from-purple-500 to-indigo-400',
+      color: 'from-orange-500 to-red-600',
     },
     {
-      title: 'Education Tracking',
+      title: 'Education Journey',
       stats: [
-        { label: 'Courses Complete', value: '8/12', trend: 'up', percent: '25%' },
-        { label: 'Certifications', value: '3', trend: 'neutral', percent: '0%' },
-        { label: 'Learning Hours', value: '48', trend: 'up', percent: '10%' },
+        { label: 'Courses Active', value: '3', trend: 'neutral' },
+        { label: 'Completion Rate', value: '78%', trend: 'up', percent: '5%' },
+        { label: 'Study Streak', value: '12 days', trend: 'up' },
       ],
-      insights: "You're on track to complete your current certification within 45 days.",
+      insights: 'You\'re ahead of schedule in 2 courses. Consider starting the advanced module.',
       link: '/dashboard/education',
-      color: 'from-amber-500 to-yellow-400',
-    },
-    {
-      title: 'Health Metrics',
-      stats: [
-        { label: 'Wellness Score', value: '82/100', trend: 'up', percent: '4%' },
-        { label: 'Activity Level', value: '7.5/10', trend: 'up', percent: '12%' },
-        { label: 'Sleep Quality', value: '6.8/10', trend: 'down', percent: '3%' },
-      ],
-      insights: 'Your recent exercise routine is showing positive results. Focus on improving sleep quality.',
-      link: '/dashboard/healthcare',
-      color: 'from-rose-500 to-red-400',
+      color: 'from-indigo-500 to-blue-600',
     },
   ];
 
-  // Actions for quick access
-  const quickActions = [
-    { name: 'Update Budget', icon: '💰', href: '/dashboard/finance/budget' },
-    { name: 'Track Investments', icon: '📈', href: '/dashboard/finance/investments' },
-    { name: 'Log Exercise', icon: '🏃', href: '/dashboard/healthcare/wellness' },
-    { name: 'Secure Documents', icon: '🔒', href: '/dashboard/healthcare/documents' },
-    { name: 'View Learning Path', icon: '📚', href: '/dashboard/education/progress' },
-    { name: 'Network Connections', icon: '👥', href: '/dashboard/career/networking' },
+  // Recent activities
+  const recentActivities = [
+    { icon: '💰', text: 'Budget alert: Entertainment spending at 85%', time: '2 hours ago', type: 'warning' },
+    { icon: '📚', text: 'Course milestone completed: React Advanced Patterns', time: '5 hours ago', type: 'success' },
+    { icon: '🏥', text: 'Prescription refill reminder: Medication XYZ', time: '1 day ago', type: 'info' },
+    { icon: '💼', text: 'New job match: Senior Developer at TechCorp', time: '2 days ago', type: 'success' },
   ];
 
-  // Show loading spinner while fetching user data
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner size="large" />
-      </div>
-    );
-  }
-
-  // Show error message if fetching user data failed
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="p-4 bg-red-100 dark:bg-red-900/30 rounded-lg text-red-800 dark:text-red-200 max-w-md text-center">
-          <p className="text-lg font-medium">{error}</p>
-          <p className="mt-2">Please try refreshing the page or contact support if the problem persists.</p>
-        </div>
-      </div>
-    );
-  }
+  // Today's events
+  const todayEvents = getTodayEvents();
 
   return (
-    <div className="py-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <div className="mx-auto px-4 sm:px-6 md:px-8">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white sr-only">Dashboard</h1>
-        <p className="text-lg text-gray-700 dark:text-gray-300 font-medium">
-          Welcome back, {userData?.name || 'User'}! Here's your life at a glance.
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Welcome Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Welcome back, {profile?.name || user.email?.split('@')[0]}!
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Here's your life overview for today
         </p>
       </div>
-      
-      <div className="mx-auto px-4 sm:px-6 md:px-8">
-        {/* Quick Actions */}
-        <div className="mt-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Quick Actions</h2>
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {quickActions.map((action) => (
-              <Link
-                key={action.name}
-                href={action.href}
-                className="relative flex items-center space-x-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 shadow-sm hover:shadow transition-all"
-              >
-                <div className="flex-shrink-0 text-2xl">{action.icon}</div>
-                <div className="min-w-0 flex-1">
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{action.name}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+      {/* Domain Summaries Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {domainSummaries.map((domain, index) => (
+          <Link
+            key={index}
+            href={domain.link}
+            className="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+          >
+            <div className={`h-2 bg-gradient-to-r ${domain.color}`} />
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-4">{domain.title}</h2>
+              
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                {domain.stats.map((stat, statIndex) => (
+                  <div key={statIndex} className="flex flex-col">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.label}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">{stat.value}</p>
+                    {stat.trend !== 'neutral' && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className={`text-xs ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                          {stat.trend === 'up' ? '↑' : '↓'}
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {stat.percent}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                {domain.insights}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Today's Schedule and Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Today's Schedule */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Today's Schedule</h2>
+          <DailySchedule events={todayEvents} />
         </div>
 
-        {/* Domain Summaries */}
-        <div className="mt-8 grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {domainSummaries.map((domain) => (
-            <div
-              key={domain.title}
-              className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 shadow"
-            >
-              <div className={`bg-gradient-to-r ${domain.color} h-2`} />
-              <div className="px-4 py-5 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">{domain.title}</h3>
-                  <Link 
-                    href={domain.link}
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    View details
-                  </Link>
-                </div>
-                
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {domain.stats.map((stat) => (
-                    <div key={stat.label} className="overflow-hidden rounded-lg bg-gray-50 dark:bg-gray-700/40 px-4 py-3">
-                      <dt className="truncate text-sm font-medium text-gray-500 dark:text-gray-400">{stat.label}</dt>
-                      <dd className="mt-1 flex items-baseline">
-                        <p className="text-xl font-semibold text-gray-900 dark:text-white">{stat.value}</p>
-                        <p
-                          className={`ml-2 flex items-baseline text-xs font-semibold ${
-                            stat.trend === 'up' ? 'text-green-600 dark:text-green-400' :
-                            stat.trend === 'down' ? 'text-red-600 dark:text-red-400' :
-                            'text-gray-500 dark:text-gray-400'
-                          }`}
-                        >
-                          {stat.trend === 'up' && (
-                            <svg className="h-3 w-3 flex-shrink-0 self-center text-green-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                              <path fillRule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          {stat.trend === 'down' && (
-                            <svg className="h-3 w-3 flex-shrink-0 self-center text-red-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                              <path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          <span className="sr-only">{stat.trend === 'up' ? 'Increased' : stat.trend === 'down' ? 'Decreased' : 'Unchanged'} by</span>
-                          {stat.percent}
-                        </p>
-                      </dd>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-md p-3">
-                  <p className="text-sm text-blue-800 dark:text-blue-200">
-                    <span className="font-medium">Insight:</span> {domain.insights}
-                  </p>
+        {/* Recent Activity */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
+          <div className="space-y-3">
+            {recentActivities.map((activity, index) => (
+              <div key={index} className="flex items-start space-x-3">
+                <span className="text-2xl">{activity.icon}</span>
+                <div className="flex-1">
+                  <p className="text-sm">{activity.text}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-        
-        {/* Recommendations */}
-        <div className="mt-8">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-white">Recommended Actions</h2>
-          <div className="mt-3">
-            <div className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow">
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 text-yellow-600 dark:bg-yellow-800/30 dark:text-yellow-400">
-                        💳
-                      </span>
-                      <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Review credit card spending - 23% higher than usual</p>
-                    </div>
-                    <Link
-                      href="/dashboard/finance/transactions"
-                      className="ml-6 rounded-md bg-white dark:bg-gray-700 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 border border-gray-200 dark:border-gray-600"
-                    >
-                      Review
-                    </Link>
-                  </div>
-                </li>
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-800/30 dark:text-green-400">
-                        💰
-                      </span>
-                      <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Retirement contribution increase recommended</p>
-                    </div>
-                    <Link
-                      href="/dashboard/finance/retirement"
-                      className="ml-6 rounded-md bg-white dark:bg-gray-700 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 border border-gray-200 dark:border-gray-600"
-                    >
-                      Adjust
-                    </Link>
-                  </div>
-                </li>
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-800/30 dark:text-blue-400">
-                        👔
-                      </span>
-                      <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">3 new job opportunities match your profile</p>
-                    </div>
-                    <Link
-                      href="/dashboard/career/opportunities"
-                      className="ml-6 rounded-md bg-white dark:bg-gray-700 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 border border-gray-200 dark:border-gray-600"
-                    >
-                      View
-                    </Link>
-                  </div>
-                </li>
-                <li className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-800/30 dark:text-purple-400">
-                        🩺
-                      </span>
-                      <p className="ml-3 text-sm font-medium text-gray-900 dark:text-white">Annual physical check-up due in 2 weeks</p>
-                    </div>
-                    <Link
-                      href="/dashboard/healthcare/preventive"
-                      className="ml-6 rounded-md bg-white dark:bg-gray-700 px-3 py-1 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 border border-gray-200 dark:border-gray-600"
-                    >
-                      Schedule
-                    </Link>
-                  </div>
-                </li>
-              </ul>
-            </div>
+            ))}
           </div>
+          <Link
+            href="/dashboard/insights"
+            className="block mt-4 text-center text-sm text-blue-600 hover:text-blue-500"
+          >
+            View all activities →
+          </Link>
         </div>
+      </div>
 
-        {/* Daily Schedule */}
-        <div className="mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Daily Schedule Component */}
-            <div className="lg:col-span-1">
-              <DailySchedule events={getTodayEvents()} />
-            </div>
-
-            {/* This column is intentionally left empty to maintain grid layout */}
-            <div className="lg:col-span-2">
-              {/* Future components can be placed here */}
-            </div>
-          </div>
+      {/* Quick Actions */}
+      <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <Link
+            href="/dashboard/finance?action=add-account"
+            className="flex flex-col items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
+            <span className="text-3xl mb-2">🏦</span>
+            <span className="text-sm">Add Account</span>
+          </Link>
+          <Link
+            href="/dashboard/finance/transactions"
+            className="flex flex-col items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
+            <span className="text-3xl mb-2">💳</span>
+            <span className="text-sm">Add Transaction</span>
+          </Link>
+          <Link
+            href="/dashboard/healthcare/appointments"
+            className="flex flex-col items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
+            <span className="text-3xl mb-2">📅</span>
+            <span className="text-sm">Book Appointment</span>
+          </Link>
+          <Link
+            href="/dashboard/finance/assets"
+            className="flex flex-col items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+          >
+            <span className="text-3xl mb-2">🏠</span>
+            <span className="text-sm">Manage Assets</span>
+          </Link>
         </div>
       </div>
     </div>
