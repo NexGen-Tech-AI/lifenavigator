@@ -59,9 +59,14 @@ import {
   EyeIcon,
   PencilIcon,
   XMarkIcon,
-  FolderOpenIcon
+  FolderOpenIcon,
+  ArrowTrendingUpIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { useAccounts } from '@/hooks/useAccounts';
+import { RiskAnalysisService } from '@/lib/services/riskAnalysisService';
+import { ReportGeneratorService } from '@/lib/services/reportGeneratorService';
+import { RiskDashboard } from './RiskDashboard';
 
 // Types
 interface LifeEvent {
@@ -95,6 +100,7 @@ interface FinancialSnapshot {
   emergencyFund: number;
   healthScore: number;
   stressLevel: number;
+  cashFlow: number;
   goalProgress: Record<string, number>;
 }
 
@@ -446,10 +452,20 @@ const EventConfigModal: React.FC<{
                 <input
                   type="date"
                   value={editedEvent.date.toISOString().split('T')[0]}
-                  onChange={(e) => setEditedEvent({
-                    ...editedEvent,
-                    date: new Date(e.target.value)
-                  })}
+                  onChange={(e) => {
+                    const dateValue = e.target.value;
+                    // Only update if we have a valid date string
+                    if (dateValue) {
+                      const newDate = new Date(dateValue);
+                      // Check if the date is valid
+                      if (!isNaN(newDate.getTime())) {
+                        setEditedEvent({
+                          ...editedEvent,
+                          date: newDate
+                        });
+                      }
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                 />
               </div>
@@ -463,13 +479,31 @@ const EventConfigModal: React.FC<{
                   <input
                     type={typeof value === 'number' ? 'number' : 'text'}
                     value={value}
-                    onChange={(e) => setEditedEvent({
-                      ...editedEvent,
-                      parameters: {
-                        ...editedEvent.parameters,
-                        [key]: typeof value === 'number' ? parseFloat(e.target.value) : e.target.value
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      if (typeof value === 'number') {
+                        // For number inputs, only update if valid number or empty
+                        const parsed = parseFloat(newValue);
+                        if (!isNaN(parsed) || newValue === '') {
+                          setEditedEvent({
+                            ...editedEvent,
+                            parameters: {
+                              ...editedEvent.parameters,
+                              [key]: newValue === '' ? 0 : parsed
+                            }
+                          });
+                        }
+                      } else {
+                        // For text inputs, update directly
+                        setEditedEvent({
+                          ...editedEvent,
+                          parameters: {
+                            ...editedEvent.parameters,
+                            [key]: newValue
+                          }
+                        });
                       }
-                    })}
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                   />
                 </div>
@@ -530,13 +564,18 @@ const EventConfigModal: React.FC<{
                         <input
                           type="number"
                           value={editedEvent.impacts.income || 0}
-                          onChange={(e) => setEditedEvent({
-                            ...editedEvent,
-                            impacts: {
-                              ...editedEvent.impacts,
-                              income: parseFloat(e.target.value)
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (!isNaN(value) || e.target.value === '') {
+                              setEditedEvent({
+                                ...editedEvent,
+                                impacts: {
+                                  ...editedEvent.impacts,
+                                  income: e.target.value === '' ? 0 : value
+                                }
+                              });
                             }
-                          })}
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                         />
                       </div>
@@ -547,13 +586,18 @@ const EventConfigModal: React.FC<{
                         <input
                           type="number"
                           value={editedEvent.impacts.expenses || 0}
-                          onChange={(e) => setEditedEvent({
-                            ...editedEvent,
-                            impacts: {
-                              ...editedEvent.impacts,
-                              expenses: parseFloat(e.target.value)
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (!isNaN(value) || e.target.value === '') {
+                              setEditedEvent({
+                                ...editedEvent,
+                                impacts: {
+                                  ...editedEvent.impacts,
+                                  expenses: e.target.value === '' ? 0 : value
+                                }
+                              });
                             }
-                          })}
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
                         />
                       </div>
@@ -621,88 +665,178 @@ const ImpactDashboard: React.FC<{
     liabilities: -s.liabilities
   }));
 
-  const goalData = Object.entries(currentSnapshot.goalProgress).map(([goal, progress]) => ({
+  const goalData = Object.entries(currentSnapshot.goalProgress || {}).map(([goal, progress]) => ({
     goal,
     progress,
     remaining: 100 - progress
   }));
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Financial Health Score */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6"
-      >
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
-          Financial Health Score
-        </h3>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Circular Score Meter */}
-          <div className="flex items-center justify-center">
-            <div className="relative w-40 h-40 sm:w-48 sm:h-48">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle
-                  cx="50%"
-                  cy="50%"
-                  r="40%"
-                  stroke="#E5E7EB"
-                  strokeWidth="8%"
-                  fill="none"
-                />
-                <circle
-                  cx="50%"
-                  cy="50%"
-                  r="40%"
-                  stroke="#3B82F6"
-                  strokeWidth="8%"
-                  fill="none"
-                  strokeDasharray={`${currentSnapshot.healthScore * 2.51} 251`}
-                  className="transition-all duration-1000"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
-                    {currentSnapshot.healthScore}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500">Health Score</p>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        Simulation Results & Impact Analysis
+      </h2>
+      
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Net Worth</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(currentSnapshot.netWorth)}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                +{formatCurrency(currentSnapshot.netWorth - snapshots[0].netWorth)}
+              </p>
+            </div>
+            <ArrowTrendingUpIcon className="h-8 w-8 text-green-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Cash Flow</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(currentSnapshot.cashFlow)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {((currentSnapshot.cashFlow / currentSnapshot.income) * 100).toFixed(0)}% of income
+              </p>
+            </div>
+            <CurrencyDollarIcon className="h-8 w-8 text-blue-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Emergency Fund</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {formatCurrency(currentSnapshot.emergencyFund)}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {(currentSnapshot.emergencyFund / currentSnapshot.expenses).toFixed(1)} months
+              </p>
+            </div>
+            <ShieldCheckIcon className="h-8 w-8 text-yellow-500" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Health Score</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {currentSnapshot.healthScore}/100
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {currentSnapshot.healthScore >= 80 ? 'Excellent' : 
+                 currentSnapshot.healthScore >= 60 ? 'Good' : 'Needs Attention'}
+              </p>
+            </div>
+            <HeartIcon className="h-8 w-8 text-red-500" />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Financial Health Score */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Financial Health Breakdown
+          </h3>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Circular Score Meter */}
+            <div className="flex items-center justify-center">
+              <div className="relative w-40 h-40 sm:w-48 sm:h-48">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="40%"
+                    stroke="#E5E7EB"
+                    strokeWidth="8%"
+                    fill="none"
+                  />
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="40%"
+                    stroke="#3B82F6"
+                    strokeWidth="8%"
+                    fill="none"
+                    strokeDasharray={`${currentSnapshot.healthScore * 2.51} 251`}
+                    className="transition-all duration-1000"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
+                      {currentSnapshot.healthScore}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-500">Health Score</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Radar Chart */}
-          <div className="h-48 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={healthScoreData}>
-                <PolarGrid stroke="#e5e7eb" />
-                <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} className="text-xs" />
-                <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
-                <Radar
-                  name="Current"
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.6}
-                />
-                <Radar
-                  name="Optimal"
-                  dataKey="optimal"
-                  stroke="#10b981"
-                  fill="#10b981"
-                  fillOpacity={0.3}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-              </RadarChart>
-            </ResponsiveContainer>
+            {/* Radar Chart */}
+            <div className="h-48 sm:h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={healthScoreData}>
+                  <PolarGrid stroke="#e5e7eb" />
+                  <PolarAngleAxis dataKey="category" tick={{ fontSize: 10 }} className="text-xs" />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                  <Radar
+                    name="Current"
+                    dataKey="value"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.6}
+                  />
+                  <Radar
+                    name="Optimal"
+                    dataKey="optimal"
+                    stroke="#10b981"
+                    fill="#10b981"
+                    fillOpacity={0.3}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Net Worth Graph */}
+        {/* Net Worth Graph */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -746,6 +880,7 @@ const ImpactDashboard: React.FC<{
           </ResponsiveContainer>
         </div>
       </motion.div>
+      </div>
 
       {/* Emergency Fund & Goals */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -937,8 +1072,10 @@ export function LifeDecisionEngine() {
   const [showDAG, setShowDAG] = useState(false);
   const [showScenarioManager, setShowScenarioManager] = useState(false);
   const [savedScenarios, setSavedScenarios] = useState<SimulationScenario[]>([]);
-  const [mobileView, setMobileView] = useState<'events' | 'timeline' | 'impact'>('timeline');
+  const [mobileView, setMobileView] = useState<'events' | 'timeline' | 'impact' | 'risk'>('timeline');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [riskAnalysis, setRiskAnalysis] = useState<any>(null);
+  const [showRiskDashboard, setShowRiskDashboard] = useState(false);
 
   // Calculate initial financial state from real data
   const calculateInitialState = useCallback(() => {
@@ -997,21 +1134,25 @@ export function LifeDecisionEngine() {
 
   // Run simulation
   const runSimulation = useCallback(async () => {
+    // Prevent multiple simultaneous simulations
+    if (isSimulating) return;
+    
     setIsSimulating(true);
     
-    const initialState = calculateInitialState();
-    if (!initialState) {
-      setIsSimulating(false);
-      return;
-    }
+    try {
+      const initialState = calculateInitialState();
+      if (!initialState) {
+        setIsSimulating(false);
+        return;
+      }
 
-    // Sort events by date and dependencies (topological sort)
-    const sortedEvents = [...events].sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    // Generate monthly snapshots
-    const newSnapshots: FinancialSnapshot[] = [];
-    const startDate = new Date();
-    const endDate = new Date(startDate.getTime() + 5 * 365 * 24 * 60 * 60 * 1000); // 5 years
+      // Sort events by date and dependencies (topological sort)
+      const sortedEvents = [...events].sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      // Generate monthly snapshots
+      const newSnapshots: FinancialSnapshot[] = [];
+      const startDate = new Date();
+      const endDate = new Date(startDate.getTime() + 5 * 365 * 24 * 60 * 60 * 1000); // 5 years
     
     let currentState = {
       ...initialState,
@@ -1098,8 +1239,57 @@ export function LifeDecisionEngine() {
     }
     
     setSnapshots(newSnapshots);
-    setIsSimulating(false);
-  }, [events, calculateInitialState]);
+    
+    // Run risk analysis on the results
+    const analysis = RiskAnalysisService.analyzeRisks(
+      newSnapshots,
+      events,
+      {} // Goals would come from user profile
+    );
+    setRiskAnalysis(analysis);
+    
+    } catch (error) {
+      console.error('Simulation error:', error);
+    } finally {
+      setIsSimulating(false);
+    }
+  }, [events, calculateInitialState, isSimulating]);
+
+  // Generate PDF Report
+  const generatePDFReport = async () => {
+    if (!riskAnalysis || !snapshots.length) {
+      console.error('No analysis data available');
+      return;
+    }
+
+    try {
+      const blob = await ReportGeneratorService.generatePDFReport(
+        riskAnalysis,
+        snapshots,
+        events,
+        'Demo User' // Would come from user profile
+      );
+      
+      // For now, just alert that PDF generation requires dependencies
+      if (blob.type === 'text/plain') {
+        alert('PDF generation requires additional dependencies. Please install: npm install jspdf jspdf-autotable @types/jspdf');
+        return;
+      }
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `financial-risk-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF report. Please try again.');
+    }
+  };
 
   // Load predefined scenarios
   const loadScenarioBundle = (bundleName: string, append: boolean = false) => {
@@ -1472,12 +1662,31 @@ export function LifeDecisionEngine() {
     }
   };
 
-  // Auto-run simulation when events change
+  // Create a timer ref for debouncing
+  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-run simulation when events change with debounce
   useEffect(() => {
-    if (events.length > 0) {
-      runSimulation();
+    // Clear any existing timer
+    if (simulationTimerRef.current) {
+      clearTimeout(simulationTimerRef.current);
     }
-  }, [events, runSimulation]);
+
+    // Only run simulation if we have events and not currently simulating
+    if (events.length > 0 && !isSimulating) {
+      // Debounce the simulation by 500ms to prevent rapid re-runs
+      simulationTimerRef.current = setTimeout(() => {
+        runSimulation();
+      }, 500);
+    }
+
+    // Cleanup timer on unmount
+    return () => {
+      if (simulationTimerRef.current) {
+        clearTimeout(simulationTimerRef.current);
+      }
+    };
+  }, [events, runSimulation, isSimulating]);
 
   if (accountsLoading) {
     return (
@@ -1516,6 +1725,16 @@ export function LifeDecisionEngine() {
                   title="Toggle DAG View"
                 >
                   <MapIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setShowRiskDashboard(!showRiskDashboard)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    showRiskDashboard ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                  title="Risk Analysis"
+                  disabled={!riskAnalysis}
+                >
+                  <ExclamationTriangleIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={runSimulation}
@@ -1657,15 +1876,28 @@ export function LifeDecisionEngine() {
                 <ChartBarIcon className="h-5 w-5 mx-auto mb-1" />
                 Impact
               </button>
+              <button
+                onClick={() => setMobileView('risk')}
+                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  mobileView === 'risk'
+                    ? 'text-blue-600 border-blue-600'
+                    : 'text-gray-500 border-transparent hover:text-gray-700'
+                }`}
+                disabled={!riskAnalysis}
+              >
+                <ExclamationTriangleIcon className="h-5 w-5 mx-auto mb-1" />
+                Risk
+              </button>
             </div>
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-4 py-4 sm:py-6 h-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 h-full">
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          {/* Top Section - Event Library and Timeline */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-8">
             {/* Left Panel - Event Library & Real Data */}
-            <div className={`lg:col-span-3 space-y-4 ${mobileView === 'events' ? 'block lg:block' : 'hidden lg:block'} overflow-y-auto h-full`}>
+            <div className={`lg:col-span-3 space-y-4 ${mobileView === 'events' ? 'block lg:block' : 'hidden lg:block'}`}>
               {/* Real Data Summary */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -1846,7 +2078,7 @@ export function LifeDecisionEngine() {
             </div>
 
             {/* Center Panel - Timeline Canvas */}
-            <div className={`lg:col-span-6 ${mobileView === 'timeline' ? 'block lg:block' : 'hidden lg:block'} min-h-0`}>
+            <div className={`lg:col-span-9 ${mobileView === 'timeline' ? 'block lg:block' : 'hidden lg:block'}`}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1899,30 +2131,61 @@ export function LifeDecisionEngine() {
               </AnimatePresence>
             </div>
 
-            {/* Right Panel - Impact Dashboard & AI Insights */}
-            <div className={`lg:col-span-3 space-y-4 ${mobileView === 'impact' ? 'block lg:block' : 'hidden lg:block'} overflow-y-auto h-full`}>
-              {snapshots.length > 0 ? (
-                <>
-                  <ImpactDashboard
-                    snapshots={snapshots}
-                    currentSnapshot={snapshots[snapshots.length - 1]}
-                  />
-                  <AIInsightsPanel events={events} snapshots={snapshots} />
-                </>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-gray-100 dark:bg-gray-800 rounded-lg p-12 text-center"
-                >
-                  <ChartBarIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Add events and run simulation to see impact analysis
-                  </p>
-                </motion.div>
-              )}
-            </div>
           </div>
+
+          {/* Bottom Section - Simulation Results */}
+          {(mobileView === 'impact' || mobileView === 'timeline') && snapshots.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8"
+            >
+              <ImpactDashboard
+                snapshots={snapshots}
+                currentSnapshot={snapshots[snapshots.length - 1]}
+              />
+            </motion.div>
+          )}
+
+          {/* AI Insights Section */}
+          {(mobileView === 'impact' || mobileView === 'timeline') && snapshots.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="mt-6"
+            >
+              <AIInsightsPanel events={events} snapshots={snapshots} />
+            </motion.div>
+          )}
+
+          {/* Risk Analysis Dashboard */}
+          {(showRiskDashboard || mobileView === 'risk') && riskAnalysis && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8"
+            >
+              <RiskDashboard 
+                analysis={riskAnalysis} 
+                onGenerateReport={generatePDFReport}
+              />
+            </motion.div>
+          )}
+
+          {/* Empty State for Impact View */}
+          {mobileView === 'impact' && snapshots.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-8 bg-gray-100 dark:bg-gray-800 rounded-lg p-12 text-center"
+            >
+              <ChartBarIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">
+                Add events and run simulation to see impact analysis
+              </p>
+            </motion.div>
+          )}
         </div>
 
         {/* Event Configuration Modal */}
