@@ -3,6 +3,8 @@
  * Manages feature availability based on user subscription tiers
  */
 
+import React from 'react'
+
 export type SubscriptionTier = 'FREE' | 'PILOT' | 'PRO' | 'PREMIUM' | 'ENTERPRISE'
 
 export type FeatureKey = 
