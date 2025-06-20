@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useUser } from '@/hooks/useUser'
 import { TIER_CONFIG, SubscriptionTier, getTierFeatures, FEATURES } from '@/lib/features/access-control'
 import { Check, X, Sparkles, Crown, Rocket, Building2 } from 'lucide-react'
@@ -48,7 +48,7 @@ export default function SubscriptionPage() {
             <div className="flex items-center space-x-3">
               {tierIcons[currentTier] && (
                 <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                  {tierIcons[currentTier] && <tierIcons[currentTier] className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />}
+                  {React.createElement(tierIcons[currentTier], { className: "w-6 h-6 text-indigo-600 dark:text-indigo-400" })}
                 </div>
               )}
               <div>
