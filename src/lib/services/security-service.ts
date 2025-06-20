@@ -2,7 +2,7 @@
  * Security service for audit logging and protection features
  */
 
-import { prisma } from '@/lib/db-prod';
+import { prisma } from '@/lib/db';
 import { AuditEventType } from '@prisma/client';
 import { headers } from 'next/headers';
 

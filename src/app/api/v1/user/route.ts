@@ -7,7 +7,7 @@
 
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db-prod';
+import { prisma } from '@/lib/db';
 import {
   withErrorHandler,
   requireAuth,

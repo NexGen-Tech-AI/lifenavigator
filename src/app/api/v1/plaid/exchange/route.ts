@@ -6,7 +6,7 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
-import { prisma } from '@/lib/db-prod';
+import { prisma } from '@/lib/db';
 import {
   withErrorHandler,
   requireSubscription,
