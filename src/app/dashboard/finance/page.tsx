@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Line } from 'react-chartjs-2';
@@ -33,7 +33,7 @@ interface FinancialSummary {
   netWorth: number;
 }
 
-export default function FinancePage() {
+function FinancePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const message = searchParams.get('message');
@@ -356,5 +356,13 @@ export default function FinancePage() {
           </div>
         )}
     </div>
+  );
+}
+
+export default function FinancePage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading...</div>}>
+      <FinancePageContent />
+    </Suspense>
   );
 }
