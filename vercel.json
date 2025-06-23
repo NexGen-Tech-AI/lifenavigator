@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm prisma generate && pnpm db:ensure-demo && pnpm next build",
+  "buildCommand": "pnpm prisma generate && pnpm next build",
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "outputDirectory": ".next",
