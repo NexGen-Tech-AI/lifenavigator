@@ -1,10 +1,11 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/supabase'
 import { createMockClient } from './mock-client'
+import { supabaseConfig } from '@/config/supabase'
 
 export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = supabaseConfig.url;
+  const key = supabaseConfig.anonKey;
   
   
   // Use mock client in development if Supabase is not configured

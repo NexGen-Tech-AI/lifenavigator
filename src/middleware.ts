@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { addSecurityHeaders, addCorsHeaders } from '@/lib/middleware/security-headers'
 import { createRateLimiter, RATE_LIMITS } from '@/lib/middleware/rate-limit'
+import { supabaseConfig, isSupabaseConfigured as checkSupabaseConfig } from '@/config/supabase'
 
 // Create rate limiters for different endpoints
 const authRateLimiter = createRateLimiter(RATE_LIMITS.auth);
@@ -16,13 +17,11 @@ export async function middleware(request: NextRequest) {
   })
 
   // Check if Supabase is properly configured
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = supabaseConfig.url
+  const supabaseKey = supabaseConfig.anonKey
   
   // Skip Supabase auth if not configured or using placeholder values
-  const isSupabaseConfigured = supabaseUrl && 
-    supabaseKey && 
-    !supabaseUrl.toLowerCase().includes('your-project') && 
+  const isSupabaseConfigured = checkSupabaseConfig() && 
     !supabaseUrl.toLowerCase().includes('your_project') &&
     supabaseKey !== 'YOUR_ANON_KEY'
 

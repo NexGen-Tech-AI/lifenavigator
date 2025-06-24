@@ -2,14 +2,15 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/supabase'
 import { createMockClient } from './mock-client'
+import { supabaseConfig } from '@/config/supabase'
 
 /**
  * Creates a Supabase client for use in server components and API routes
  * This client handles cookie-based authentication automatically
  */
 export async function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const url = supabaseConfig.url;
+  const key = supabaseConfig.anonKey;
   
   
   // Use mock client in development if Supabase is not configured
@@ -64,7 +65,7 @@ export async function createClient() {
 export async function createServiceClient() {
   // Use mock client in development if Supabase is not configured
   if (process.env.NODE_ENV === 'development') {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.toLowerCase();
+    const url = supabaseConfig.url?.toLowerCase();
     if (!url || url.includes('your-project') || url.includes('your_project')) {
       return createMockClient() as any;
     }
@@ -73,8 +74,8 @@ export async function createServiceClient() {
   const cookieStore = await cookies()
 
   return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    supabaseConfig.url,
+    supabaseConfig.serviceRoleKey,
     {
       cookies: {
         async get(name: string) {
