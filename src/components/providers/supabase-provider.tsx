@@ -7,7 +7,7 @@ import type { Database } from '@/types/supabase'
 
 type SupabaseContext = {
   user: User | null
-  userProfile: Database['public']['Tables']['users']['Row'] | null
+  userProfile: Database['public']['Tables']['profiles']['Row'] | null
   loading: boolean
 }
 
@@ -19,7 +19,7 @@ const Context = createContext<SupabaseContext>({
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [userProfile, setUserProfile] = useState<Database['public']['Tables']['users']['Row'] | null>(null)
+  const [userProfile, setUserProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -33,7 +33,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         if (user) {
           // Fetch user profile
           const { data: profile } = await supabase
-            .from('users')
+            .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single()
@@ -58,7 +58,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         // Fetch user profile
         const { data: profile } = await supabase
-          .from('users')
+          .from('profiles')
           .select('*')
           .eq('id', session.user.id)
           .single()

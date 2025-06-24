@@ -1,9 +1,18 @@
 'use client';
 
 export function MockAuthBanner() {
-  if (process.env.NODE_ENV !== 'development' || 
-      (process.env.NEXT_PUBLIC_SUPABASE_URL && 
-       process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project.supabase.co')) {
+  // In production, this banner should never show
+  if (process.env.NODE_ENV === 'production') {
+    return null;
+  }
+
+  // Only show in development when using mock auth
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const isUsingMockAuth = !supabaseUrl || 
+                         supabaseUrl.includes('your-project') || 
+                         supabaseUrl.includes('your_project');
+  
+  if (!isUsingMockAuth) {
     return null;
   }
 

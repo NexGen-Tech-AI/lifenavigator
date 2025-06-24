@@ -121,7 +121,7 @@ export async function middleware(request: NextRequest) {
   if (user && !isAuthPath && !isOnboardingPath) {
     // Fetch user profile to check onboarding status
     const { data: profile } = await supabase
-      .from('users')
+      .from('profiles')
       .select('onboarding_completed')
       .eq('id', user.id)
       .single()
