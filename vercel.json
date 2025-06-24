@@ -1,7 +1,7 @@
 {
-  "buildCommand": "pnpm prisma generate && pnpm next build",
+  "buildCommand": "npm run prisma:generate && npm run build",
   "framework": "nextjs",
-  "installCommand": "pnpm install --no-frozen-lockfile",
+  "installCommand": "npm install",
   "outputDirectory": ".next",
   "ignoreCommand": "false",
   "devCommand": "pnpm dev",
