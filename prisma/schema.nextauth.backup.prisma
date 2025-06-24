@@ -1,5 +1,5 @@
-// Production-ready Prisma schema for LifeNavigator with Supabase Auth
-// Uses Supabase auth.users for authentication and public.profiles for user data
+// Production-ready Prisma schema for LifeNavigator Financial SaaS
+// Supports free tier (manual + documents) and paid tier (+ integrations)
 
 datasource db {
   provider  = "postgresql"
@@ -11,39 +11,33 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ==================== PROFILE (replaces User) ====================
-// This matches the Supabase public.profiles table that references auth.users
+// ==================== AUTH & USER MANAGEMENT ====================
 
-model Profile {
-  id                    String                 @id @db.Uuid
+model User {
+  id                    String                 @id @default(cuid())
   email                 String                 @unique
-  username              String?                @unique
-  fullName              String?                @map("full_name")
-  avatarUrl             String?                @map("avatar_url")
-  bio                   String?
-  
-  // Subscription info
-  subscriptionTier      SubscriptionTier       @default(FREE) @map("subscription_tier")
-  subscriptionStatus    SubscriptionStatus     @default(ACTIVE) @map("subscription_status")
-  subscriptionExpiry    DateTime?              @map("subscription_expires_at")
-  
-  // Security and status
-  securityClearance     String                 @default("STANDARD") @map("security_clearance")
-  mfaEnabled            Boolean                @default(true) @map("mfa_enabled")
-  isActive              Boolean                @default(true) @map("is_active")
-  isVerified            Boolean                @default(false) @map("is_verified")
-  accountLocked         Boolean                @default(false) @map("account_locked")
-  lockoutUntil          DateTime?              @map("lockout_until")
-  
-  // Metadata
-  metadata              Json                   @default("{}")
-  lastSeenAt            DateTime?              @map("last_seen_at")
-  lastIpAddress         String?                @map("last_ip_address")
-  
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
+  emailVerified         DateTime?
+  password              String?
+  name                  String?
+  image                 String?
+  role                  UserRole               @default(USER)
+  subscriptionTier      SubscriptionTier       @default(FREE)
+  subscriptionStatus    SubscriptionStatus     @default(ACTIVE)
+  subscriptionExpiry    DateTime?
+  isPilotMember         Boolean                @default(false)
+  pilotDiscount         Float?                 // 0.5 for 50% lifetime discount
+  referralCode          String?                @unique
+  referredBy            String?
+  referredByUser        User?                  @relation("Referrals", fields: [referredBy], references: [referralCode])
+  referrals             User[]                 @relation("Referrals")
+  isDemoAccount         Boolean                @default(false)
+  onboardingCompleted   Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
   // Relations
+  accounts              Account[]
+  sessions              Session[]
   financialAccounts     FinancialAccount[]
   transactions          Transaction[]
   documents             Document[]
@@ -52,17 +46,27 @@ model Profile {
   insights              Insight[]
   plaidItems            PlaidItem[]
   stripeCustomer        StripeCustomer?
+  verificationTokens    VerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
+  mfaSettings           MfaSetting?
   securityAuditLogs     SecurityAuditLog[]
   notifications         Notification[]
+  waitlistEntry         WaitlistEntry?
   dataExports           DataExport[]
   categories            Category[]
   merchants             Merchant[]
   recurringTransactions RecurringTransaction[]
   financialSnapshots    FinancialSnapshot[]
 
-  @@map("profiles")
   @@index([email])
   @@index([subscriptionTier])
+  @@index([referralCode])
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  DEMO
 }
 
 enum SubscriptionTier {
@@ -80,12 +84,63 @@ enum SubscriptionStatus {
   TRIALING
 }
 
+// NextAuth models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
 // ==================== FINANCIAL ACCOUNTS ====================
 
 model FinancialAccount {
   id                 String               @id @default(cuid())
-  userId             String               @db.Uuid
-  user               Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Account details
   accountName        String
@@ -153,8 +208,8 @@ enum DataSource {
 
 model Transaction {
   id                    String               @id @default(cuid())
-  userId                String               @db.Uuid
-  user                  Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId             String
   account               FinancialAccount     @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
@@ -204,8 +259,8 @@ model Transaction {
 
 model Category {
   id              String          @id @default(cuid())
-  userId          String?         @db.Uuid // null for system categories
-  user            Profile?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?         // null for system categories
+  user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   parentId        String?
   parent          Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id])
@@ -222,8 +277,8 @@ model Category {
 
 model Merchant {
   id              String          @id @default(cuid())
-  userId          String?         @db.Uuid // null for system merchants
-  user            Profile?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String?         // null for system merchants
+  user            User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String
   displayName     String?
   categoryId      String?
@@ -240,8 +295,8 @@ model Merchant {
 
 model PlaidItem {
   id                  String              @id @default(cuid())
-  userId              String              @db.Uuid
-  user                Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Plaid credentials (encrypted)
   accessToken         String              @db.Text // Encrypted
@@ -289,8 +344,8 @@ model PlaidWebhookEvent {
 
 model Document {
   id                 String             @id @default(cuid())
-  userId             String             @db.Uuid
-  user               Profile            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // File info
   fileName           String
@@ -369,8 +424,8 @@ model ManualAccount {
 
 model Budget {
   id              String           @id @default(cuid())
-  userId          String           @db.Uuid
-  user            Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   name            String
   amount          Float
@@ -410,8 +465,8 @@ enum BudgetPeriod {
 
 model Goal {
   id              String           @id @default(cuid())
-  userId          String           @db.Uuid
-  user            Profile          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   name            String
   description     String?
@@ -461,8 +516,8 @@ enum GoalPriority {
 
 model Insight {
   id              String          @id @default(cuid())
-  userId          String          @db.Uuid
-  user            Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   type            InsightType
   category        String
@@ -507,8 +562,8 @@ enum InsightType {
 
 model FinancialSnapshot {
   id              String          @id @default(cuid())
-  userId          String          @db.Uuid
-  user            Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   snapshotDate    DateTime
   
@@ -535,8 +590,8 @@ model FinancialSnapshot {
 
 model RecurringTransaction {
   id              String              @id @default(cuid())
-  userId          String              @db.Uuid
-  user            Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId       String
   account         FinancialAccount    @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
@@ -579,8 +634,8 @@ enum RecurringFrequency {
 
 model StripeCustomer {
   id                    String   @id @default(cuid())
-  userId                String   @unique @db.Uuid
-  user                  Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   stripeCustomerId      String   @unique
   
   // Subscription info
@@ -596,12 +651,35 @@ model StripeCustomer {
   updatedAt             DateTime @updatedAt
 }
 
+// ==================== WAITLIST & REFERRALS ====================
+
+model WaitlistEntry {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  userId          String?         @unique
+  user            User?           @relation(fields: [userId], references: [id])
+  
+  position        Int             @unique @default(autoincrement())
+  referralCode    String          @unique
+  referredBy      String?
+  referralCount   Int             @default(0)
+  
+  // Conversion tracking
+  signedUpAt      DateTime?
+  convertedAt     DateTime?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([referralCode])
+}
+
 // ==================== NOTIFICATIONS ====================
 
 model Notification {
   id              String              @id @default(cuid())
-  userId          String              @db.Uuid
-  user            Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   type            NotificationType
   title           String
@@ -637,8 +715,8 @@ enum NotificationType {
 
 model DataExport {
   id              String          @id @default(cuid())
-  userId          String          @db.Uuid
-  user            Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   format          ExportFormat
   status          ExportStatus    @default(PENDING)
@@ -677,8 +755,8 @@ enum ExportStatus {
 
 model SecurityAuditLog {
   id              String          @id @default(cuid())
-  userId          String?         @db.Uuid
-  user            Profile?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   
   event           String
   eventType       AuditEventType
@@ -706,4 +784,25 @@ enum AuditEventType {
   PERMISSION_CHANGED
   INTEGRATION_CONNECTED
   INTEGRATION_DISCONNECTED
+}
+
+model MfaSetting {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  enabled         Boolean         @default(false)
+  method          MfaMethod       @default(TOTP)
+  secret          String?         @db.Text // Encrypted
+  backupCodes     String[]        // Encrypted
+  
+  lastUsedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum MfaMethod {
+  TOTP
+  SMS
+  EMAIL
 }
