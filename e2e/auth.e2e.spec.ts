@@ -11,8 +11,8 @@ test.describe('Authentication E2E Tests', () => {
     await expect(page).toHaveURL('/auth/login');
 
     // Fill login form
-    await page.getByLabel(/email address/i).fill('demo@lifenavigator.ai');
-    await page.getByLabel(/password/i).fill('demo123');
+    await page.getByLabel(/email address/i).fill('demo@lifenavigator.tech');
+    await page.getByLabel(/password/i).fill('DemoPassword123');
     
     // Submit form
     await page.getByRole('button', { name: /sign in/i }).click();
@@ -82,8 +82,8 @@ test.describe('Authentication E2E Tests', () => {
     await page.goto('/auth/login');
     
     // Login with remember me
-    await page.getByLabel(/email address/i).fill('demo@lifenavigator.ai');
-    await page.getByLabel(/password/i).fill('demo123');
+    await page.getByLabel(/email address/i).fill('demo@lifenavigator.tech');
+    await page.getByLabel(/password/i).fill('DemoPassword123');
     await page.getByLabel(/remember me/i).check();
     
     await page.getByRole('button', { name: /sign in/i }).click();

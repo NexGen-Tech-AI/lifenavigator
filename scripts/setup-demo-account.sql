@@ -2,7 +2,7 @@
 -- Run this in your Supabase SQL Editor
 
 -- 1. First, check if the demo user exists
-SELECT id, email FROM auth.users WHERE email = 'demo@lifenavigator.ai';
+SELECT id, email FROM auth.users WHERE email = 'demo@lifenavigator.tech';
 
 -- 2. If the user exists, ensure they have a profile
 -- Get the user ID from the above query and replace 'USER_ID_HERE' with the actual ID
@@ -11,7 +11,7 @@ SELECT id, email FROM auth.users WHERE email = 'demo@lifenavigator.ai';
 -- INSERT INTO public.profiles (id, email, username, full_name, onboarding_completed)
 -- VALUES (
 --   'USER_ID_HERE',  -- Replace with actual user ID from above query
---   'demo@lifenavigator.ai',
+--   'demo@lifenavigator.tech',
 --   'demo_user',
 --   'Demo User',
 --   true  -- Set to true so they skip onboarding
@@ -33,4 +33,4 @@ SELECT id, email FROM auth.users WHERE email = 'demo@lifenavigator.ai';
 --   ('USER_ID_HERE', 'Learn Spanish', 'Become conversational in Spanish', 'education', 'not_started', '2025-09-01');
 
 -- 4. Verify everything is set up
--- SELECT * FROM public.profiles WHERE email = 'demo@lifenavigator.ai';
+-- SELECT * FROM public.profiles WHERE email = 'demo@lifenavigator.tech';

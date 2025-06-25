@@ -5,9 +5,9 @@
 export const createMockClient = () => {
   // Mock users for development
   const mockUsers: Record<string, any> = {
-    'demo@lifenavigator.ai': {
+    'demo@lifenavigator.tech': {
       id: 'demo-user-id',
-      email: 'demo@lifenavigator.ai',
+      email: 'demo@lifenavigator.tech',
       app_metadata: {},
       user_metadata: { name: 'Demo User' },
       aud: 'authenticated',
@@ -31,7 +31,7 @@ export const createMockClient = () => {
     }
   };
 
-  const defaultMockUser = mockUsers['demo@lifenavigator.ai'];
+  const defaultMockUser = mockUsers['demo@lifenavigator.tech'];
 
   // Store auth state in memory for server-side
   let currentUser: any = null;
@@ -69,7 +69,7 @@ export const createMockClient = () => {
       },
       signInWithPassword: async ({ email, password }: any) => {
         // Accept demo credentials
-        if (email === 'demo@lifenavigator.ai' && password === 'demo123') {
+        if (email === 'demo@lifenavigator.tech' && password === 'DemoPassword123') {
           const user = mockUsers[email];
           currentUser = user; // Store for server-side
           

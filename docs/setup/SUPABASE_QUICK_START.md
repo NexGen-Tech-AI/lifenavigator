@@ -29,7 +29,7 @@ pnpm run dev
 
 ## 4. Test Login
 - Visit http://localhost:3000
-- Use demo account: `demo@lifenavigator.ai` / `demo123`
+- Use demo account: `demo@lifenavigator.tech` / `DemoPassword123`
 
 ## OAuth Setup (Optional - 10 min each)
 

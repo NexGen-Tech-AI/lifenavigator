@@ -38,8 +38,8 @@ async function createDemoAccount() {
   console.log('🚀 Creating demo account...')
   
   const demoUserId = '11111111-1111-1111-1111-111111111111'
-  const demoEmail = 'demo@lifenavigator.ai'
-  const demoPassword = 'demo123'
+  const demoEmail = 'demo@lifenavigator.tech'
+  const demoPassword = 'DemoPassword123'
   
   try {
     // First, check if user exists in auth.users

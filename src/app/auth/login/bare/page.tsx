@@ -11,7 +11,7 @@ export default function BareLoginPage() {
             <input 
               type="email" 
               name="email" 
-              defaultValue="demo@lifenavigator.ai"
+              defaultValue="demo@lifenavigator.tech"
               style={{ width: '100%', padding: '8px' }}
             />
           </label>
@@ -23,7 +23,7 @@ export default function BareLoginPage() {
             <input 
               type="password" 
               name="password" 
-              defaultValue="demo123"
+              defaultValue="DemoPassword123"
               style={{ width: '100%', padding: '8px' }}
             />
           </label>
@@ -36,8 +36,8 @@ export default function BareLoginPage() {
       
       <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#e3f2fd' }}>
         <strong>Demo Credentials:</strong><br />
-        Email: demo@lifenavigator.ai<br />
-        Password: demo123
+        Email: demo@lifenavigator.tech<br />
+        Password: DemoPassword123
       </div>
     </div>
   );

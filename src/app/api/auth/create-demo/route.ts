@@ -6,8 +6,8 @@ export async function GET() {
     const supabase = await createClient();
     
     // Create demo user if it doesn't exist
-    const demoEmail = 'demo@lifenavigator.ai';
-    const demoPassword = 'demo123';
+    const demoEmail = 'demo@lifenavigator.tech';
+    const demoPassword = 'DemoPassword123';
     
     // Try to sign up the demo user
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({

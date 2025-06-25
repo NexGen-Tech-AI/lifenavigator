@@ -25,8 +25,8 @@
 ### 👤 Demo Account Status: **READY TO DEPLOY**
 - ✅ Schema includes demo account creation function
 - ✅ Demo user ID: `11111111-1111-1111-1111-111111111111`
-- ✅ Demo email: `demo@lifenavigator.ai`
-- ✅ Demo password: `demo123`
+- ✅ Demo email: `demo@lifenavigator.tech`
+- ✅ Demo password: `DemoPassword123`
 - ✅ Pre-populated with sample data
 - ✅ Protected from modifications via RLS
 
@@ -141,7 +141,7 @@ Run this query to check if the demo account was created:
 ```sql
 SELECT id, email, name, is_demo_account, subscription_tier 
 FROM public.users 
-WHERE email = 'demo@lifenavigator.ai';
+WHERE email = 'demo@lifenavigator.tech';
 ```
 
 If not created, run:
@@ -159,8 +159,8 @@ SELECT create_demo_account();
 
 2. **Test demo login**:
    - Go to http://localhost:3000/auth/login
-   - Email: `demo@lifenavigator.ai`
-   - Password: `demo123`
+   - Email: `demo@lifenavigator.tech`
+   - Password: `DemoPassword123`
    - Should redirect to dashboard
 
 ## Step 7: Configure AWS (Optional for Document Storage)

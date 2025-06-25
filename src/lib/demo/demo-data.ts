@@ -5,7 +5,7 @@
 
 export const DEMO_USER = {
   id: 'demo-user-001',
-  email: 'demo@lifenavigator.ai',
+  email: 'demo@lifenavigator.tech',
   name: 'Alex Johnson',
   age: 35,
   occupation: 'Senior Software Engineer',

@@ -12,8 +12,8 @@ export default function TestLoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'demo@lifenavigator.ai',
-          password: 'demo123'
+          email: 'demo@lifenavigator.tech',
+          password: 'DemoPassword123'
         })
       });
       

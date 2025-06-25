@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const { email, password } = body
   
   // Check demo credentials
-  if (email === 'demo@lifenavigator.ai' && password === 'demo123') {
+  if (email === 'demo@lifenavigator.tech' && password === 'DemoPassword123') {
     // Set a simple cookie for auth
     const cookieStore = await cookies()
     cookieStore.set('mock-auth-user', email, {

@@ -21,7 +21,7 @@ export function MockAuthBanner() {
       <div className="px-4 py-2">
         <p className="text-sm text-center text-yellow-800 dark:text-yellow-200">
           🔧 Running in development mode with mock authentication. 
-          Use email: <code className="font-mono">demo@lifenavigator.ai</code> / password: <code className="font-mono">demo123</code>
+          Use email: <code className="font-mono">demo@lifenavigator.tech</code> / password: <code className="font-mono">DemoPassword123</code>
         </p>
       </div>
     </div>

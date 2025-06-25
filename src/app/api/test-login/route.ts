@@ -37,8 +37,8 @@ export async function GET() {
   return NextResponse.json({
     message: 'Test login endpoint. POST with {email, password} to test.',
     demo: {
-      email: 'demo@lifenavigator.ai',
-      password: 'demo123'
+      email: 'demo@lifenavigator.tech',
+      password: 'DemoPassword123'
     }
   });
 }

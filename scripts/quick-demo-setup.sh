@@ -13,8 +13,8 @@ curl -X POST "${SUPABASE_URL}/auth/v1/admin/users" \
   -H "Authorization: Bearer ${SUPABASE_SERVICE_KEY}" \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "demo@lifenavigator.ai",
-    "password": "demo123",
+    "email": "demo@lifenavigator.tech",
+    "password": "DemoPassword123",
     "email_confirm": true,
     "user_metadata": {
       "full_name": "Demo User"
@@ -23,5 +23,5 @@ curl -X POST "${SUPABASE_URL}/auth/v1/admin/users" \
 
 echo ""
 echo "Demo user creation attempted!"
-echo "Email: demo@lifenavigator.ai"
-echo "Password: demo123"
+echo "Email: demo@lifenavigator.tech"
+echo "Password: DemoPassword123"

@@ -43,8 +43,8 @@ npm run dev
 ```
 
 **Demo Login:**
-- Email: `demo@lifenavigator.ai`
-- Password: `Demo@Secure2024!`
+- Email: `demo@lifenavigator.tech`
+- Password: `DemoPassword123`
 
 ## 🛡️ Full Elite Security Setup (30 minutes)
 

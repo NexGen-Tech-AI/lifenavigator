@@ -27,8 +27,8 @@ async function createDemoAccount() {
     // Step 1: Create auth user
     console.log('\n📝 Step 1: Creating auth user...')
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: 'demo@lifenavigator.ai',
-      password: 'demo123',
+      email: 'demo@lifenavigator.tech',
+      password: 'DemoPassword123',
       email_confirm: true,
       user_metadata: {
         name: 'Demo User'
@@ -41,7 +41,7 @@ async function createDemoAccount() {
         
         // Get the existing user
         const { data: users } = await supabase.auth.admin.listUsers()
-        const existingUser = users?.users?.find(u => u.email === 'demo@lifenavigator.ai')
+        const existingUser = users?.users?.find(u => u.email === 'demo@lifenavigator.tech')
         
         if (existingUser) {
           await createUserProfile(existingUser.id)

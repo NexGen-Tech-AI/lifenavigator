@@ -2,7 +2,7 @@ export default function DashboardDemoPage() {
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif' }}>
       <h1>Welcome to Life Navigator Dashboard</h1>
-      <p>You are successfully logged in as: demo@lifenavigator.ai</p>
+      <p>You are successfully logged in as: demo@lifenavigator.tech</p>
       
       <div style={{ marginTop: '30px' }}>
         <h2>Available Features:</h2>

@@ -3,8 +3,8 @@
 import { useState } from 'react';
 
 export default function SimpleLoginPage() {
-  const [email, setEmail] = useState('demo@lifenavigator.ai');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('demo@lifenavigator.tech');
+  const [password, setPassword] = useState('DemoPassword123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -79,8 +79,8 @@ export default function SimpleLoginPage() {
         
         <div className="mt-6 p-3 bg-gray-100 rounded-md text-sm">
           <p className="font-medium">Demo Credentials:</p>
-          <p>Email: demo@lifenavigator.ai</p>
-          <p>Password: demo123</p>
+          <p>Email: demo@lifenavigator.tech</p>
+          <p>Password: DemoPassword123</p>
         </div>
       </div>
     </div>

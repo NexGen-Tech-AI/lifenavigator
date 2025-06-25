@@ -19,10 +19,10 @@ export default function DemoWelcomePage() {
           </h2>
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 mb-6">
             <p className="text-gray-700 dark:text-gray-300 mb-2">
-              <strong>Email:</strong> demo@lifenavigator.ai
+              <strong>Email:</strong> demo@lifenavigator.tech
             </p>
             <p className="text-gray-700 dark:text-gray-300">
-              <strong>Password:</strong> demo123
+              <strong>Password:</strong> DemoPassword123
             </p>
           </div>
           <Link

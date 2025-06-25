@@ -20,8 +20,8 @@ if (isMockMode) {
   console.log('📦 Running in mock mode (no Supabase configured)');
   console.log('✅ Mock authentication is already set up!');
   console.log('\n🚀 You can login with:');
-  console.log('   Email: demo@lifenavigator.ai');
-  console.log('   Password: demo123');
+  console.log('   Email: demo@lifenavigator.tech');
+  console.log('   Password: DemoPassword123');
   console.log('\n💡 To use your custom email (timothy@riffeandassociates.com), you need to:');
   console.log('   1. Set up Supabase (run: pnpm run setup:supabase)');
   console.log('   2. Create the user in Supabase Auth');
@@ -32,8 +32,8 @@ if (isMockMode) {
   console.log('   1. Go to your Supabase dashboard');
   console.log('   2. Navigate to Authentication > Users');
   console.log('   3. Click "Add user" and create:');
-  console.log('      - Email: demo@lifenavigator.ai');
-  console.log('      - Password: demo123');
+  console.log('      - Email: demo@lifenavigator.tech');
+  console.log('      - Password: DemoPassword123');
   console.log('   4. Or create your custom user:');
   console.log('      - Email: timothy@riffeandassociates.com');
   console.log('      - Password: Your chosen password');

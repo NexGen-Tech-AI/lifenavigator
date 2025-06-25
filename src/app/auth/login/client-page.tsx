@@ -65,8 +65,8 @@ export default function LoginClientPage() {
   const useDemoCredentials = async () => {
     
     console.log('[Login] Using demo credentials');
-    setEmail('demo@lifenavigator.ai');
-    setPassword('demo123');
+    setEmail('demo@lifenavigator.tech');
+    setPassword('DemoPassword123');
     
     // Automatically trigger login with demo credentials
     setError(null);
@@ -79,8 +79,8 @@ export default function LoginClientPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          email: 'demo@lifenavigator.ai', 
-          password: 'demo123' 
+          email: 'demo@lifenavigator.tech', 
+          password: 'DemoPassword123' 
         }),
         credentials: 'same-origin',
       });

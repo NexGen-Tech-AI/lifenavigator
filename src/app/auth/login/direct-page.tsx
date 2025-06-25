@@ -47,8 +47,8 @@ function LoginForm() {
   };
 
   const useDemoCredentials = () => {
-    setEmail('demo@lifenavigator.ai');
-    setPassword('demo123');
+    setEmail('demo@lifenavigator.tech');
+    setPassword('DemoPassword123');
   };
 
   return (

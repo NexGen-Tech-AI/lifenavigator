@@ -180,8 +180,8 @@
    ```
 
    This will create a demo user with:
-   - Email: `demo@lifenavigator.ai`
-   - Password: `demo123`
+   - Email: `demo@lifenavigator.tech`
+   - Password: `DemoPassword123`
    - Sample data for testing
 
 ## Step 7: Test Your Setup

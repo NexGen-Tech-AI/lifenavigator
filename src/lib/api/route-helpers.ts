@@ -91,7 +91,7 @@ export async function authenticateRequest(request: NextRequest) {
   const userData = {
     id: user.id,
     email: user.email!,
-    isDemoAccount: user.email === 'demo@lifenavigator.ai',
+    isDemoAccount: user.email === 'demo@lifenavigator.tech',
     subscriptionTier: profile?.subscription_tier || 'FREE',
     ...profile
   };

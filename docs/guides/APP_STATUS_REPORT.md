@@ -66,8 +66,8 @@ Implementation: Complete
 
 ### Configuration
 - **User ID**: `11111111-1111-1111-1111-111111111111`
-- **Email**: `demo@lifenavigator.ai`
-- **Password**: `demo123`
+- **Email**: `demo@lifenavigator.tech`
+- **Password**: `DemoPassword123`
 - **Subscription**: PRO tier
 - **Features**: All features enabled
 

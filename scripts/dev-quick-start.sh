@@ -24,8 +24,8 @@ rm -rf .next
 echo "🚀 Starting the app..."
 echo ""
 echo "✅ Login with:"
-echo "   Email: demo@lifenavigator.ai"
-echo "   Password: demo123"
+echo "   Email: demo@lifenavigator.tech"
+echo "   Password: DemoPassword123"
 echo ""
 
 npm run dev

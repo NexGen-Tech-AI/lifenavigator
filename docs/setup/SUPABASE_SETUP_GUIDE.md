@@ -92,8 +92,8 @@ npx tsx scripts/create-supabase-demo.ts
 ```
 
 This will create a demo account with:
-- Email: `demo@lifenavigator.ai`
-- Password: `demo123456`
+- Email: `demo@lifenavigator.tech`
+- Password: `DemoPassword123456`
 - Pre-populated financial data
 
 ## Step 7: Configure Authentication

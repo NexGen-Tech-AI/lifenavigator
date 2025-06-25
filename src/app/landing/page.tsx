@@ -38,8 +38,8 @@ export default function LandingPage() {
             </h2>
             <div className="bg-gray-100 dark:bg-gray-700 rounded p-4">
               <p className="text-gray-700 dark:text-gray-300">
-                <strong>Email:</strong> demo@lifenavigator.ai<br />
-                <strong>Password:</strong> demo123
+                <strong>Email:</strong> demo@lifenavigator.tech<br />
+                <strong>Password:</strong> DemoPassword123
               </p>
             </div>
           </div>

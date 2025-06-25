@@ -409,6 +409,6 @@ SELECT
   CURRENT_DATE - INTERVAL '6 months',
   CURRENT_DATE + INTERVAL '6 months'
 FROM public.users 
-WHERE email = 'demo@lifenavigator.ai'
+WHERE email = 'demo@lifenavigator.tech'
 ON CONFLICT DO NOTHING;
 */

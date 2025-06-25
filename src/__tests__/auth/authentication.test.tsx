@@ -112,7 +112,7 @@ describe('Authentication Flow', () => {
 
     it.skip('handles demo account login', async () => {
       mockSupabase.auth.signInWithPassword.mockResolvedValueOnce({
-        data: { user: { id: 'demo-user', email: 'demo@lifenavigator.ai' } },
+        data: { user: { id: 'demo-user', email: 'demo@lifenavigator.tech' } },
         error: null,
       });
 
@@ -122,8 +122,8 @@ describe('Authentication Flow', () => {
 
       await waitFor(() => {
         expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
-          email: 'demo@lifenavigator.ai',
-          password: 'demo123',
+          email: 'demo@lifenavigator.tech',
+          password: 'DemoPassword123',
         });
         expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
       });

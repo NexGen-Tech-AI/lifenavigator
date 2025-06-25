@@ -531,7 +531,7 @@ BEGIN
   ) VALUES (
     demo_user_id,
     '00000000-0000-0000-0000-000000000000',
-    'demo@lifenavigator.ai',
+    'demo@lifenavigator.tech',
     crypt('Demo@Secure2024!', gen_salt('bf')),
     NOW(),
     NOW(),
@@ -554,7 +554,7 @@ BEGIN
     onboarding_completed
   ) VALUES (
     demo_user_id,
-    'demo@lifenavigator.ai',
+    'demo@lifenavigator.tech',
     'Demo User',
     true,
     'PRO',
@@ -684,7 +684,7 @@ INSERT INTO auth.users (
 ) VALUES (
   gen_random_uuid(),
   '00000000-0000-0000-0000-000000000000',
-  'admin-demo@lifenavigator.ai',
+  'admin-demo@lifenavigator.tech',
   crypt('Admin@Demo2024!', gen_salt('bf')),
   NOW(),
   NOW(),
@@ -736,7 +736,7 @@ async function testSetup() {
     // Test 2: Authentication
     console.log('2. Testing authentication...');
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: 'demo@lifenavigator.ai',
+      email: 'demo@lifenavigator.tech',
       password: 'Demo@Secure2024!'
     });
     
@@ -843,7 +843,7 @@ node test-supabase-setup.js
 2. Open http://localhost:3000
 
 3. Try logging in with:
-   - Email: `demo@lifenavigator.ai`
+   - Email: `demo@lifenavigator.tech`
    - Password: `Demo@Secure2024!`
 
 ## ✅ Step 11: Production Security Checklist

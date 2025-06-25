@@ -85,8 +85,8 @@ export default function LoginForm() {
 
   const handleDemoLogin = async () => {
     setFormData({
-      email: 'demo@lifenavigator.ai',
-      password: 'demo123',
+      email: 'demo@lifenavigator.tech',
+      password: 'DemoPassword123',
       rememberMe: false,
     });
     

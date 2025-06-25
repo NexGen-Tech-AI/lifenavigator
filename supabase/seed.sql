@@ -1,4 +1,4 @@
--- Create demo user (password: demo123456)
+-- Create demo user (password: DemoPassword123)
 -- Note: This uses Supabase Auth, so we'll create it via the API
 -- The user ID will be created by Supabase Auth
 
@@ -11,7 +11,7 @@ BEGIN
   INSERT INTO public.users (id, email, name, subscription_tier, subscription_status, is_demo_account, onboarding_completed)
   VALUES (
     demo_user_id,
-    'demo@lifenavigator.ai',
+    'demo@lifenavigator.tech',
     'Demo User',
     'PRO',
     'ACTIVE',

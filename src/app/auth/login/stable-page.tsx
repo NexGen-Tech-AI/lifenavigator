@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function StableLoginPage() {
-  const [email, setEmail] = useState('demo@lifenavigator.ai');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('demo@lifenavigator.tech');
+  const [password, setPassword] = useState('DemoPassword123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -132,8 +132,8 @@ export default function StableLoginPage() {
               Demo Credentials
             </h3>
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Email: demo@lifenavigator.ai<br />
-              Password: demo123
+              Email: demo@lifenavigator.tech<br />
+              Password: DemoPassword123
             </p>
           </div>
 

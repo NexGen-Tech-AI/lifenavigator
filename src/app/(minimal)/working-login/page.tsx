@@ -58,7 +58,7 @@ export default function WorkingLoginPage() {
             <input
               type="email"
               name="email"
-              defaultValue="demo@lifenavigator.ai"
+              defaultValue="demo@lifenavigator.tech"
               style={{
                 width: '100%',
                 padding: '10px',
@@ -76,7 +76,7 @@ export default function WorkingLoginPage() {
             <input
               type="password"
               name="password"
-              defaultValue="demo123"
+              defaultValue="DemoPassword123"
               style={{
                 width: '100%',
                 padding: '10px',

@@ -24,8 +24,8 @@ async function testConnection() {
     // Test 1: Try to sign in
     console.log('\n📝 Test 1: Attempting to sign in...')
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: 'demo@lifenavigator.ai',
-      password: 'demo123'
+      email: 'demo@lifenavigator.tech',
+      password: 'DemoPassword123'
     })
     
     if (authError) {

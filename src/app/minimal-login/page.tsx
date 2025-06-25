@@ -13,8 +13,8 @@ export default function MinimalLoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: 'demo@lifenavigator.ai',
-          password: 'demo123'
+          email: 'demo@lifenavigator.tech',
+          password: 'DemoPassword123'
         }),
       });
       
@@ -38,8 +38,8 @@ export default function MinimalLoginPage() {
           
           <div style={{ marginTop: 20, padding: 20, backgroundColor: '#f0f0f0', borderRadius: 8 }}>
             <p><strong>Demo Credentials:</strong></p>
-            <p>Email: demo@lifenavigator.ai</p>
-            <p>Password: demo123</p>
+            <p>Email: demo@lifenavigator.tech</p>
+            <p>Password: DemoPassword123</p>
           </div>
           
           <button

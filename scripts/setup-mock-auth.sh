@@ -7,7 +7,7 @@ echo "The app is currently using mock authentication because Supabase is not con
 echo ""
 echo "Available accounts:"
 echo "1. timothy@riffeandassociates.com / Sushi!\$#1"
-echo "2. demo@lifenavigator.ai / demo123"
+echo "2. demo@lifenavigator.tech / DemoPassword123"
 echo "3. plaid-demo@lifenavigator.ai / plaid-demo-2024"
 echo ""
 echo "To use real authentication with Supabase:"

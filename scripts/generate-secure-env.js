@@ -73,8 +73,8 @@ JWT_SECRET=${generateSecureString(32)}
 
 # Demo Account (do not change)
 DEMO_USER_ID=11111111-1111-1111-1111-111111111111
-DEMO_USER_EMAIL=demo@lifenavigator.ai
-DEMO_USER_PASSWORD=demo123
+DEMO_USER_EMAIL=demo@lifenavigator.tech
+DEMO_USER_PASSWORD=DemoPassword123
 `;
 
 // Production template

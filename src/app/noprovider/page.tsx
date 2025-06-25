@@ -36,8 +36,8 @@ export default function NoProviderPage() {
         <div className="mt-8 p-4 bg-blue-50 rounded">
           <p className="text-sm text-blue-800">
             <strong>Demo Credentials:</strong><br />
-            Email: demo@lifenavigator.ai<br />
-            Password: demo123
+            Email: demo@lifenavigator.tech<br />
+            Password: DemoPassword123
           </p>
         </div>
       </div>

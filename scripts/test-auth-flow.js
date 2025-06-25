@@ -37,4 +37,4 @@ console.log('\nTo fully test authentication:');
 console.log('1. Set up Supabase environment variables');
 console.log('2. Run: npm run dev');
 console.log('3. Test login at: http://localhost:3000/auth/login');
-console.log('4. Test demo account: demo@lifenavigator.ai / demo123');
+console.log('4. Test demo account: demo@lifenavigator.tech / DemoPassword123');

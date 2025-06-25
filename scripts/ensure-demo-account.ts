@@ -1,64 +1,129 @@
+#!/usr/bin/env tsx
+
 /**
- * Script to ensure the demo account exists in the database
- * Can be run locally or as part of the build process
+ * Script to ensure demo account exists and is properly configured
+ * Run with: npx tsx scripts/ensure-demo-account.ts
  */
 
-import { PrismaClient } from '@prisma/client';
-import { hash } from 'bcryptjs';
+import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Load environment variables
+dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('❌ Missing required environment variables');
+  console.error('   NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✓' : '✗');
+  console.error('   SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✓' : '✗');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 async function ensureDemoAccount() {
-  console.log('🔄 Checking for demo account...');
-  
-  const prisma = new PrismaClient({
-    log: ['query', 'error', 'warn'],
-  });
+  console.log('🔍 Checking for demo account...\n');
+
+  const demoEmail = 'demo@lifenavigator.tech';
+  const demoPassword = 'DemoPassword123';
 
   try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1+1 as result`;
-    console.log('✅ Database connection successful');
+    // Check if user exists
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingUser = users.find(u => u.email === demoEmail);
 
-    // Check if demo user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: 'demo@example.com' },
-    });
+    let userId: string;
 
     if (existingUser) {
-      console.log('✅ Demo account already exists');
-      return;
+      console.log('✓ Demo user already exists');
+      userId = existingUser.id;
+      
+      // Update password to ensure it matches
+      const { error: updateError } = await supabase.auth.admin.updateUserById(
+        userId,
+        { password: demoPassword }
+      );
+      
+      if (updateError) {
+        console.error('❌ Error updating password:', updateError.message);
+      } else {
+        console.log('✓ Password updated successfully');
+      }
+    } else {
+      console.log('📝 Creating demo user...');
+      
+      // Create new user
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email: demoEmail,
+        password: demoPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: 'Demo User',
+          username: 'demo_user'
+        }
+      });
+
+      if (createError) {
+        console.error('❌ Error creating user:', createError.message);
+        process.exit(1);
+      }
+
+      userId = newUser.user.id;
+      console.log('✓ Demo user created successfully');
     }
 
-    // Create demo account
-    console.log('📝 Creating demo account...');
-    const hashedPassword = await hash('password', 12);
+    // Ensure profile exists
+    console.log('\n📝 Ensuring user profile...');
     
-    const demoUser = await prisma.user.create({
-      data: {
-        id: 'demo-user-id',
-        email: 'demo@example.com',
-        name: 'Demo User',
-        password: hashedPassword,
-        setupCompleted: true,
-        emailVerified: new Date(),
-      },
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        email: demoEmail,
+        username: 'demo_user',
+        full_name: 'Demo User',
+        onboarding_completed: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+    if (profileError) {
+      console.error('❌ Error creating/updating profile:', profileError.message);
+    } else {
+      console.log('✓ User profile ready');
+    }
+
+    // Test login
+    console.log('\n🔐 Testing login...');
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: demoEmail,
+      password: demoPassword
     });
 
-    console.log('✅ Demo account created successfully:', demoUser.email);
-  } catch (error) {
-    console.error('❌ Error ensuring demo account:', error);
+    if (signInError) {
+      console.error('❌ Login test failed:', signInError.message);
+    } else {
+      console.log('✓ Login successful!');
+    }
+
+    console.log('\n✨ Demo account is ready!');
+    console.log('📧 Email:', demoEmail);
+    console.log('🔑 Password:', demoPassword);
+    console.log('\n🚀 You can now login at: /auth/login');
+
+  } catch (error: any) {
+    console.error('❌ Unexpected error:', error.message);
     process.exit(1);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 // Run the script
-ensureDemoAccount()
-  .then(() => {
-    console.log('✅ Script completed successfully');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('❌ Script failed:', error);
-    process.exit(1);
-  });
+ensureDemoAccount();

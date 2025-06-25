@@ -5,8 +5,8 @@
 The application is currently running in **mock authentication mode** (no Supabase configured). You can login with any of these accounts:
 
 ### 1. Default Demo Account
-- **Email:** demo@lifenavigator.ai
-- **Password:** demo123
+- **Email:** demo@lifenavigator.tech
+- **Password:** DemoPassword123
 - **Purpose:** General demo and exploration
 
 ### 2. Timothy's Account

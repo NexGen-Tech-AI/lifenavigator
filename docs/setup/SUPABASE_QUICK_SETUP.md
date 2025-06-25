@@ -63,5 +63,5 @@ If you just want to test the UI without a database:
 
 Once setup is complete:
 1. Start the app: `npm run dev`
-2. Login with demo account: `demo@lifenavigator.ai` / `demo123`
+2. Login with demo account: `demo@lifenavigator.tech` / `DemoPassword123`
 3. Or create a new account via signup

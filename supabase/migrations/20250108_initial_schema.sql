@@ -622,7 +622,7 @@ BEGIN
     INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
     VALUES (
         '11111111-1111-1111-1111-111111111111',
-        'demo@lifenavigator.ai',
+        'demo@lifenavigator.tech',
         '{"provider": "email", "providers": ["email"]}',
         '{"name": "Demo User"}',
         NOW(),
@@ -636,7 +636,7 @@ BEGIN
     INSERT INTO public.users (id, email, name, is_demo_account, subscription_tier, onboarding_completed)
     VALUES (
         demo_user_id,
-        'demo@lifenavigator.ai',
+        'demo@lifenavigator.tech',
         'Demo User',
         TRUE,
         'PRO',
