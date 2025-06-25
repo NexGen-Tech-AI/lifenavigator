@@ -116,7 +116,8 @@ export async function middleware(request: NextRequest) {
                        request.nextUrl.pathname === '/landing' ||
                        request.nextUrl.pathname.includes('/minimal') ||
                        request.nextUrl.pathname.includes('/working-login') ||
-                       request.nextUrl.pathname.includes('/bare')
+                       request.nextUrl.pathname.includes('/bare') ||
+                       request.nextUrl.pathname === '/dashboard-demo'
 
   // Redirect root path to login if not authenticated
   if (isRootPath && !user) {

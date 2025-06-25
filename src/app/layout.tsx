@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./dark-mode.css"; // Import the dark mode styles
-import { Providers } from "@/providers";
+// import { Providers } from "@/providers";
+import { ProvidersSimple as Providers } from "@/providers-simple";
 import { Analytics } from "@/components/analytics/Analytics";
 import { Toaster } from "@/components/ui/toaster";
 import { getThemeScript } from "./theme-script";
