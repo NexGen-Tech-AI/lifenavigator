@@ -21,9 +21,22 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createBrowserClient()
+  const [error, setError] = useState<string | null>(null)
+  
+  let supabase: any = null
+  try {
+    supabase = createBrowserClient()
+  } catch (err: any) {
+    console.error('Failed to create Supabase client:', err)
+    setError(err.message)
+  }
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
+    
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -49,9 +62,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession()
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+    const authSubscription = supabase?.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       console.log('Auth state changed:', event, session?.user?.email)
       setUser(session?.user ?? null)
       
@@ -72,9 +83,24 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => {
-      subscription.unsubscribe()
+      authSubscription?.data?.subscription?.unsubscribe()
     }
-  }, [supabase])
+  }, [])
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-2">
+            Supabase initialization error
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {error}
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Context.Provider value={{ user, userProfile, loading }}>

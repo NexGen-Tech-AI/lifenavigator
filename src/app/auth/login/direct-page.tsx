@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { AuthLoadingWrapper } from '@/components/providers/auth-loading-wrapper';
 
-export default function DirectLoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -178,5 +179,13 @@ export default function DirectLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DirectLoginPage() {
+  return (
+    <AuthLoadingWrapper>
+      <LoginForm />
+    </AuthLoadingWrapper>
   );
 }

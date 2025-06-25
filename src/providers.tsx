@@ -6,6 +6,7 @@ import { ToastProvider } from '@/components/ui/toaster';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createPersistentQueryClient } from '@/lib/cache/persistQueryClient';
 import { SupabaseProvider } from '@/components/providers/supabase-provider';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   // Create the client in a state to ensure it's only created once on the client side
@@ -13,19 +14,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => createPersistentQueryClient());
   
   return (
-    <SupabaseProvider>
-      <QueryClientProvider client={queryClient}>
-        <NextThemesProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange={false}
-        >
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </NextThemesProvider>
-      </QueryClientProvider>
-    </SupabaseProvider>
+    <ErrorBoundary>
+      <SupabaseProvider>
+        <QueryClientProvider client={queryClient}>
+          <NextThemesProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange={false}
+          >
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </NextThemesProvider>
+        </QueryClientProvider>
+      </SupabaseProvider>
+    </ErrorBoundary>
   );
 }

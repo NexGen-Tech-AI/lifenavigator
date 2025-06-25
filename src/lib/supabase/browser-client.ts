@@ -12,14 +12,22 @@ export function createBrowserClient() {
     return browserClient;
   }
 
+  console.log('[Supabase] Creating browser client with URL:', SUPABASE_URL);
+  
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('[Supabase] Missing credentials');
+    throw new Error('Supabase credentials not found');
+  }
+
   try {
     browserClient = createSupabaseBrowserClient<Database>(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
     );
+    console.log('[Supabase] Browser client created successfully');
     return browserClient;
   } catch (error) {
-    console.error('Failed to create Supabase browser client:', error);
+    console.error('[Supabase] Failed to create browser client:', error);
     throw error;
   }
 }
