@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import DirectLoginPage from './direct-page';
+import StableLoginPage from './stable-page';
 
 export const metadata: Metadata = {
   title: 'Sign In | Life Navigator',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  return <DirectLoginPage />;
+  return <StableLoginPage />;
 }
