@@ -108,6 +108,14 @@ export async function middleware(request: NextRequest) {
   
   const isAuthPath = request.nextUrl.pathname.startsWith('/auth')
   const isOnboardingPath = request.nextUrl.pathname.startsWith('/onboarding')
+  const isRootPath = request.nextUrl.pathname === '/'
+  const isTestPath = request.nextUrl.pathname.startsWith('/test')
+
+  // Redirect root path to login if not authenticated
+  if (isRootPath && !user) {
+    console.log('[Middleware] Redirecting root to login - no user');
+    return NextResponse.redirect(new URL('/auth/login', request.url))
+  }
 
   // Redirect to login if accessing protected route without auth
   if (isProtectedPath && !user) {
@@ -117,8 +125,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
+  // Skip auth checks for test pages
+  if (isTestPath) {
+    return response
+  }
+
   // Check if user needs onboarding
-  if (user && !isAuthPath && !isOnboardingPath) {
+  if (user && !isAuthPath && !isOnboardingPath && !isTestPath) {
     // Fetch user profile to check onboarding status
     const { data: profile } = await supabase
       .from('profiles')
