@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/supabase'
 import { createMockClient } from './mock-client'
-import { supabaseConfig } from '@/config/supabase'
+import { getSupabaseConfig } from '@/config/supabase-client'
 
 let clientInstance: any = null;
 
@@ -11,8 +11,8 @@ export function createClient() {
     return clientInstance;
   }
 
-  const url = supabaseConfig.url;
-  const key = supabaseConfig.anonKey;
+  // Use client-specific config that handles env vars properly
+  const { url, anonKey: key } = getSupabaseConfig();
   
   // Use mock client in development if Supabase is not configured
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
