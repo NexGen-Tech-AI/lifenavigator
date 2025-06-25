@@ -7,21 +7,21 @@ export default async function Home() {
   // Get the user's session
   const { data: { user } } = await supabase.auth.getUser();
 
-  // If user is not authenticated, redirect to login
+  // If user is not authenticated, redirect to waitlist
   if (!user) {
-    redirect('/auth/login');
+    redirect('/waitlist');
   }
 
-  // Get user profile to check setup status
+  // Get user profile to check onboarding status
   const { data: profile } = await supabase
-    .from('users')
-    .select('setup_completed')
+    .from('profiles')
+    .select('onboarding_completed')
     .eq('id', user.id)
     .single();
 
-  // If user hasn't completed setup, redirect to onboarding
-  if (profile && !profile.setup_completed) {
-    redirect(`/onboarding/questionnaire?userId=${user.id}`);
+  // If user hasn't completed onboarding, redirect to onboarding
+  if (profile && !profile.onboarding_completed) {
+    redirect('/onboarding');
   }
 
   // If user is authenticated and has completed setup, redirect to dashboard
