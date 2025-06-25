@@ -7,9 +7,9 @@ export default async function Home() {
   // Get the user's session
   const { data: { user } } = await supabase.auth.getUser();
 
-  // If user is not authenticated, redirect to waitlist
+  // If user is not authenticated, redirect to login
   if (!user) {
-    redirect('/waitlist');
+    redirect('/auth/login');
   }
 
   // Get user profile to check onboarding status
