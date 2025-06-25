@@ -110,6 +110,7 @@ export async function middleware(request: NextRequest) {
   const isOnboardingPath = request.nextUrl.pathname.startsWith('/onboarding')
   const isRootPath = request.nextUrl.pathname === '/'
   const isTestPath = request.nextUrl.pathname.startsWith('/test')
+  const isDemoPath = request.nextUrl.pathname.startsWith('/demo')
 
   // Redirect root path to login if not authenticated
   if (isRootPath && !user) {
@@ -125,8 +126,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  // Skip auth checks for test pages
-  if (isTestPath) {
+  // Skip auth checks for test and demo pages
+  if (isTestPath || isDemoPath) {
     return response
   }
 
