@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createBrowserClient } from '@/lib/supabase/browser-client'
 import { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 
@@ -21,7 +21,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<Database['public']['Tables']['profiles']['Row'] | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
+  const supabase = createBrowserClient()
 
   useEffect(() => {
     // Get initial session
