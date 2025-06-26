@@ -10,6 +10,7 @@ import { CashFlow } from "@/components/domain/finance/overview/CashFlow";
 import { LoadingSpinner } from "@/components/ui/loaders/LoadingSpinner";
 import { FinancialHealthScore } from "@/components/finance/FinancialHealthScore";
 import { useFinancialHealth } from "@/hooks/useFinancialHealth";
+import { useAccounts } from "@/hooks/useAccounts";
 import { BeakerIcon, ChartBarIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
@@ -20,31 +21,8 @@ interface FinancialSummary {
 }
 
 export default function OverviewPage() {
-  const [financialData, setFinancialData] = useState<FinancialSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { summary: financialData, isLoading } = useAccounts();
   const { score, history, isLoading: scoreLoading, refreshScore } = useFinancialHealth();
-
-  useEffect(() => {
-    const fetchFinancialData = async () => {
-      try {
-        const response = await fetch('/api/v1/accounts');
-        if (response.ok) {
-          const data = await response.json();
-          // Check for summary in multiple locations for compatibility
-          const summary = data.summary || data.metadata?.summary;
-          if (summary) {
-            setFinancialData(summary);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching financial data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFinancialData();
-  }, []);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

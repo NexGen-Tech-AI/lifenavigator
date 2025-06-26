@@ -1,44 +1,27 @@
 // FILE: src/components/finance/overview/AccountsSummary.tsx
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { 
   BuildingLibraryIcon, 
   CreditCardIcon, 
   HomeIcon, 
   CurrencyDollarIcon 
 } from "@heroicons/react/24/outline";
+import { useAccounts } from "@/hooks/useAccounts";
 
 export function AccountsSummary() {
   const [filter, setFilter] = useState<string>("all");
-  const [accountsData, setAccountsData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { accounts, isLoading } = useAccounts();
   
-  useEffect(() => {
-    fetchAccounts();
-  }, []);
-  
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/v1/accounts');
-      if (response.ok) {
-        const data = await response.json();
-        // Transform the data to match the component's expected format
-        const accounts = (data.data || []).map((account: any) => ({
-          id: account.id,
-          name: account.account_name,
-          type: account.account_type.toLowerCase(),
-          balance: account.current_balance,
-          icon: getIconForType(account.account_type)
-        }));
-        setAccountsData(accounts);
-      }
-    } catch (error) {
-      console.error('Error fetching accounts:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Transform the data to match the component's expected format
+  const accountsData = accounts.map((account) => ({
+    id: account.id,
+    name: account.account_name,
+    type: account.account_type.toLowerCase(),
+    balance: account.current_balance,
+    icon: getIconForType(account.account_type)
+  }));
   
   const getIconForType = (type: string) => {
     switch (type) {

@@ -6,11 +6,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year') || new Date().getFullYear().toString();
@@ -19,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { data: documents, error } = await supabase
       .from('documents')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .eq('category', 'tax')
       .or(`metadata->tax_year.eq.${year},metadata->tax_year.is.null`);
 
@@ -89,11 +86,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -106,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = `tax/${user.id}/${taxYear}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const fileName = `tax/${demoUserId}/${taxYear}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     // Upload to storage
     const { error: uploadError } = await supabase.storage
@@ -122,7 +116,7 @@ export async function POST(request: NextRequest) {
     const { data: document, error: dbError } = await supabase
       .from('documents')
       .insert({
-        user_id: user.id,
+        user_id: demoUserId,
         name: file.name,
         type: documentType,
         category: 'tax',

@@ -1,22 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001'
 
     // Get all calendar connections for the user
     const { data: connections, error: connectionsError } = await supabase
       .from('calendar_connections')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .order('created_at', { ascending: false })
 
     if (connectionsError) {
@@ -26,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Get calendar counts and event counts for each connection
     const connectionsWithStats = await Promise.all(
-      connections.map(async (connection) => {
+      connections.map(async (connection: any) => {
         // Get calendar count
         const { count: calendarCount } = await supabase
           .from('calendars')
@@ -37,7 +33,7 @@ export async function GET(request: NextRequest) {
         const { count: eventCount } = await supabase
           .from('calendar_events')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
+          .eq('user_id', demoUserId)
           .in('calendar_id', 
             supabase
               .from('calendars')
@@ -70,13 +66,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001'
 
     const body = await request.json()
     
@@ -95,7 +88,7 @@ export async function POST(request: NextRequest) {
       const { data: connection, error: dbError } = await supabase
         .from('calendar_connections')
         .insert({
-          user_id: user.id,
+          user_id: demoUserId,
           provider: 'CALDAV',
           provider_account_id: username,
           account_email: username,

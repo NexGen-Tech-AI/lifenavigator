@@ -32,17 +32,14 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Fetch family members
     const { data: familyMembers, error } = await supabase
       .from('family_members')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -65,11 +62,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Parse and validate request body
     const body = await request.json();
@@ -84,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const familyMemberData = {
       ...validationResult.data,
-      user_id: user.id,
+      user_id: demoUserId,
     };
 
     // Insert family member
@@ -104,7 +98,7 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('emergency_contacts')
         .insert({
-          user_id: user.id,
+          user_id: demoUserId,
           family_member_id: familyMember.id,
           priority: 1,
         });

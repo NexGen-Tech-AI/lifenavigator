@@ -6,22 +6,19 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     // Fetch user's financial data to personalize strategies
     const { data: accounts } = await supabase
       .from('accounts')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', demoUserId);
 
     const { data: taxProfile } = await supabase
       .from('tax_profiles')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .eq('tax_year', new Date().getFullYear())
       .single();
 
@@ -159,11 +156,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     const body = await request.json();
     const { strategyId, implemented, notes } = body;
@@ -172,7 +166,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('tax_strategy_implementations')
       .upsert({
-        user_id: user.id,
+        user_id: demoUserId,
         strategy_id: strategyId,
         implemented,
         implementation_date: implemented ? new Date().toISOString() : null,

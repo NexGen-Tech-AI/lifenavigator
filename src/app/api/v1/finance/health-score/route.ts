@@ -7,11 +7,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Check for force recalculation parameter
     const { searchParams } = new URL(request.url);
@@ -22,7 +19,7 @@ export async function GET(request: NextRequest) {
       const { data: currentScore } = await supabase
         .from('financial_health_scores')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', demoUserId)
         .eq('is_current', true)
         .single();
 
@@ -36,7 +33,7 @@ export async function GET(request: NextRequest) {
           const { data: history } = await supabase
             .from('financial_health_scores')
             .select('*')
-            .eq('user_id', user.id)
+            .eq('user_id', demoUserId)
             .order('calculated_at', { ascending: false })
             .limit(12);
 
@@ -69,8 +66,8 @@ export async function GET(request: NextRequest) {
 
     // Calculate new score
     const healthService = new FinancialHealthService(supabase);
-    const score = await healthService.calculateHealthScore(user.id);
-    const history = await healthService.getScoreHistory(user.id);
+    const score = await healthService.calculateHealthScore(demoUserId);
+    const history = await healthService.getScoreHistory(demoUserId);
 
     return NextResponse.json({
       score,
@@ -88,16 +85,13 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Calculate new score
     const healthService = new FinancialHealthService(supabase);
-    const score = await healthService.calculateHealthScore(user.id);
-    const history = await healthService.getScoreHistory(user.id);
+    const score = await healthService.calculateHealthScore(demoUserId);
+    const history = await healthService.getScoreHistory(demoUserId);
 
     return NextResponse.json({
       score,

@@ -38,11 +38,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Get filter parameters
     const { searchParams } = new URL(request.url);
@@ -52,7 +49,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('pets')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', demoUserId);
 
     if (status) {
       query = query.eq('status', status);
@@ -68,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     // Get upcoming appointments
     const { data: upcomingAppointments } = await supabase
-      .rpc('get_upcoming_pet_appointments', { user_id_param: user.id });
+      .rpc('get_upcoming_pet_appointments', { user_id_param: demoUserId });
 
     return NextResponse.json({
       pets: pets || [],
@@ -86,11 +83,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use a fixed user ID
+    const demoUserId = 'demo-user-001';
 
     // Parse and validate request body
     const body = await request.json();
@@ -105,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     const petData = {
       ...validationResult.data,
-      user_id: user.id,
+      user_id: demoUserId,
     };
 
     // Insert pet

@@ -6,11 +6,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     const { searchParams } = new URL(request.url);
     const year = searchParams.get('year') || new Date().getFullYear().toString();
@@ -19,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { data: deductions, error: deductionsError } = await supabase
       .from('tax_deductions')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .eq('tax_year', year);
 
     if (deductionsError) {
@@ -30,7 +27,7 @@ export async function GET(request: NextRequest) {
     const { data: credits, error: creditsError } = await supabase
       .from('tax_credits')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', demoUserId)
       .eq('tax_year', year);
 
     if (creditsError) {
@@ -104,11 +101,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // Demo mode - use hardcoded user ID
+    const demoUserId = 'demo-user-001';
 
     const body = await request.json();
     const { name, amount, category, taxYear, documentation } = body;
@@ -116,7 +110,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('tax_deductions')
       .insert({
-        user_id: user.id,
+        user_id: demoUserId,
         name,
         amount,
         category,
