@@ -11,21 +11,7 @@ import {
   PlusIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
-import {
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend
-} from 'recharts';
+// Removed recharts imports - using HTML/CSS alternatives
 
 interface Skill {
   id: string;
@@ -230,17 +216,12 @@ export default function CareerSkillsPage() {
     ? skills 
     : skills.filter(skill => skill.category === selectedCategory);
 
-  // Prepare data for radar chart
-  const radarData = skills
+  // Prepare data for technical skills display
+  const technicalSkills = skills
     .filter(skill => skill.category === 'technical')
-    .slice(0, 6)
-    .map(skill => ({
-      skill: skill.name,
-      level: skill.level * 20,
-      fullMark: 100
-    }));
+    .slice(0, 6);
 
-  // Prepare data for skill growth chart
+  // Prepare data for skill growth display
   const growthData = [
     { month: 'Jan', skills: 35 },
     { month: 'Feb', skills: 37 },
@@ -354,27 +335,36 @@ export default function CareerSkillsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Technical Skills Radar */}
+            {/* Technical Skills Overview */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Technical Skills Overview
               </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="#e5e7eb" />
-                    <PolarAngleAxis dataKey="skill" tick={{ fontSize: 12 }} />
-                    <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                    <Radar
-                      name="Skill Level"
-                      dataKey="level"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.6}
-                    />
-                    <Tooltip />
-                  </RadarChart>
-                </ResponsiveContainer>
+              <div className="space-y-4">
+                {technicalSkills.map((skill) => (
+                  <div key={skill.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {skill.name}
+                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {getLevelLabel(skill.level)}
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(skill.level / 5) * 100}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Beginner</span>
+                        <span>Expert</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -383,22 +373,44 @@ export default function CareerSkillsPage() {
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                 Skill Growth Trend
               </h3>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={growthData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="skills"
-                      stroke="#10b981"
-                      strokeWidth={3}
-                      dot={{ fill: '#10b981', r: 6 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <span>Total Skills Progress</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    +{growthData[growthData.length - 1].skills - growthData[0].skills} skills
+                  </span>
+                </div>
+                <div className="relative h-48">
+                  <div className="absolute inset-0 flex items-end justify-between gap-2">
+                    {growthData.map((item, index) => {
+                      const maxSkills = Math.max(...growthData.map(d => d.skills));
+                      const height = (item.skills / maxSkills) * 100;
+                      return (
+                        <div key={item.month} className="flex-1 flex flex-col items-center">
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style={{ height: '100%' }}>
+                            <div
+                              className="absolute bottom-0 w-full bg-green-500 rounded-t transition-all duration-300"
+                              style={{ height: `${height}%` }}
+                            >
+                              <span className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {item.skills}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            {item.month}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
+                    <ArrowTrendingUpIcon className="w-4 h-4 mr-1 text-green-500" />
+                    Average monthly growth: 2 skills
+                  </div>
+                </div>
               </div>
             </div>
           </div>
