@@ -1,9 +1,6 @@
 import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/supabase'
-
-// Hardcoded values for immediate functionality
-const SUPABASE_URL = "https://oxtivjctfyemoegxepzw.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dGl2amN0ZnllbW9lZ3hlcHp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA1MjIzNTAsImV4cCI6MjA2NjA5ODM1MH0.-SDX_rIM-8VCUbjJ_CyqOaeoBPbI8J3RYxcigDwkcGQ";
+import { supabaseConfig } from '@/config/supabase'
 
 let browserClient: any = null;
 
@@ -11,6 +8,9 @@ export function createBrowserClient() {
   if (browserClient) {
     return browserClient;
   }
+
+  const SUPABASE_URL = supabaseConfig.url;
+  const SUPABASE_ANON_KEY = supabaseConfig.anonKey;
 
   console.log('[Supabase] Creating browser client with URL:', SUPABASE_URL);
   
@@ -20,6 +20,8 @@ export function createBrowserClient() {
   }
 
   try {
+    // Create browser client without deprecated cookies option
+    // The SSR package handles cookies automatically in the browser
     browserClient = createSupabaseBrowserClient<Database>(
       SUPABASE_URL,
       SUPABASE_ANON_KEY

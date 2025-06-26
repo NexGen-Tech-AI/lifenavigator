@@ -33,24 +33,34 @@ export async function createClient() {
     {
       cookies: {
         async get(name: string) {
-          return cookieStore.get(name)?.value
+          const cookie = cookieStore.get(name);
+          console.log(`[Supabase Server] Getting cookie ${name}:`, cookie ? 'found' : 'not found');
+          return cookie?.value;
         },
         async set(name: string, value: string, options: CookieOptions) {
+          console.log(`[Supabase Server] Setting cookie ${name}`, { 
+            hasValue: !!value, 
+            valueLength: value?.length,
+            options 
+          });
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.log(`[Supabase Server] Cookie set error (expected in Server Components):`, error);
           }
         },
         async remove(name: string, options: CookieOptions) {
+          console.log(`[Supabase Server] Removing cookie ${name}`);
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {
             // The `delete` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
+            console.log(`[Supabase Server] Cookie remove error (expected in Server Components):`, error);
           }
         },
       },

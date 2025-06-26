@@ -132,7 +132,19 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Log auth-related cookies before checking user
+  const authCookies = request.cookies.getAll().filter(c => 
+    c.name.includes('auth') || c.name.includes('supabase') || c.name.includes('sb-')
+  );
+  console.log('[Middleware] Auth cookies before getUser:', 
+    authCookies.map(c => ({ name: c.name, hasValue: !!c.value }))
+  );
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError) {
+    console.log('[Middleware] Error getting user:', userError.message);
+  }
   
   console.log('[Middleware]', request.nextUrl.pathname, '- User:', user?.email || 'none');
 
