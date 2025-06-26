@@ -14,15 +14,6 @@ export function AccountsSummary() {
   const [filter, setFilter] = useState<string>("all");
   const { accounts, isLoading } = useAccounts();
   
-  // Transform the data to match the component's expected format
-  const accountsData = (accounts || []).map((account: any) => ({
-    id: account.id,
-    name: account.account_name,
-    type: account.account_type.toLowerCase(),
-    balance: account.current_balance,
-    icon: getIconForType(account.account_type)
-  }));
-  
   const getIconForType = (type: string) => {
     switch (type) {
       case 'CREDIT_CARD':
@@ -36,6 +27,15 @@ export function AccountsSummary() {
         return <BuildingLibraryIcon className="w-5 h-5" />;
     }
   };
+  
+  // Transform the data to match the component's expected format
+  const accountsData = (accounts || []).map((account: any) => ({
+    id: account.id,
+    name: account.account_name,
+    type: account.account_type.toLowerCase(),
+    balance: account.current_balance,
+    icon: getIconForType(account.account_type)
+  }));
   
   // Filter accounts based on selected type
   const filteredAccounts = filter === "all" 
