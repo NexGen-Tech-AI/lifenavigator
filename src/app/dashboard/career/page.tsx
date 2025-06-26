@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, RadarChart, 
   PolarGrid, PolarAngleAxis, Radar
 } from 'recharts';
+import { CheckCircleIcon, BriefcaseIcon, UserGroupIcon, StarIcon } from '@heroicons/react/24/outline';
 
 const CareerDashboard = () => {
   // State for career data
@@ -99,90 +100,102 @@ const CareerDashboard = () => {
   const fetchIndustryTrends = async () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     return [
-      { skill: 'AI/ML', growth: 85 },
-      { skill: 'Cybersecurity', growth: 75 },
-      { skill: 'Cloud Computing', growth: 70 },
-      { skill: 'Blockchain', growth: 60 },
-      { skill: 'Edge Computing', growth: 55 },
+      { skill: 'AI/Machine Learning', growth: 78 },
+      { skill: 'Cloud Computing', growth: 65 },
+      { skill: 'Data Analytics', growth: 62 },
+      { skill: 'Cybersecurity', growth: 58 },
+      { skill: 'DevOps', growth: 55 }
     ];
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl font-semibold">Loading career data...</div>
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-xl font-semibold text-red-500">{error}</div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-red-500">{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-      <header className="mb-8">
+    <div className="p-6 space-y-6">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Career Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400">Track your professional development and opportunities</p>
-      </header>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Career Summary */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md lg:col-span-1">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Career Summary</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Role Readiness</span>
-              <span className="font-semibold text-gray-900 dark:text-white">85%</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Network Strength</span>
-              <span className="font-semibold text-gray-900 dark:text-white">72%</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Industry Alignment</span>
-              <span className="font-semibold text-gray-900 dark:text-white">91%</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Skill Growth</span>
-              <span className="font-semibold text-gray-900 dark:text-white">+15%</span>
-            </div>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">Track your professional growth and opportunities</p>
+      </div>
+
+      {/* Top Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Skills Mastered</h3>
+            <CheckCircleIcon className="h-5 w-5 text-green-500" />
           </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">+3 this quarter</p>
         </div>
         
-        {/* Skills Radar */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md lg:col-span-2">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Skills Assessment</h2>
-          <div className="h-64 md:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={careerData.skills}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="name" />
-                <Radar name="Current Level" dataKey="level" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                <Radar name="Target Level" dataKey="target" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
-                <Legend />
-              </RadarChart>
-            </ResponsiveContainer>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Job Matches</h3>
+            <BriefcaseIcon className="h-5 w-5 text-blue-500" />
           </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">24</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Above 80% match</p>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Network Size</h3>
+            <UserGroupIcon className="h-5 w-5 text-purple-500" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">342</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">+67 new connections</p>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Avg. Match Score</h3>
+            <StarIcon className="h-5 w-5 text-yellow-500" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">87%</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Top 10% in your field</p>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Top Job Matches */}
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Skills Assessment Radar */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Skills Assessment</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={careerData.skills}>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <Radar name="Current" dataKey="level" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
+              <Radar name="Target" dataKey="target" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Job Match Table */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Top Job Matches</h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Position</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Match</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Salary</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b dark:border-gray-700">
+                  <th className="text-left py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">Position</th>
+                  <th className="text-left py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">Match</th>
+                  <th className="text-left py-2 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">Salary</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -193,58 +206,53 @@ const CareerDashboard = () => {
                       <div className="text-sm text-gray-500 dark:text-gray-400">{job.company}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-green-600 dark:text-green-400">{job.match}%</div>
+                      <div className="flex items-center">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">{job.match}%</div>
+                        <div className="ml-2 w-16 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="bg-purple-600 h-2 rounded-full" style={{ width: `${job.match}%` }}></div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{job.salary}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{job.location}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {job.salary}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="mt-4 text-center">
-            <button className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
-              View All Opportunities
-            </button>
-          </div>
         </div>
         
-        {/* Networking Activity */}
+        {/* Network Activity */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Networking Activity</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={careerData.networkMetrics}
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="connections" name="New Connections" fill="#8884d8" />
-                <Bar dataKey="messages" name="Messages Sent" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={careerData.networkMetrics}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip />
+              <Bar dataKey="connections" fill="#8b5cf6" name="New Connections" />
+              <Bar dataKey="messages" fill="#06b6d4" name="Messages" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
         {/* Upcoming Events */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Upcoming Events</h2>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="space-y-3">
             {careerData.upcomingEvents.map((event) => (
-              <div key={event.id} className="py-3 flex justify-between items-center">
+              <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                 <div>
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">{event.title}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{new Date(event.date).toLocaleDateString()}</div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">{event.title}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(event.date).toLocaleDateString()} • {event.type}
+                  </p>
                 </div>
-                <div className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded">
-                  {event.type}
-                </div>
+                <button className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700">
+                  Register
+                </button>
               </div>
             ))}
           </div>
