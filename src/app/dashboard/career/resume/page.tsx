@@ -9,11 +9,9 @@ import {
   SparklesIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ArrowUpIcon,
   ShareIcon,
   ClipboardDocumentIcon,
   PrinterIcon,
-  CogIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
 import { ResumeTemplate, ResumeData } from '@/components/career/ResumeTemplate';
