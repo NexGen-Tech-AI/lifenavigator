@@ -1,7 +1,7 @@
 // FILE: src/app/dashboard/finance/overview/page.tsx
 'use client';
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountsSummary } from "@/components/domain/finance/overview/AccountsSummary";
 import { SpendingTrends } from "@/components/domain/finance/overview/SpendingTrends";
 import { UpcomingBills } from "@/components/domain/finance/overview/UpcomingBills";
@@ -21,8 +21,8 @@ interface FinancialSummary {
 }
 
 export default function OverviewPage() {
-  const { summary: financialData, isLoading } = useAccounts();
-  const { score, history, isLoading: scoreLoading, refreshScore } = useFinancialHealth();
+  const { summary: financialData, isLoading, error: accountsError } = useAccounts();
+  const { score, history, isLoading: scoreLoading, refreshScore, error: scoreError } = useFinancialHealth();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -32,6 +32,33 @@ export default function OverviewPage() {
       maximumFractionDigits: 2
     }).format(amount);
   };
+
+  // Show loading state while data is being fetched
+  if (isLoading || scoreLoading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="large" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if there are any errors
+  if (accountsError || scoreError) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <h2 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
+            Error Loading Financial Data
+          </h2>
+          <p className="text-red-600 dark:text-red-300">
+            {accountsError || scoreError || 'Failed to load financial information'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-6">
@@ -56,14 +83,16 @@ export default function OverviewPage() {
       </div>
 
       {/* Financial Health Score */}
-      <div className="mb-8">
-        <FinancialHealthScore 
-          score={score} 
-          history={history}
-          isLoading={scoreLoading}
-          onRefresh={refreshScore}
-        />
-      </div>
+      {score && (
+        <div className="mb-8">
+          <FinancialHealthScore 
+            score={score} 
+            history={history}
+            isLoading={false}
+            onRefresh={refreshScore}
+          />
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow dark:bg-slate-800 p-6">
@@ -141,27 +170,14 @@ export default function OverviewPage() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <Suspense fallback={<LoadingSpinner />}>
-          <AccountsSummary />
-        </Suspense>
-        
-        <Suspense fallback={<LoadingSpinner />}>
-          <SpendingTrends />
-        </Suspense>
+        <AccountsSummary />
+        <SpendingTrends />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Suspense fallback={<LoadingSpinner />}>
-          <UpcomingBills />
-        </Suspense>
-        
-        <Suspense fallback={<LoadingSpinner />}>
-          <CashFlow />
-        </Suspense>
-        
-        <Suspense fallback={<LoadingSpinner />}>
-          <FinancialInsights />
-        </Suspense>
+        <UpcomingBills />
+        <CashFlow />
+        <FinancialInsights />
       </div>
     </div>
   );

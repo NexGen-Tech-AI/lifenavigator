@@ -38,7 +38,7 @@ const financeNavItems = [
   },
   {
     title: "Investments",
-    href: "/dashboard/finance/investment",
+    href: "/dashboard/finance/investments",
     icon: <BuildingLibraryIcon className="w-5 h-5" />,
   },
   {
