@@ -1,5 +1,5 @@
-import { Sidebar } from '@/components/layout/sidebar'
-import { Header } from '@/components/layout/header'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { Header } from '@/components/layout/Header'
 import { DemoProvider } from '@/components/providers/demo-provider'
 
 export default function DemoLayout({
