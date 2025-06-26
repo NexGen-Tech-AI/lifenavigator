@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { 
+  BarChart, Bar, LineChart, Line, ResponsiveContainer, 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, RadarChart, 
+  PolarGrid, PolarAngleAxis, Radar
+} from 'recharts';
 import { CheckCircleIcon, BriefcaseIcon, UserGroupIcon, StarIcon } from '@heroicons/react/24/outline';
 
 const CareerDashboard = () => {
@@ -167,25 +172,18 @@ const CareerDashboard = () => {
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Skills Assessment */}
+        {/* Skills Assessment Radar */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Skills Assessment</h2>
-          <div className="space-y-4">
-            {careerData.skills.map((skill, index) => (
-              <div key={index}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{skill.name}</span>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">{skill.level}%</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full" 
-                    style={{ width: `${skill.level}%` }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart data={careerData.skills}>
+              <PolarGrid stroke="#e5e7eb" />
+              <PolarAngleAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <Radar name="Current" dataKey="level" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.6} />
+              <Radar name="Target" dataKey="target" stroke="#06b6d4" fill="#06b6d4" fillOpacity={0.3} />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
         </div>
         
         {/* Job Match Table */}
@@ -228,23 +226,16 @@ const CareerDashboard = () => {
         {/* Network Activity */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Networking Activity</h2>
-          <div className="space-y-4">
-            {careerData.networkMetrics.map((metric, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                <div>
-                  <div className="font-medium text-gray-900 dark:text-white">{metric.month}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {metric.connections} connections, {metric.messages} messages
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                    +{metric.connections + metric.messages} total
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={careerData.networkMetrics}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip />
+              <Bar dataKey="connections" fill="#8b5cf6" name="New Connections" />
+              <Bar dataKey="messages" fill="#06b6d4" name="Messages" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
         
         {/* Upcoming Events */}

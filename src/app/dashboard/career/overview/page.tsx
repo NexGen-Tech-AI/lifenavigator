@@ -11,7 +11,7 @@ import {
   ArrowTrendingUpIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
-// Removed recharts imports - using HTML/CSS alternatives
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface CareerOverview {
   currentRole: {
@@ -229,32 +229,34 @@ export default function CareerOverviewPage() {
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Salary Progression
           </h3>
-          <div className="space-y-4">
-            {overview.salaryProgression.map((item, index) => {
-              const maxSalary = Math.max(...overview.salaryProgression.map(p => p.salary));
-              const percentage = (item.salary / maxSalary) * 100;
-              return (
-                <div key={item.year} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">
-                      {item.year} - {item.role}
-                    </span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {formatCurrency(item.salary)}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={overview.salaryProgression}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="year" stroke="#9CA3AF" />
+              <YAxis 
+                stroke="#9CA3AF" 
+                tickFormatter={(value) => formatCurrency(value)}
+              />
+              <Tooltip 
+                formatter={(value: number) => formatCurrency(value)}
+                contentStyle={{ 
+                  backgroundColor: '#1F2937', 
+                  border: 'none',
+                  borderRadius: '0.5rem'
+                }}
+                labelStyle={{ color: '#E5E7EB' }}
+              />
+              <Legend />
+              <Line 
+                type="monotone" 
+                dataKey="salary" 
+                stroke="#3B82F6" 
+                strokeWidth={2}
+                dot={{ fill: '#3B82F6' }}
+                name="Salary"
+              />
+            </LineChart>
+          </ResponsiveContainer>
           <div className="mt-4 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
             <ArrowTrendingUpIcon className="w-4 h-4 mr-1 text-green-500" />
             Average yearly increase: 12.5%
@@ -266,41 +268,45 @@ export default function CareerOverviewPage() {
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Skill Distribution
           </h3>
-          <div className="space-y-4">
-            {overview.skillDistribution.map((skill) => (
-              <div key={skill.category} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-4 h-4 rounded"
-                      style={{ backgroundColor: skill.color }}
-                    ></div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {skill.category}
-                    </span>
-                  </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {skill.value}%
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={overview.skillDistribution}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ category, value }) => `${category}: ${value}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {overview.skillDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: '#1F2937', 
+                  border: 'none',
+                  borderRadius: '0.5rem'
+                }}
+                labelStyle={{ color: '#E5E7EB' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-2 gap-2">
+              {overview.skillDistribution.map((skill) => (
+                <div key={skill.category} className="flex items-center gap-2">
+                  <div
+                    className="w-3 h-3 rounded"
+                    style={{ backgroundColor: skill.color }}
+                  ></div>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">
+                    {skill.category}: {skill.value}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                  <div
-                    className="h-3 rounded-full transition-all duration-300"
-                    style={{ 
-                      width: `${skill.value}%`,
-                      backgroundColor: skill.color
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-center gap-4 text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Total Skills:</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {overview.skillDistribution.reduce((acc, s) => acc + s.value, 0)}%
-              </span>
+              ))}
             </div>
           </div>
         </div>

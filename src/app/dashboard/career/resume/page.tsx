@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   DocumentTextIcon,
-  DownloadIcon,
+  ArrowDownTrayIcon,
   PencilIcon,
   EyeIcon,
   SparklesIcon,
@@ -516,7 +516,7 @@ export default function CareerResumePage() {
                       {resume.views}
                     </span>
                     <span className="flex items-center">
-                      <DownloadIcon className="w-4 h-4 mr-1" />
+                      <ArrowDownTrayIcon className="w-4 h-4 mr-1" />
                       {resume.downloads}
                     </span>
                   </div>
@@ -586,7 +586,7 @@ export default function CareerResumePage() {
                   onClick={handleDownloadPDF}
                   className="flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <DownloadIcon className="w-5 h-5 mr-2" />
+                  <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
                   Download PDF
                 </button>
                 <button className="flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
