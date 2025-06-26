@@ -186,7 +186,7 @@ export default function AccountsPage() {
       case 'CREDIT_CARD':
         return <CreditCardIcon className="w-5 h-5" />;
       case 'INVESTMENT':
-        return <ChartLineIcon className="w-5 h-5" />;
+        return <ChartBarIcon className="w-5 h-5" />;
       case 'LOAN':
       case 'MORTGAGE':
         return <HomeIcon className="w-5 h-5" />;

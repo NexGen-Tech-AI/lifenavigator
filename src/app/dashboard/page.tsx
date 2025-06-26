@@ -4,37 +4,20 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/hooks/useUser';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
+import { useAccounts } from '@/hooks/useAccounts';
 import DailySchedule from '@/components/calendar/DailySchedule';
 import { getTodayEvents } from '@/lib/mock/calendarEvents';
 
 export default function Dashboard() {
   const { user, profile, loading: authLoading } = useUser();
+  const { summary, isLoading: accountsLoading } = useAccounts();
   const [loading, setLoading] = useState(true);
-  const [financialData, setFinancialData] = useState<any>(null);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
-    fetchDashboardData();
-  }, [user]);
-
-  const fetchDashboardData = async () => {
-    try {
-      // Fetch accounts summary
-      const response = await fetch('/api/v1/accounts');
-      if (response.ok) {
-        const data = await response.json();
-        setFinancialData(data);
-      }
-    } catch (err) {
-      console.error('Error fetching dashboard data:', err);
-    } finally {
+    if (!authLoading && !accountsLoading) {
       setLoading(false);
     }
-  };
+  }, [authLoading, accountsLoading]);
 
   if (authLoading || loading) {
     return (
@@ -58,9 +41,9 @@ export default function Dashboard() {
   }
 
   // Calculate financial stats from real data
-  const netWorth = financialData?.summary?.netWorth || 0;
-  const totalAssets = financialData?.summary?.totalAssets || 0;
-  const totalLiabilities = financialData?.summary?.totalLiabilities || 0;
+  const netWorth = summary?.netWorth || 0;
+  const totalAssets = summary?.totalAssets || 0;
+  const totalLiabilities = summary?.totalLiabilities || 0;
 
   // Domain summaries with real data where available
   const domainSummaries = [

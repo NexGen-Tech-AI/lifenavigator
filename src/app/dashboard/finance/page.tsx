@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useAccounts } from '@/hooks/useAccounts';
 import Link from 'next/link';
 import { Line } from 'react-chartjs-2';
 import {
@@ -37,31 +38,10 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const message = searchParams.get('message');
-  const [financialData, setFinancialData] = useState<FinancialSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { summary: financialData, isLoading, refetch } = useAccounts();
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
 
-  const fetchFinancialData = async () => {
-    try {
-      const response = await fetch('/api/v1/accounts');
-      if (response.ok) {
-        const data = await response.json();
-        // Check for summary in multiple locations for compatibility
-        const summary = data.summary || data.metadata?.summary;
-        if (summary) {
-          setFinancialData(summary);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching financial data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchFinancialData();
-    
     // Check if we should open the add account modal
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'add-account') {
@@ -270,7 +250,7 @@ function FinancePageContent() {
                   
                   if (response.ok) {
                     setShowAddAccountModal(false);
-                    fetchFinancialData(); // Refresh data
+                    refetch(); // Refresh data
                   }
                 } catch (error) {
                   console.error('Error adding account:', error);

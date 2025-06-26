@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { AssetsProvider } from '@/contexts/AssetsContext';
+import { AccountsProvider } from '@/hooks/useAccounts';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -12,8 +13,9 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <AssetsProvider>
-      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+    <AccountsProvider>
+      <AssetsProvider>
+        <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
         {/* Sidebar component */}
         <Sidebar />
 
@@ -33,6 +35,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </main>
         </div>
       </div>
-    </AssetsProvider>
+      </AssetsProvider>
+    </AccountsProvider>
   );
 }

@@ -27,8 +27,7 @@ export default function TransactionsPage() {
   const isDemoAccount = useIsDemoAccount();
 
   // Fetch accounts
-  const { data: accountsData, isLoading: accountsLoading } = useAccounts();
-  const accounts = accountsData?.data || [];
+  const { accounts, isLoading: accountsLoading } = useAccounts();
 
   // Initialize by selecting all accounts
   useEffect(() => {
