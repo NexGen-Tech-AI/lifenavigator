@@ -16,6 +16,13 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Allow test pages without auth
+  const testPaths = ['/auth-test', '/simple-dashboard', '/test-auth', '/api/auth/setup-demo'];
+  if (testPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+    console.log('[Middleware] Allowing test path:', request.nextUrl.pathname);
+    return response;
+  }
+  
   // Check if we're in demo mode - look for demo subdomain or query param
   const url = new URL(request.url);
   const isDemoSubdomain = url.hostname.includes('demo') || url.hostname.includes('mrxm1q5s5');
