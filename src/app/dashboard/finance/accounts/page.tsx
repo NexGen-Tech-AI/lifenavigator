@@ -14,6 +14,7 @@ import {
   WalletIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
+import { useAccounts } from '@/hooks/useAccounts';
 
 interface Account {
   id: string;
@@ -43,8 +44,8 @@ interface AccountFormData {
 
 export default function AccountsPage() {
   const router = useRouter();
+  const { accounts: accountsData, isLoading, refetch } = useAccounts();
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -65,22 +66,8 @@ export default function AccountsPage() {
   });
 
   useEffect(() => {
-    fetchAccounts();
-  }, []);
-
-  const fetchAccounts = async () => {
-    try {
-      const response = await fetch('/api/v1/accounts');
-      if (response.ok) {
-        const data = await response.json();
-        setAccounts(data.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching accounts:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    setAccounts(accountsData || []);
+  }, [accountsData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +94,7 @@ export default function AccountsPage() {
       });
 
       if (response.ok) {
-        await fetchAccounts();
+        await refetch();
         setShowAddModal(false);
         setShowEditModal(false);
         resetForm();
@@ -141,7 +128,7 @@ export default function AccountsPage() {
       });
 
       if (response.ok) {
-        await fetchAccounts();
+        await refetch();
       }
     } catch (error) {
       console.error('Error deleting account:', error);

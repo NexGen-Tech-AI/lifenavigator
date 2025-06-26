@@ -15,7 +15,7 @@ export function AccountsSummary() {
   const { accounts, isLoading } = useAccounts();
   
   // Transform the data to match the component's expected format
-  const accountsData = accounts.map((account) => ({
+  const accountsData = (accounts || []).map((account: any) => ({
     id: account.id,
     name: account.account_name,
     type: account.account_type.toLowerCase(),

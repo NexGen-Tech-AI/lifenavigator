@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import FileUpload from '@/components/FileUpload';
@@ -43,16 +43,7 @@ export default function FinancialAssetsPage() {
   });
 
   // No need for loading state - assets come from context
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router, supabase]);
+  // Demo mode - no auth check needed
 
   const handleAddAsset = async (e: React.FormEvent) => {
     e.preventDefault();
