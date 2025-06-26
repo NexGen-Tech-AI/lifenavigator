@@ -178,16 +178,16 @@ export default function AppThumbnails() {
 
   return (
     <div className="relative group">
-      <h2 className="text-xl font-semibold mb-4">Upcoming Features</h2>
+      <h2 className="text-lg font-semibold mb-3">Upcoming Features</h2>
       
       {/* Left Arrow */}
       {showLeftArrow && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white p-2 rounded-r-md opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white p-1.5 rounded-r-md opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Scroll left"
         >
-          <ChevronLeftIcon className="w-6 h-6" />
+          <ChevronLeftIcon className="w-5 h-5" />
         </button>
       )}
 
@@ -195,10 +195,10 @@ export default function AppThumbnails() {
       {showRightArrow && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white p-2 rounded-l-md opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/70 hover:bg-black/90 text-white p-1.5 rounded-l-md opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Scroll right"
         >
-          <ChevronRightIcon className="w-6 h-6" />
+          <ChevronRightIcon className="w-5 h-5" />
         </button>
       )}
 
@@ -206,30 +206,30 @@ export default function AppThumbnails() {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-4 px-4"
+        className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {appThumbnails.map((app) => (
           <div
             key={app.id}
-            className="flex-none w-64 group/item"
+            className="flex-none w-48 group/item"
           >
-            <div className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer">
+            <div className="relative overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
               {/* Gradient Background */}
               <div className={`absolute inset-0 bg-gradient-to-br ${app.gradient}`} />
               
               {/* Icon */}
-              <div className="relative h-40 flex items-center justify-center p-8">
+              <div className="relative h-24 flex items-center justify-center p-4">
                 {app.icon}
               </div>
               
               {/* Content */}
-              <div className="relative bg-white/10 backdrop-blur-sm p-4">
-                <h3 className="text-white font-semibold text-lg mb-1">{app.title}</h3>
-                <p className="text-white/80 text-sm mb-2">{app.description}</p>
+              <div className="relative bg-white/10 backdrop-blur-sm p-3">
+                <h3 className="text-white font-semibold text-sm mb-0.5">{app.title}</h3>
+                <p className="text-white/80 text-xs line-clamp-2 mb-1.5">{app.description}</p>
                 
                 {/* Status Badge */}
-                <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                <span className={`inline-block px-1.5 py-0.5 text-xs rounded-full ${
                   app.status === 'available' ? 'bg-green-500/20 text-green-200' :
                   app.status === 'beta' ? 'bg-yellow-500/20 text-yellow-200' :
                   'bg-gray-500/20 text-gray-200'
@@ -241,7 +241,7 @@ export default function AppThumbnails() {
               
               {/* Hover Overlay */}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white font-medium">
+                <span className="text-white font-medium text-sm">
                   {app.status === 'coming-soon' ? 'Coming Soon' : 'View Details'}
                 </span>
               </div>

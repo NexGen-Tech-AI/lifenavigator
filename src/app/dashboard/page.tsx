@@ -142,11 +142,6 @@ export default function Dashboard() {
         </a>
       </div>
 
-      {/* Upcoming Features - Netflix Style Thumbnails */}
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-        <AppThumbnails />
-      </div>
-
       {/* Domain Summaries Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {domainSummaries.map((domain, index) => (
@@ -250,6 +245,11 @@ export default function Dashboard() {
             <span className="text-sm">Manage Assets</span>
           </Link>
         </div>
+      </div>
+
+      {/* Upcoming Features - Netflix Style Thumbnails */}
+      <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <AppThumbnails />
       </div>
     </div>
   );
