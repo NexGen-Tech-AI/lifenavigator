@@ -6,11 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 import { DEMO_USER } from '@/lib/demo/demo-data'
 
 export function useUser() {
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+  // Check if we're in demo mode - multiple detection methods
+  const isDemoMode = typeof window !== 'undefined' && (
+    window.location.hostname.includes('demo') ||
+    window.location.hostname.includes('mrxm1q5s5') ||
+    window.location.search.includes('demo=true') ||
+    process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  )
   
   // In demo mode, return mock user data
-  if (isDemoMode && skipAuth) {
+  if (isDemoMode) {
     return {
       user: {
         id: DEMO_USER.id,

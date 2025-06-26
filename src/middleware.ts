@@ -16,19 +16,22 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // Check if we're in demo mode
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+  // Check if we're in demo mode - look for demo subdomain or query param
+  const url = new URL(request.url);
+  const isDemoSubdomain = url.hostname.includes('demo') || url.hostname.includes('mrxm1q5s5');
+  const hasDemoParam = url.searchParams.get('demo') === 'true';
+  const isDemoMode = isDemoSubdomain || hasDemoParam || process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   
   console.log('[Middleware] Demo mode check:', {
     isDemoMode,
-    skipAuth,
-    NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE,
-    NEXT_PUBLIC_SKIP_AUTH: process.env.NEXT_PUBLIC_SKIP_AUTH
+    isDemoSubdomain,
+    hasDemoParam,
+    hostname: url.hostname,
+    NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE
   })
 
   // In demo mode, bypass all authentication
-  if (isDemoMode && skipAuth) {
+  if (isDemoMode) {
     console.log('[Middleware] Demo mode active - bypassing auth')
     
     // Redirect root to dashboard directly

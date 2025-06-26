@@ -46,12 +46,15 @@ const createAccountSchema = z.object({
  * List user's financial accounts
  */
 export const GET = withErrorHandler(async (request: NextRequest) => {
-  // Check if we're in demo mode
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+  // Check if we're in demo mode - multiple detection methods
+  const url = new URL(request.url);
+  const isDemoMode = url.hostname.includes('demo') || 
+                     url.hostname.includes('mrxm1q5s5') ||
+                     url.searchParams.get('demo') === 'true' ||
+                     process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   
   // In demo mode, return mock data
-  if (isDemoMode && skipAuth) {
+  if (isDemoMode) {
     return NextResponse.json({
       data: [
         {

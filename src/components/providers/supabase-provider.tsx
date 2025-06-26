@@ -24,11 +24,15 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   
   // Check if we're in demo mode
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
-  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+  const isDemoMode = typeof window !== 'undefined' && (
+    window.location.hostname.includes('demo') ||
+    window.location.hostname.includes('mrxm1q5s5') ||
+    window.location.search.includes('demo=true') ||
+    process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  )
   
   // In demo mode, don't initialize Supabase
-  if (isDemoMode && skipAuth) {
+  if (isDemoMode) {
     return (
       <Context.Provider value={{ user: null, userProfile: null, loading: false }}>
         {children}
