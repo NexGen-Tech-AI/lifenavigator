@@ -7,6 +7,7 @@ import LoadingSpinner from '@/components/ui/loaders/LoadingSpinner';
 import { useAccounts } from '@/hooks/useAccounts';
 import DailySchedule from '@/components/calendar/DailySchedule';
 import { getTodayEvents } from '@/lib/mock/calendarEvents';
+import AppThumbnails from '@/components/dashboard/AppThumbnails';
 
 export default function Dashboard() {
   const { user, profile, loading: authLoading } = useUser();
@@ -139,6 +140,11 @@ export default function Dashboard() {
         >
           Logout
         </a>
+      </div>
+
+      {/* Upcoming Features - Netflix Style Thumbnails */}
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <AppThumbnails />
       </div>
 
       {/* Domain Summaries Grid */}
