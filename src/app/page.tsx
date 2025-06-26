@@ -2,6 +2,15 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function Home() {
+  // Check if we're in demo mode
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+  
+  // In demo mode, redirect straight to dashboard
+  if (isDemoMode && skipAuth) {
+    redirect('/dashboard');
+  }
+  
   const supabase = await createClient();
   
   // Get the user's session

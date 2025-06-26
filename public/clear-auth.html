@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearing Authentication...</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f3f4f6;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success {
+            color: #10b981;
+            font-weight: 600;
+        }
+        .button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Clearing Authentication Data...</h1>
+        <div class="spinner"></div>
+        <p id="status">Please wait...</p>
+        <a href="/auth/login" class="button" style="display: none;" id="loginBtn">Go to Login</a>
+    </div>
+
+    <script>
+        // Clear all authentication data
+        function clearAllAuth() {
+            const status = document.getElementById('status');
+            
+            try {
+                // 1. Clear localStorage
+                localStorage.clear();
+                console.log('✓ localStorage cleared');
+                
+                // 2. Clear sessionStorage
+                sessionStorage.clear();
+                console.log('✓ sessionStorage cleared');
+                
+                // 3. Clear all cookies
+                document.cookie.split(";").forEach(function(c) { 
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                });
+                console.log('✓ Cookies cleared');
+                
+                // 4. Clear Supabase specific items
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('supabase') || key.includes('sb-'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                console.log('✓ Supabase tokens cleared');
+                
+                // 5. Clear IndexedDB (if used)
+                if ('indexedDB' in window) {
+                    indexedDB.databases().then(dbs => {
+                        dbs.forEach(db => {
+                            if (db.name && db.name.includes('supabase')) {
+                                indexedDB.deleteDatabase(db.name);
+                            }
+                        });
+                    }).catch(() => {});
+                }
+                
+                // Update status
+                status.innerHTML = '<span class="success">✓ All authentication data cleared!</span>';
+                document.querySelector('.spinner').style.display = 'none';
+                document.getElementById('loginBtn').style.display = 'inline-block';
+                
+                // Auto redirect after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/auth/login';
+                }, 2000);
+                
+            } catch (error) {
+                status.innerHTML = '<span style="color: #ef4444;">Error clearing data. Please try manually.</span>';
+                console.error('Error:', error);
+            }
+        }
+        
+        // Run immediately
+        clearAllAuth();
+    </script>
+</body>
+</html>

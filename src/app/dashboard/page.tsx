@@ -141,13 +141,21 @@ export default function Dashboard() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
       {/* Welcome Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome back, {profile?.name || user.email?.split('@')[0]}!
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Here's your life overview for today
-        </p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {profile?.name || user.email?.split('@')[0]}!
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Here's your life overview for today
+          </p>
+        </div>
+        <a
+          href="/auth/logout"
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Logout
+        </a>
       </div>
 
       {/* Domain Summaries Grid */}

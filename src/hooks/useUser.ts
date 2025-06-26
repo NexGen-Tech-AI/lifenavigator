@@ -3,8 +3,39 @@
 import { useSupabase } from '@/components/providers/supabase-provider'
 import { useQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
+import { DEMO_USER } from '@/lib/demo/demo-data'
 
 export function useUser() {
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+  
+  // In demo mode, return mock user data
+  if (isDemoMode && skipAuth) {
+    return {
+      user: {
+        id: DEMO_USER.id,
+        email: DEMO_USER.email,
+        user_metadata: {
+          name: DEMO_USER.name,
+          avatar_url: null
+        }
+      },
+      profile: {
+        id: DEMO_USER.id,
+        email: DEMO_USER.email,
+        name: DEMO_USER.name,
+        is_demo_account: true,
+        subscription_tier: 'PRO',
+        onboarding_completed: true
+      },
+      loading: false,
+      isAuthenticated: true,
+      isDemoAccount: true,
+      subscriptionTier: 'PRO',
+      onboardingCompleted: true
+    }
+  }
+  
   const { user, userProfile, loading } = useSupabase()
   const supabase = createClient()
   

@@ -23,6 +23,19 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
+  // Check if we're in demo mode
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+  
+  // In demo mode, don't initialize Supabase
+  if (isDemoMode && skipAuth) {
+    return (
+      <Context.Provider value={{ user: null, userProfile: null, loading: false }}>
+        {children}
+      </Context.Provider>
+    )
+  }
+  
   let supabase: any = null
   try {
     supabase = createBrowserClient()

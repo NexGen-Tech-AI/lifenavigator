@@ -16,6 +16,26 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Check if we're in demo mode
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true'
+
+  // In demo mode, bypass all authentication
+  if (isDemoMode && skipAuth) {
+    // Redirect root to dashboard directly
+    if (request.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    
+    // Skip auth pages in demo mode
+    if (request.nextUrl.pathname.startsWith('/auth')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    
+    // Allow all other routes
+    return response
+  }
+
   // Check if Supabase is properly configured
   const supabaseUrl = supabaseConfig.url
   const supabaseKey = supabaseConfig.anonKey

@@ -46,6 +46,64 @@ const createAccountSchema = z.object({
  * List user's financial accounts
  */
 export const GET = withErrorHandler(async (request: NextRequest) => {
+  // Check if we're in demo mode
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+  
+  // In demo mode, return mock data
+  if (isDemoMode && skipAuth) {
+    return NextResponse.json({
+      data: [
+        {
+          id: '1',
+          account_name: 'Demo Checking',
+          account_type: 'CHECKING',
+          institution_name: 'Demo Bank',
+          current_balance: 15000,
+          available_balance: 15000,
+          currency: 'USD'
+        },
+        {
+          id: '2',
+          account_name: 'Demo Savings',
+          account_type: 'SAVINGS',
+          institution_name: 'Demo Bank',
+          current_balance: 45000,
+          available_balance: 45000,
+          currency: 'USD'
+        },
+        {
+          id: '3',
+          account_name: 'Demo Investment',
+          account_type: 'INVESTMENT',
+          institution_name: 'Demo Brokerage',
+          current_balance: 85000,
+          available_balance: 85000,
+          currency: 'USD'
+        }
+      ],
+      summary: {
+        totalAssets: 145000,
+        totalLiabilities: 0,
+        netWorth: 145000
+      },
+      metadata: { 
+        summary: {
+          totalAssets: 145000,
+          totalLiabilities: 0,
+          netWorth: 145000
+        }
+      },
+      pagination: {
+        page: 1,
+        pageSize: 20,
+        total: 3,
+        totalPages: 1,
+        hasMore: false
+      }
+    });
+  }
+  
   const user = await requireAuth(request);
   const supabase = await createClient();
   
