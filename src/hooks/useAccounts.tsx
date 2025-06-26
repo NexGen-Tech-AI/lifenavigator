@@ -136,7 +136,15 @@ export function AccountsProvider({ children }: { children: ReactNode }) {
 export function useAccounts() {
   const context = useContext(AccountsContext);
   if (context === undefined) {
-    throw new Error('useAccounts must be used within an AccountsProvider');
+    console.error('useAccounts must be used within an AccountsProvider');
+    // Return default values to prevent crashes
+    return {
+      accounts: [],
+      summary: null,
+      isLoading: true,
+      error: 'Context not available',
+      refetch: async () => {}
+    };
   }
   return context;
 }
