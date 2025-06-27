@@ -1,98 +1,162 @@
 import { NextResponse } from 'next/server';
+import type { InvestmentPortfolio } from '@/types/investment';
 
 // GET /api/financial/investments/portfolio - Return demo investment portfolio
 export async function GET() {
-  return NextResponse.json({
+  const portfolio: InvestmentPortfolio = {
     totalValue: 385000,
-    totalCost: 350000,
+    totalCostBasis: 350000,
     totalGainLoss: 35000,
     totalGainLossPercent: 10,
-    dayChange: 2150.50,
-    dayChangePercent: 0.56,
+    risk: 'Moderate',
     holdings: [
       {
         id: '1',
-        symbol: 'VTI',
+        ticker: 'VTI',
         name: 'Vanguard Total Stock Market ETF',
-        quantity: 100,
-        avgCost: 200,
-        currentPrice: 220,
+        type: 'ETF',
+        sector: 'Diversified',
+        shares: 100,
+        price: 220,
         value: 22000,
+        costBasis: 20000,
         gainLoss: 2000,
         gainLossPercent: 10,
-        allocation: 5.71,
-        dayChange: 100,
-        dayChangePercent: 0.45
+        allocation: 5.71
       },
       {
         id: '2', 
-        symbol: 'AAPL',
+        ticker: 'AAPL',
         name: 'Apple Inc.',
-        quantity: 150,
-        avgCost: 150,
-        currentPrice: 180,
+        type: 'Stock',
+        sector: 'Technology',
+        shares: 150,
+        price: 180,
         value: 27000,
+        costBasis: 22500,
         gainLoss: 4500,
         gainLossPercent: 20,
-        allocation: 7.01,
-        dayChange: 150,
-        dayChangePercent: 0.56
+        allocation: 7.01
       },
       {
         id: '3',
-        symbol: 'BND',
+        ticker: 'BND',
         name: 'Vanguard Total Bond Market ETF',
-        quantity: 200,
-        avgCost: 80,
-        currentPrice: 82,
+        type: 'ETF',
+        sector: 'Bonds',
+        shares: 200,
+        price: 82,
         value: 16400,
+        costBasis: 16000,
         gainLoss: 400,
         gainLossPercent: 2.5,
-        allocation: 4.26,
-        dayChange: -50,
-        dayChangePercent: -0.30
+        allocation: 4.26
       }
     ],
-    assetAllocation: {
-      stocks: { value: 250000, percent: 64.94 },
-      bonds: { value: 85000, percent: 22.08 },
-      cash: { value: 30000, percent: 7.79 },
-      alternatives: { value: 20000, percent: 5.19 }
-    },
-    sectorAllocation: {
-      technology: { value: 120000, percent: 31.17 },
-      healthcare: { value: 60000, percent: 15.58 },
-      financials: { value: 55000, percent: 14.29 },
-      'consumer discretionary': { value: 45000, percent: 11.69 },
-      industrials: { value: 40000, percent: 10.39 },
-      'real estate': { value: 30000, percent: 7.79 },
-      energy: { value: 20000, percent: 5.19 },
-      utilities: { value: 15000, percent: 3.90 }
-    },
-    geographicAllocation: {
-      'United States': { value: 270000, percent: 70.13 },
-      'International Developed': { value: 80000, percent: 20.78 },
-      'Emerging Markets': { value: 35000, percent: 9.09 }
-    },
+    assetAllocation: [
+      { name: 'Stocks', value: 64.94, color: '#10b981' },
+      { name: 'Bonds', value: 22.08, color: '#3b82f6' },
+      { name: 'Cash', value: 7.79, color: '#f59e0b' },
+      { name: 'Alternatives', value: 5.19, color: '#8b5cf6' }
+    ],
+    sectorAllocation: [
+      { name: 'Technology', value: 31.17, color: '#10b981' },
+      { name: 'Healthcare', value: 15.58, color: '#3b82f6' },
+      { name: 'Financials', value: 14.29, color: '#f59e0b' },
+      { name: 'Consumer Discretionary', value: 11.69, color: '#8b5cf6' },
+      { name: 'Industrials', value: 10.39, color: '#ec4899' },
+      { name: 'Real Estate', value: 7.79, color: '#14b8a6' },
+      { name: 'Energy', value: 5.19, color: '#f97316' },
+      { name: 'Utilities', value: 3.90, color: '#6366f1' }
+    ],
+    geographicAllocation: [
+      { name: 'United States', value: 70.13, color: '#10b981' },
+      { name: 'International Developed', value: 20.78, color: '#3b82f6' },
+      { name: 'Emerging Markets', value: 9.09, color: '#f59e0b' }
+    ],
     riskMetrics: {
       beta: 0.95,
-      standardDeviation: 12.5,
       sharpeRatio: 1.25,
-      treynorRatio: 0.15,
-      alpha: 2.1,
-      rSquared: 0.92,
-      informationRatio: 0.45,
-      trackingError: 3.2
+      volatility: 12.5,
+      maxDrawdown: -15.2,
+      downside: 8.3,
+      concentrationRisk: 0.31
     },
-    performanceMetrics: {
-      ytd: { value: 28500, percent: 8.14 },
-      oneMonth: { value: 3850, percent: 1.01 },
-      threeMonths: { value: 11550, percent: 3.09 },
-      sixMonths: { value: 19250, percent: 5.26 },
-      oneYear: { value: 35000, percent: 10.0 },
-      threeYears: { value: 77000, percent: 24.0 },
-      fiveYears: { value: 115500, percent: 41.57 },
-      sinceInception: { value: 35000, percent: 10.0 }
+    riskAlerts: [
+      {
+        id: '1',
+        type: 'info',
+        title: 'Diversification',
+        description: 'Your portfolio is well-diversified across asset classes'
+      }
+    ],
+    stressTests: [
+      {
+        name: 'Market Crash (-20%)',
+        portfolioImpact: -15.2
+      },
+      {
+        name: 'Interest Rate Rise (+2%)',
+        portfolioImpact: -4.8
+      }
+    ],
+    insights: [
+      {
+        id: '1',
+        type: 'success',
+        title: 'Strong YTD Performance',
+        description: 'Your portfolio has outperformed the market by 2.5%',
+        icon: '📈',
+        action: 'Consider rebalancing to lock in gains'
+      }
+    ],
+    rebalancingRecommendations: [
+      {
+        action: 'Reduce',
+        ticker: 'VTI',
+        name: 'Vanguard Total Stock Market ETF',
+        current: 5.71,
+        target: 5.0,
+        difference: -0.71
+      }
+    ],
+    performance: {
+      '1D': [
+        { date: '2024-01-01', portfolioValue: 383000, benchmark: 98 },
+        { date: '2024-01-02', portfolioValue: 385000, benchmark: 100 }
+      ],
+      '1W': [
+        { date: '2023-12-25', portfolioValue: 380000, benchmark: 95 },
+        { date: '2023-12-26', portfolioValue: 381000, benchmark: 96 },
+        { date: '2023-12-27', portfolioValue: 382000, benchmark: 97 },
+        { date: '2023-12-28', portfolioValue: 383000, benchmark: 98 },
+        { date: '2023-12-29', portfolioValue: 384000, benchmark: 99 },
+        { date: '2024-01-01', portfolioValue: 383000, benchmark: 98 },
+        { date: '2024-01-02', portfolioValue: 385000, benchmark: 100 }
+      ],
+      '1M': Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(2024, 0, i + 1).toISOString().split('T')[0],
+        portfolioValue: 370000 + (i * 500),
+        benchmark: 90 + (i * 0.33)
+      })),
+      '3M': Array.from({ length: 90 }, (_, i) => ({
+        date: new Date(2023, 9, i + 1).toISOString().split('T')[0],
+        portfolioValue: 350000 + (i * 388),
+        benchmark: 85 + (i * 0.17)
+      })),
+      '1Y': Array.from({ length: 365 }, (_, i) => ({
+        date: new Date(2023, 0, i + 1).toISOString().split('T')[0],
+        portfolioValue: 350000 + (i * 95),
+        benchmark: 90 + (i * 0.027)
+      }))
+    },
+    marketAssumptions: {
+      riskFreeRate: 4.5,
+      equityRiskPremium: 5.5,
+      inflationRate: 2.5,
+      bondYield: 4.8
     }
-  });
+  };
+
+  return NextResponse.json(portfolio);
 }
