@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
+import type { GeographicAllocation } from '@/types/investment';
 
 // GET /api/financial/investments/allocation/geographic - Return geographic allocation
 export async function GET() {
-  return NextResponse.json([
-    { region: 'United States', value: 270000, percent: 70.13, color: '#3b82f6' },
-    { region: 'International Developed', value: 80000, percent: 20.78, color: '#10b981' },
-    { region: 'Emerging Markets', value: 35000, percent: 9.09, color: '#f59e0b' }
-  ]);
+  const allocation: GeographicAllocation = [
+    { name: 'United States', value: 70.13, color: '#3b82f6' },
+    { name: 'International Developed', value: 20.78, color: '#10b981' },
+    { name: 'Emerging Markets', value: 9.09, color: '#f59e0b' }
+  ];
+  
+  return NextResponse.json(allocation);
 }
