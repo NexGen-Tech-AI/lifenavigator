@@ -16,6 +16,18 @@ import {
   Legend,
   ChartOptions
 } from 'chart.js';
+import { 
+  AlertTriangle, 
+  TrendingUp, 
+  Shield, 
+  Home, 
+  Calendar,
+  DollarSign,
+  Info,
+  CheckCircle,
+  Clock,
+  AlertCircle
+} from 'lucide-react';
 
 // Register ChartJS components
 ChartJS.register(
@@ -38,10 +50,12 @@ function FinancePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const message = searchParams.get('message');
-  const { summary: financialData, isLoading, refetch } = useAccounts();
+  const { data, isLoading, refetch } = useAccounts({ includeSummary: true });
   const [showAddAccountModal, setShowAddAccountModal] = useState(false);
+  
+const financialData = data?.summary;
 
-  useEffect(() => {
+useEffect(() => {
     // Check if we should open the add account modal
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'add-account') {
@@ -104,6 +118,88 @@ function FinancePageContent() {
     }
   };
 
+  // Tax bracket calculation (simplified for demo)
+  const calculateTaxBracket = (income: number) => {
+    if (income <= 11000) return { rate: 10, bracket: '$0 - $11,000' };
+    if (income <= 44725) return { rate: 12, bracket: '$11,001 - $44,725' };
+    if (income <= 95375) return { rate: 22, bracket: '$44,726 - $95,375' };
+    if (income <= 182050) return { rate: 24, bracket: '$95,376 - $182,050' };
+    if (income <= 231250) return { rate: 32, bracket: '$182,051 - $231,250' };
+    if (income <= 578125) return { rate: 35, bracket: '$231,251 - $578,125' };
+    return { rate: 37, bracket: '$578,126+' };
+  };
+
+  const estimatedIncome = 200000; // Total household income from demo data
+  const taxInfo = calculateTaxBracket(estimatedIncome);
+
+  // Upcoming events
+  const upcomingEvents = [
+    { id: 1, title: 'Quarterly Tax Payment Due', date: '2024-01-15', type: 'tax', priority: 'high' },
+    { id: 2, title: 'Insurance Premium Due', date: '2024-01-20', type: 'payment', priority: 'medium' },
+    { id: 3, title: 'Investment Review Meeting', date: '2024-01-25', type: 'meeting', priority: 'low' },
+    { id: 4, title: '401(k) Contribution Deadline', date: '2024-01-31', type: 'deadline', priority: 'high' }
+  ];
+
+  // Financial insights and warnings
+  const insights = [
+    {
+      id: 1,
+      type: 'warning',
+      title: 'Reassess Insurance Coverage',
+      description: 'Your home value has increased 15% since last review. Consider updating coverage.',
+      icon: Shield,
+      action: 'Review Policy',
+      priority: 'high'
+    },
+    {
+      id: 2,
+      type: 'opportunity',
+      title: 'Refinance Potential',
+      description: 'Current rates are 1.2% lower than your mortgage. Potential savings: $340/month.',
+      icon: Home,
+      action: 'Calculate Savings',
+      priority: 'medium'
+    },
+    {
+      id: 3,
+      type: 'info',
+      title: 'Tax Optimization',
+      description: 'You have $8,000 remaining in 401(k) contribution room for tax benefits.',
+      icon: DollarSign,
+      action: 'Maximize Contribution',
+      priority: 'medium'
+    },
+    {
+      id: 4,
+      type: 'success',
+      title: 'Emergency Fund Goal Met',
+      description: 'Congratulations! Your emergency fund now covers 6 months of expenses.',
+      icon: CheckCircle,
+      action: 'View Details',
+      priority: 'low'
+    }
+  ];
+
+  const getEventTypeColor = (type: string) => {
+    switch (type) {
+      case 'tax': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
+      case 'payment': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
+      case 'meeting': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
+      case 'deadline': return 'text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-900/30';
+    }
+  };
+
+  const getInsightColor = (type: string) => {
+    switch (type) {
+      case 'warning': return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
+      case 'opportunity': return 'border-green-500 bg-green-50 dark:bg-green-900/20';
+      case 'info': return 'border-blue-500 bg-blue-50 dark:bg-blue-900/20';
+      case 'success': return 'border-green-500 bg-green-50 dark:bg-green-900/20';
+      default: return 'border-gray-500 bg-gray-50 dark:bg-gray-900/20';
+    }
+  };
+
   return (
     <div className="p-8">
         {message && (
@@ -119,8 +215,8 @@ function FinancePageContent() {
           </p>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Summary Cards with Tax Info */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Link href="/dashboard/finance/assets" className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
             <div className="flex flex-col h-full">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Total Assets</h3>
@@ -183,43 +279,119 @@ function FinancePageContent() {
               </div>
             </div>
           </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex flex-col h-full">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Tax Bracket</h3>
+              <div className="flex-1 flex flex-col justify-center">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {taxInfo.rate}%
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  {taxInfo.bracket}
+                </p>
+              </div>
+              <div className="flex items-center gap-1 mt-2">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Federal tax rate
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Net Worth Trend Chart */}
+        {/* Full Width Net Worth Trend Chart */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Net Worth Trend</h3>
-          <div className="h-64">
+          <div className="h-80">
             <Line data={chartData} options={chartOptions} />
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button 
-              onClick={() => setShowAddAccountModal(true)}
-              className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              <div className="text-left">
+        {/* Insights and Warnings */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Insights & Recommendations</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {insights.map((insight) => {
+              const Icon = insight.icon;
+              return (
+                <div key={insight.id} className={`p-4 rounded-lg border-l-4 ${getInsightColor(insight.type)}`}>
+                  <div className="flex items-start">
+                    <Icon className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{insight.title}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{insight.description}</p>
+                      <button className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                        {insight.action} →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Upcoming Events */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upcoming Events</h3>
+              <Calendar className="w-5 h-5 text-gray-400" />
+            </div>
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center">
+                    <div className={`p-2 rounded-full mr-3 ${getEventTypeColor(event.type)}`}>
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white text-sm">{event.title}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+                  {event.priority === 'high' && (
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                  )}
+                </div>
+              ))}
+            </div>
+            <button className="mt-4 w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline">
+              View All Events →
+            </button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-1 gap-3">
+              <button 
+                onClick={() => setShowAddAccountModal(true)}
+                className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
                 <h4 className="font-medium text-gray-900 dark:text-white">Add Account</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Connect a new financial account</p>
-              </div>
-            </button>
-            
-            <Link href="/dashboard/finance/budgets" className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <div className="text-left">
+              </button>
+              
+              <Link href="/dashboard/finance/budgets" className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <h4 className="font-medium text-gray-900 dark:text-white">Create Budget</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Set up monthly spending limits</p>
-              </div>
-            </Link>
-            
-            <Link href="/dashboard/finance/investments" className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-              <div className="text-left">
+              </Link>
+              
+              <Link href="/dashboard/finance/investments" className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <h4 className="font-medium text-gray-900 dark:text-white">Investment Analysis</h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Review portfolio performance</p>
-              </div>
-            </Link>
+              </Link>
+
+              <Link href="/dashboard/finance/taxes" className="block p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <h4 className="font-medium text-gray-900 dark:text-white">Tax Planning</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Optimize your tax strategy</p>
+              </Link>
+            </div>
           </div>
         </div>
 

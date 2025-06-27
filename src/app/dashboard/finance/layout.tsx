@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { FinanceSidebar } from '@/components/domain/finance/FinanceSidebar';
-import { AccountsProvider } from '@/hooks/useAccounts';
+import { AccountsProvider } from '@/hooks/useAccountsContext';
 
 interface FinanceLayoutProps {
   children: ReactNode;

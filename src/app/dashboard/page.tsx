@@ -11,8 +11,9 @@ import AppThumbnails from '@/components/dashboard/AppThumbnails';
 
 export default function Dashboard() {
   const { user, profile, loading: authLoading } = useUser();
-  const { summary, isLoading: accountsLoading } = useAccounts();
+  const { data: accountsData, isLoading: accountsLoading } = useAccounts({ includeSummary: true });
   const [loading, setLoading] = useState(true);
+  const summary = accountsData?.summary;
 
   useEffect(() => {
     if (!authLoading && !accountsLoading) {

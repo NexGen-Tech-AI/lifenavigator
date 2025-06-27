@@ -63,7 +63,7 @@ import {
   ArrowTrendingUpIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
-import { useAccounts } from '@/hooks/useAccounts';
+import { useAccounts } from '@/hooks/useAccountsContext';
 import { RiskAnalysisService } from '@/lib/services/riskAnalysisService';
 import { ReportGeneratorService } from '@/lib/services/reportGeneratorService';
 import { RiskDashboard } from './RiskDashboard';
@@ -1058,10 +1058,7 @@ const AIInsightsPanel: React.FC<{
 
 // Main Component
 export function LifeDecisionEngine() {
-  const accountsData = useAccounts();
-  
-  const accounts = accountsData.data?.data || [];
-  const accountsLoading = accountsData.isLoading;
+  const { accounts, isLoading: accountsLoading } = useAccounts();
   
   const [events, setEvents] = useState<LifeEvent[]>([]);
   const [snapshots, setSnapshots] = useState<FinancialSnapshot[]>([]);

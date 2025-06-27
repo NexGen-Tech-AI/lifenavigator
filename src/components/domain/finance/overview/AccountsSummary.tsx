@@ -8,7 +8,7 @@ import {
   HomeIcon, 
   CurrencyDollarIcon 
 } from "@heroicons/react/24/outline";
-import { useAccounts } from "@/hooks/useAccounts";
+import { useAccounts } from "@/hooks/useAccountsContext";
 
 export function AccountsSummary() {
   const [filter, setFilter] = useState<string>("all");

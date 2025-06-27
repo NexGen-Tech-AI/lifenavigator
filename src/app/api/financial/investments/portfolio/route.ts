@@ -3,11 +3,12 @@ import type { InvestmentPortfolio } from '@/types/investment';
 
 // GET /api/financial/investments/portfolio - Return demo investment portfolio
 export async function GET() {
+  // Total investment value includes: Brokerage (85k) + 401k Primary (225k) + 401k Spouse (125k) + Roth IRA (45k) = 480k
   const portfolio: InvestmentPortfolio = {
-    totalValue: 385000,
-    totalCostBasis: 350000,
-    totalGainLoss: 35000,
-    totalGainLossPercent: 10,
+    totalValue: 480000,
+    totalCostBasis: 420000,
+    totalGainLoss: 60000,
+    totalGainLossPercent: 14.29,
     risk: 'Moderate',
     holdings: [
       {

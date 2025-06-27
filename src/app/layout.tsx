@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./dark-mode.css"; // Import the dark mode styles
 // import { Providers } from "@/providers";
@@ -8,16 +7,9 @@ import { Analytics } from "@/components/analytics/Analytics";
 import { Toaster } from "@/components/ui/toaster";
 import { getThemeScript } from "./theme-script";
 
-// Font configuration
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Font configuration - Using system fonts as fallback to avoid download issues
+const fontSans = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const fontMono = "Consolas, Monaco, 'Courier New', monospace";
 
 // Metadata
 export const metadata: Metadata = {
@@ -67,7 +59,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `console.log('Inline script test working!');` }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
+        style={{
+          fontFamily: fontSans,
+          ["--font-mono" as any]: fontMono,
+        }}
       >
         <Providers>
           {children}

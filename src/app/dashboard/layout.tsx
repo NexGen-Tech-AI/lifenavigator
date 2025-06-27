@@ -5,7 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import Breadcrumbs from '@/components/layout/Breadcrumbs';
 import { AssetsProvider } from '@/contexts/AssetsContext';
-import { AccountsProvider } from '@/hooks/useAccounts';
+import { AccountsProvider } from '@/hooks/useAccountsContext';
 
 interface DashboardLayoutProps {
   children: ReactNode;

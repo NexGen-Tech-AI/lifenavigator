@@ -45,7 +45,7 @@ export function AccountsProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/v1/accounts');
+      const response = await fetch('/api/v1/accounts?includeSummary=true');
       
       if (!response.ok) {
         // In demo mode, return mock data if auth fails

@@ -3,7 +3,6 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSession } from '@/hooks/useAuth';
 import { toast } from '@/lib/utils/toast';
 import {
   getAccounts,
@@ -23,12 +22,11 @@ export function useAccounts(params?: {
   active?: boolean;
   includeSummary?: boolean;
 }) {
-  const { data: session } = useSession();
-  
+  // Always fetch in demo mode - no auth required
   return useQuery({
     queryKey: ['accounts', params],
     queryFn: () => getAccounts(params),
-    enabled: !!session?.user,
+    enabled: true,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
@@ -37,12 +35,11 @@ export function useAccounts(params?: {
  * Hook to fetch single account
  */
 export function useAccount(id: string) {
-  const { data: session } = useSession();
-  
+  // Always fetch in demo mode - no auth required
   return useQuery({
     queryKey: ['account', id],
     queryFn: () => getAccount(id),
-    enabled: !!session?.user && !!id,
+    enabled: !!id,
   });
 }
 
@@ -51,14 +48,10 @@ export function useAccount(id: string) {
  */
 export function useCreateAccount() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   
   return useMutation({
     mutationFn: (data: CreateAccountInput) => {
-      // Prevent demo account from creating accounts
-      if (session?.user?.email === 'demo@example.com') {
-        throw new Error('Demo account cannot create accounts');
-      }
+      // In demo mode, just simulate success
       return createAccount(data);
     },
     onSuccess: () => {
@@ -76,14 +69,10 @@ export function useCreateAccount() {
  */
 export function useUpdateAccount() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateAccountInput> }) => {
-      // Prevent demo account from updating
-      if (session?.user?.email === 'demo@example.com') {
-        throw new Error('Demo account cannot modify data');
-      }
+      // In demo mode, just simulate success
       return updateAccount(id, data);
     },
     onSuccess: (_, variables) => {
@@ -102,14 +91,10 @@ export function useUpdateAccount() {
  */
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
   
   return useMutation({
     mutationFn: (id: string) => {
-      // Prevent demo account from deleting
-      if (session?.user?.email === 'demo@example.com') {
-        throw new Error('Demo account cannot delete data');
-      }
+      // In demo mode, just simulate success
       return deleteAccount(id);
     },
     onSuccess: () => {

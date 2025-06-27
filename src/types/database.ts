@@ -56,6 +56,17 @@ export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
 export type HealthRecordType = 'APPOINTMENT' | 'LAB_RESULT' | 'PRESCRIPTION' | 'VACCINATION' | 'PROCEDURE' | 'DIAGNOSIS' | 'INSURANCE_CLAIM' | 'OTHER'
 export type CareerStatus = 'EMPLOYED' | 'SELF_EMPLOYED' | 'UNEMPLOYED' | 'STUDENT' | 'RETIRED'
 
+// Financial summary type
+export interface AccountsSummary {
+  totalAssets: number
+  totalLiabilities: number
+  netWorth: number
+}
+
+// Input types for API
+export type CreateAccountInput = FinancialAccountInsert
+export type CreateTransactionInput = TransactionInsert
+
 // Helper types
 export interface UserPreferences {
   theme: 'light' | 'dark' | 'system'

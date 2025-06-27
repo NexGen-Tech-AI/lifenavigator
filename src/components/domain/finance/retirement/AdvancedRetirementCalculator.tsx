@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Calculator, TrendingUp, DollarSign, Target, AlertTriangle, Info, Settings, BarChart3 } from 'lucide-react';
+import { Calculator, TrendingUp, Target, AlertTriangle, Info, Settings, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 const AdvancedRetirementCalculator = () => {
   const [inputs, setInputs] = useState({
@@ -87,8 +87,8 @@ const AdvancedRetirementCalculator = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="max-w-7xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 min-h-screen">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6">
           <div className="flex items-center justify-between">
@@ -112,7 +112,7 @@ const AdvancedRetirementCalculator = () => {
         </div>
 
         {/* Navigation Tabs */}
-        <div className="bg-gray-50 px-6 py-3 border-b">
+        <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 border-b dark:border-gray-600">
           <div className="flex space-x-1">
             {['calculator', 'projections', 'scenarios', 'analytics'].map((tab) => (
               <button
@@ -121,7 +121,7 @@ const AdvancedRetirementCalculator = () => {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   activeTab === tab 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -139,7 +139,7 @@ const AdvancedRetirementCalculator = () => {
           )}
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -183,8 +183,8 @@ const CalculatorTab: React.FC<any> = ({ inputs, updateInput, calculations, showA
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
     {/* Input Section */}
     <div className="space-y-6">
-      <div className="bg-gray-50 rounded-xl p-6">
-        <h3 className="text-xl font-semibold mb-4 flex items-center">
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+        <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-gray-100">
           <Settings className="w-5 h-5 mr-2" />
           Basic Parameters
         </h3>
@@ -193,13 +193,13 @@ const CalculatorTab: React.FC<any> = ({ inputs, updateInput, calculations, showA
           <InputField label="Retirement Age" value={inputs.retirementAge} onChange={(v) => updateInput('retirementAge', v)} />
           <InputField label="Current Savings ($)" value={inputs.currentSavings} onChange={(v) => updateInput('currentSavings', v)} />
           <InputField label="Monthly Contribution ($)" value={inputs.monthlyContribution} onChange={(v) => updateInput('monthlyContribution', v)} />
-          <InputField label="Expected Annual Return (%)" value={inputs.expectedAnnualReturn * 100} onChange={(v) => updateInput('expectedAnnualReturn', v / 100)} />
+          <InputField label="Expected Annual Return (%)" value={inputs.expectedAnnualReturn * 100} onChange={(v) => updateInput('expectedAnnualReturn', parseFloat(v) / 100)} />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Risk Tolerance</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Risk Tolerance</label>
             <select 
               value={inputs.riskTolerance} 
               onChange={(e) => updateInput('riskTolerance', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value={1}>Conservative</option>
               <option value={2}>Moderate</option>
@@ -211,19 +211,19 @@ const CalculatorTab: React.FC<any> = ({ inputs, updateInput, calculations, showA
 
       {showAdvanced && (
         <>
-          <div className="bg-gray-50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-4">Advanced Parameters</h3>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Advanced Parameters</h3>
             <div className="grid grid-cols-2 gap-4">
-              <InputField label="Inflation Rate (%)" value={inputs.inflationRate * 100} onChange={(v) => updateInput('inflationRate', v / 100)} />
-              <InputField label="Contribution Growth (%)" value={inputs.contributionIncreaseRate * 100} onChange={(v) => updateInput('contributionIncreaseRate', v / 100)} />
-              <InputField label="Withdrawal Rate (%)" value={inputs.withdrawalRate * 100} onChange={(v) => updateInput('withdrawalRate', v / 100)} />
-              <InputField label="Tax Rate (%)" value={inputs.taxRate * 100} onChange={(v) => updateInput('taxRate', v / 100)} />
+              <InputField label="Inflation Rate (%)" value={inputs.inflationRate * 100} onChange={(v) => updateInput('inflationRate', parseFloat(v) / 100)} />
+              <InputField label="Contribution Growth (%)" value={inputs.contributionIncreaseRate * 100} onChange={(v) => updateInput('contributionIncreaseRate', parseFloat(v) / 100)} />
+              <InputField label="Withdrawal Rate (%)" value={inputs.withdrawalRate * 100} onChange={(v) => updateInput('withdrawalRate', parseFloat(v) / 100)} />
+              <InputField label="Tax Rate (%)" value={inputs.taxRate * 100} onChange={(v) => updateInput('taxRate', parseFloat(v) / 100)} />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Compounding Frequency</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Compounding Frequency</label>
                 <select 
                   value={inputs.compoundingFrequency} 
                   onChange={(e) => updateInput('compoundingFrequency', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value={1}>Annually</option>
                   <option value={4}>Quarterly</option>
@@ -231,17 +231,17 @@ const CalculatorTab: React.FC<any> = ({ inputs, updateInput, calculations, showA
                   <option value={365}>Daily</option>
                 </select>
               </div>
-              <InputField label="Volatility (%)" value={inputs.volatility * 100} onChange={(v) => updateInput('volatility', v / 100)} />
+              <InputField label="Volatility (%)" value={inputs.volatility * 100} onChange={(v) => updateInput('volatility', parseFloat(v) / 100)} />
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-xl p-6">
-            <h3 className="text-xl font-semibold mb-4">Additional Income Sources</h3>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Additional Income Sources</h3>
             <div className="grid grid-cols-2 gap-4">
               <InputField label="Social Security ($)" value={inputs.socialSecurityIncome} onChange={(v) => updateInput('socialSecurityIncome', v)} />
               <InputField label="Pension Income ($)" value={inputs.pensionIncome} onChange={(v) => updateInput('pensionIncome', v)} />
               <InputField label="Current Annual Income ($)" value={inputs.currentAnnualIncome} onChange={(v) => updateInput('currentAnnualIncome', v)} />
-              <InputField label="Income Replacement Goal (%)" value={inputs.incomeReplacementGoal * 100} onChange={(v) => updateInput('incomeReplacementGoal', v / 100)} />
+              <InputField label="Income Replacement Goal (%)" value={inputs.incomeReplacementGoal * 100} onChange={(v) => updateInput('incomeReplacementGoal', parseFloat(v) / 100)} />
               <InputField label="Healthcare Costs ($)" value={inputs.healthcareCosts} onChange={(v) => updateInput('healthcareCosts', v)} />
               <InputField label="Emergency Fund ($)" value={inputs.emergencyFund} onChange={(v) => updateInput('emergencyFund', v)} />
             </div>
@@ -308,7 +308,7 @@ const ProjectionsTab: React.FC<any> = ({ calculations, inputs }) => {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {projectionData.incomeBreakdown.map((entry, index) => (
+                {projectionData.incomeBreakdown.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={['#3B82F6', '#10B981', '#F59E0B', '#EF4444'][index % 4]} />
                 ))}
               </Pie>
@@ -353,15 +353,15 @@ const ScenariosTab: React.FC<any> = ({ scenarios, addScenario, removeScenario, c
     </div>
 
     {scenarios.length === 0 ? (
-      <div className="text-center py-12 text-gray-500">
-        <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+        <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
         <p>No scenarios saved yet. Add your current configuration to start comparing scenarios.</p>
       </div>
     ) : (
       <div className="grid gap-6">
         <ScenarioComparisonChart scenarios={scenarios} currentResults={currentResults} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {scenarios.map((scenario, index) => (
+          {scenarios.map((scenario: any, index: number) => (
             <ScenarioCard 
               key={index} 
               scenario={scenario} 
@@ -374,7 +374,7 @@ const ScenariosTab: React.FC<any> = ({ scenarios, addScenario, removeScenario, c
   </div>
 );
 
-const AnalyticsTab: React.FC<any> = ({ calculations, inputs }) => (
+const AnalyticsTab: React.FC<any> = ({ calculations }) => (
   <div className="space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <MetricCard 
@@ -408,10 +408,10 @@ const AnalyticsTab: React.FC<any> = ({ calculations, inputs }) => (
       <ChartCard title="Monte Carlo Success Rate" icon={<Target className="w-5 h-5" />}>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="text-6xl font-bold text-blue-600">
+            <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
               {calculations.monteCarloResults?.successRate?.toFixed(1)}%
             </div>
-            <p className="text-gray-600 mt-2">Probability of meeting retirement goals</p>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">Probability of meeting retirement goals</p>
           </div>
         </div>
       </ChartCard>
@@ -426,12 +426,12 @@ const InputField: React.FC<{ label: string; value: number; onChange: (value: str
   label, value, onChange, type = "number" 
 }) => (
   <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
     <input
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
     />
   </div>
 );
@@ -439,84 +439,84 @@ const InputField: React.FC<{ label: string; value: number; onChange: (value: str
 const ChartCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ 
   title, icon, children 
 }) => (
-  <div className="bg-white rounded-xl border shadow-sm p-6">
+  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
     <div className="flex items-center mb-4">
       <div className="text-blue-600 mr-2">{icon}</div>
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3>
     </div>
     {children}
   </div>
 );
 
 const ResultsCard: React.FC<{ calculations: any }> = ({ calculations }) => (
-  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6 border border-green-200">
-    <h3 className="text-xl font-semibold mb-4 flex items-center">
-      <Target className="w-5 h-5 mr-2 text-green-600" />
+  <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+    <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-gray-100">
+      <Target className="w-5 h-5 mr-2 text-green-600 dark:text-green-400" />
       Retirement Projections
     </h3>
     <div className="space-y-3">
       <div className="flex justify-between">
-        <span className="text-gray-600">Total at Retirement:</span>
-        <span className="font-bold text-lg">${calculations.totalAtRetirement.toLocaleString()}</span>
+        <span className="text-gray-600 dark:text-gray-400">Total at Retirement:</span>
+        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">${calculations.totalAtRetirement.toLocaleString()}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Monthly Income:</span>
-        <span className="font-bold text-lg">${calculations.monthlyIncome.toLocaleString()}</span>
+        <span className="text-gray-600 dark:text-gray-400">Monthly Income:</span>
+        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">${calculations.monthlyIncome.toLocaleString()}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Income Replacement:</span>
-        <span className={`font-bold text-lg ${calculations.meetsIncomeGoal ? 'text-green-600' : 'text-red-600'}`}>
+        <span className="text-gray-600 dark:text-gray-400">Income Replacement:</span>
+        <span className={`font-bold text-lg ${calculations.meetsIncomeGoal ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
           {calculations.incomeReplacementRatio}%
         </span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Portfolio Longevity:</span>
-        <span className="font-bold text-lg">{calculations.portfolioLongevity} years</span>
+        <span className="text-gray-600 dark:text-gray-400">Portfolio Longevity:</span>
+        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">{calculations.portfolioLongevity} years</span>
       </div>
     </div>
   </div>
 );
 
 const RiskMetricsCard: React.FC<{ calculations: any }> = ({ calculations }) => (
-  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
-    <h3 className="text-xl font-semibold mb-4 flex items-center">
-      <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+  <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+    <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-gray-100">
+      <BarChart3 className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
       Risk Metrics
     </h3>
     <div className="space-y-3">
       <div className="flex justify-between">
-        <span className="text-gray-600">Sharpe Ratio:</span>
-        <span className="font-bold">{calculations.sharpeRatio}</span>
+        <span className="text-gray-600 dark:text-gray-400">Sharpe Ratio:</span>
+        <span className="font-bold text-gray-900 dark:text-gray-100">{calculations.sharpeRatio}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Sortino Ratio:</span>
-        <span className="font-bold">{calculations.sortinoRatio}</span>
+        <span className="text-gray-600 dark:text-gray-400">Sortino Ratio:</span>
+        <span className="font-bold text-gray-900 dark:text-gray-100">{calculations.sortinoRatio}</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Value at Risk:</span>
-        <span className="font-bold text-red-600">{calculations.valueAtRisk}%</span>
+        <span className="text-gray-600 dark:text-gray-400">Value at Risk:</span>
+        <span className="font-bold text-red-600 dark:text-red-400">{calculations.valueAtRisk}%</span>
       </div>
       <div className="flex justify-between">
-        <span className="text-gray-600">Max Drawdown:</span>
-        <span className="font-bold text-red-600">{calculations.maxDrawdown}%</span>
+        <span className="text-gray-600 dark:text-gray-400">Max Drawdown:</span>
+        <span className="font-bold text-red-600 dark:text-red-400">{calculations.maxDrawdown}%</span>
       </div>
     </div>
   </div>
 );
 
 const QuickInsights: React.FC<{ calculations: any }> = ({ calculations }) => (
-  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
-    <h3 className="text-xl font-semibold mb-4 flex items-center">
-      <Info className="w-5 h-5 mr-2 text-yellow-600" />
+  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl p-6 border border-yellow-200 dark:border-yellow-800">
+    <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900 dark:text-gray-100">
+      <Info className="w-5 h-5 mr-2 text-yellow-600 dark:text-yellow-400" />
       Key Insights
     </h3>
     <div className="space-y-2 text-sm">
       {calculations.insights?.map((insight: string, index: number) => (
         <div key={index} className="flex items-start">
-          <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-          <span>{insight}</span>
+          <div className="w-2 h-2 bg-yellow-500 dark:bg-yellow-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+          <span className="text-gray-700 dark:text-gray-300">{insight}</span>
         </div>
-      )) || <p className="text-gray-500">Loading insights...</p>}
+      )) || <p className="text-gray-500 dark:text-gray-400">Loading insights...</p>}
     </div>
   </div>
 );
@@ -532,11 +532,11 @@ const MetricCard: React.FC<{ title: string; value: string | number; subtitle: st
   };
 
   return (
-    <div className="bg-white rounded-xl border shadow-sm p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-6">
       <div className={`w-full h-2 bg-gradient-to-r ${colorClasses[color]} rounded-full mb-4`}></div>
-      <h3 className="text-lg font-semibold mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900">{value}</p>
-      <p className="text-sm text-gray-500">{subtitle}</p>
+      <h3 className="text-lg font-semibold mb-1 text-gray-900 dark:text-gray-100">{title}</h3>
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
     </div>
   );
 };
@@ -622,57 +622,57 @@ const ScenarioComparisonChart: React.FC<{ scenarios: any[]; currentResults: any 
 };
 
 const ScenarioCard: React.FC<{ scenario: any; onRemove: () => void }> = ({ scenario, onRemove }) => (
-  <div className="bg-white rounded-lg border shadow-sm p-4">
+  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
     <div className="flex justify-between items-start mb-3">
-      <h4 className="font-semibold">{scenario.name}</h4>
+      <h4 className="font-semibold text-gray-900 dark:text-gray-100">{scenario.name}</h4>
       <button 
         onClick={onRemove}
-        className="text-red-500 hover:text-red-700 text-sm"
+        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 text-sm"
       >
         Remove
       </button>
     </div>
     <div className="space-y-2 text-sm">
       <div className="flex justify-between">
-        <span>Total:</span>
-        <span className="font-medium">${(scenario.results.totalAtRetirement / 1000000).toFixed(1)}M</span>
+        <span className="text-gray-600 dark:text-gray-400">Total:</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">${(scenario.results.totalAtRetirement / 1000000).toFixed(1)}M</span>
       </div>
       <div className="flex justify-between">
-        <span>Monthly:</span>
-        <span className="font-medium">${scenario.results.monthlyIncome.toLocaleString()}</span>
+        <span className="text-gray-600 dark:text-gray-400">Monthly:</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">${scenario.results.monthlyIncome.toLocaleString()}</span>
       </div>
       <div className="flex justify-between">
-        <span>Replacement:</span>
-        <span className="font-medium">{scenario.results.incomeReplacementRatio}%</span>
+        <span className="text-gray-600 dark:text-gray-400">Replacement:</span>
+        <span className="font-medium text-gray-900 dark:text-gray-100">{scenario.results.incomeReplacementRatio}%</span>
       </div>
     </div>
   </div>
 );
 
 const AdvancedMetricsTable: React.FC<{ calculations: any }> = ({ calculations }) => (
-  <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-    <div className="p-6 border-b">
-      <h3 className="text-lg font-semibold">Advanced Financial Metrics</h3>
+  <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+    <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Advanced Financial Metrics</h3>
     </div>
     <div className="overflow-x-auto">
       <table className="w-full">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interpretation</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metric</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Interpretation</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {calculations.advancedMetrics?.map((metric: any, index: number) => (
             <tr key={index}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{metric.name}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{metric.value}</td>
-              <td className="px-6 py-4 text-sm text-gray-500">{metric.interpretation}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{metric.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">{metric.value}</td>
+              <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{metric.interpretation}</td>
             </tr>
           )) || (
             <tr>
-              <td colSpan={3} className="px-6 py-4 text-center text-gray-500">Loading metrics...</td>
+              <td colSpan={3} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Loading metrics...</td>
             </tr>
           )}
         </tbody>

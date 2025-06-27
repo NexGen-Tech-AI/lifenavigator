@@ -1,21 +1,17 @@
 'use client';
 
 import React from 'react';
-import RetirementCalculator from '@/components/domain/finance/retirement/RetirementCalculator';
+import dynamic from 'next/dynamic';
+
+const AdvancedRetirementCalculator = dynamic(
+  () => import('@/components/domain/finance/retirement/AdvancedRetirementCalculator'),
+  { ssr: false }
+);
 
 export default function RetirementPage() {
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Retirement Planning</h1>
-        <p className="text-slate-500 dark:text-slate-400">Plan and secure your financial future</p>
-      </div>
-      
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
-        <div className="p-6">
-          <RetirementCalculator />
-        </div>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <AdvancedRetirementCalculator />
     </div>
   );
 }
