@@ -1,14 +1,20 @@
-import RetirementCalculator from '@/components/financial/retirement/RetirementCalculator';
+'use client';
 
-export const metadata = {
-  title: 'Retirement Calculator | LifeNavigator',
-  description: 'Plan your retirement with our advanced calculator that helps you project savings, contributions, and income replacement.',
-};
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues with charts
+const AdvancedRetirementCalculator = dynamic(
+  () => import('@/components/domain/finance/retirement/AdvancedRetirementCalculator'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+);
 
 export default function RetirementCalculatorPage() {
-  return (
-    <div className="container mx-auto py-8">
-      <RetirementCalculator />
-    </div>
-  );
+  return <AdvancedRetirementCalculator />;
 }
